@@ -29,7 +29,7 @@ Run the suite yourself. Diff the test files against their previous state — and
 
 ## Pass 3 — Architectural conformance
 
-Judge the code against what the maestro dispatched, in the vocabulary of `skills/designing` (same root as this skill — read it first):
+Judge the code against what the maestro dispatched, by the house discipline of `skills/codebase-design` (same root as this skill — read it first):
 
 - **Contract:** does the implementation match the dossier's interface — signature, invariants, ordering, error modes? Any silent widening or narrowing is a finding. Consumers bind to observable behavior, not the declared shape — changed error text, ordering, or timing on a public interface is a contract change too. So is a new return path that reuses an existing sentinel (null, empty, fallback value) for a new state: audit whether consumers can still tell the states apart — "doesn't crash" is not enough when the message or action is now false.
 - **Depth:** a module that fails the depth test — interface as complicated as its implementation — should be inlined; flag it.

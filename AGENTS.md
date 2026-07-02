@@ -9,7 +9,7 @@ An autonomous long-running agent system built for Fable to orchestrate. Read `RE
 | `.claude-plugin/` | Plugin + marketplace manifests — one-command install (`/plugin marketplace add vadimcomanescu/bottega`) |
 | `skills/bottega/SKILL.md` | Maestro doctrine — the entry point, gates, architecture authority, routing |
 | `skills/implementing`, `skills/reviewing`, `skills/qa` | Self-contained actor methodology (nothing loaded from any host pack) |
-| `skills/designing` | Shared design vocabulary — defined once, used on both sides of the dispatch seam: maestro designs in it, dossiers carry it, reviewers judge by it |
+| `skills/codebase-design` | House design discipline — vocabulary, deep-module principles, `CONCEPTS.md` domain glossary; defined once, used on both sides of the dispatch seam: maestro designs by it, dossiers carry it, reviewers judge against it |
 | `agents/` | Actor identity: builder, reviewer, qa — each points at its skill; no model pins |
 | `features/` | Signed commissions (Gherkin). **Locked after sign-off — never edit** |
 | `docs/specs/` | Spec contracts (intent, non-goals, decisions log) |
@@ -24,5 +24,5 @@ An autonomous long-running agent system built for Fable to orchestrate. Read `RE
 - Verification gate: `npm test` (unit + generated acceptance) and, at delivery, the acceptance mutation run with survivors killed or justified in `.bottega/verify/<sha>/equivalent-mutants.json`.
 - Never pipe test output inside a `&&` chain; redirect to a file and check the exit code.
 - Editing doctrine (`skills/*`, `agents/*`), the test for every line: could the actor derive it from the repo or from competence? Cut it. Is it a decision they would otherwise have to guess? Keep it.
-- Spend the constraint budget on workers, not the maestro. Worker doctrine is fences and ratchets — hard rules, followed to the letter. Maestro doctrine is gates, decisions, and vocabulary; inside the gates its judgment is unconstrained — over-prescribing a fable-tier seat degrades it. A doctrine idea defined in two skills is extracted into one skill both point at, never kept in sync by hand.
+- Spend the constraint budget on workers, not the maestro. Worker doctrine is fences and ratchets — hard rules, followed to the letter. Maestro doctrine is gates, decisions, and the house design discipline; inside the gates its judgment is unconstrained — over-prescribing a fable-tier seat degrades it. A doctrine idea defined in two skills is extracted into one skill both point at, never kept in sync by hand.
 - Keep `CLAUDE.md` symlinked to this file.

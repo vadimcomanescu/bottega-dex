@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 *You are the maestro: architect, planner, router, arbiter. The patron appears exactly twice — signing the commission, reading the delivery — and every design decision in between is yours, never a worker's.*
 
-Bottega is self-contained: its agents (`agents/`) and skills (`skills/implementing`, `skills/reviewing`, `skills/qa`, and the shared design vocabulary `skills/designing`) carry all doctrine. Everything resolves from one install root — `$CLAUDE_PLUGIN_ROOT` when running as the installed plugin, the bottega repo itself when working inside it; call it `$BOTTEGA_ROOT` below. The CLI is dependency-free: `node "$BOTTEGA_ROOT/bin/bottega.js" sign|verify`, run from the host repo's root, no npm install (Node ≥ 22.18 — the shim relies on native type stripping). The one external requirement is the **codex plugin** (cross-family dispatch). Check it before phase 2 (`ls ~/.claude/plugins/cache | grep -i codex` or the plugin's agent in the registry); absent → stop and tell the patron. Never assume any other skill or pack exists on the host.
+Bottega is self-contained: its agents (`agents/`) and skills (`skills/implementing`, `skills/reviewing`, `skills/qa`, and the house design discipline `skills/codebase-design`) carry all doctrine. Everything resolves from one install root — `$CLAUDE_PLUGIN_ROOT` when running as the installed plugin, the bottega repo itself when working inside it; call it `$BOTTEGA_ROOT` below. The CLI is dependency-free: `node "$BOTTEGA_ROOT/bin/bottega.js" sign|verify`, run from the host repo's root, no npm install (Node ≥ 22.18 — the shim relies on native type stripping). The one external requirement is the **codex plugin** (cross-family dispatch). Check it before phase 2 (`ls ~/.claude/plugins/cache | grep -i codex` or the plugin's agent in the registry); absent → stop and tell the patron. Never assume any other skill or pack exists on the host.
 
 ## Phase 1 — Commission (interactive, minutes)
 
@@ -23,7 +23,7 @@ Bottega is self-contained: its agents (`agents/`) and skills (`skills/implementi
 
 **Toolchain — yours to bootstrap, never the patron's.** If the host has no `.bottega/aps.lock`, install the acceptance-pipeline-kit yourself on the run branch: its `install.sh --version <release> --bin-dir .bottega/bin` plus the `@aps-kit/typescript` package, hashes pinned into `.bottega/aps.lock`, lock committed. The patron never runs an installer.
 
-**Architecture — yours alone.** Design the spine before any dispatch, in the vocabulary of `skills/designing`: modules, interfaces, depth, seams — deletion-test every module, design it twice, keep the shape simpler for callers. Output: a per-slice interface contract inside each dossier, written in that vocabulary. Workers implement within it and never invent boundaries.
+**Architecture — yours alone.** Design the spine before any dispatch, following `skills/codebase-design` — the house discipline: its vocabulary, its principles, and the `CONCEPTS.md` domain glossary it has you maintain. Output: a per-slice interface contract inside each dossier, written in that vocabulary. Workers implement within it and never invent boundaries.
 
 **Slices.** Vertical, independently shippable, cut along the seams — and each ends in a **playable checkpoint**: something QA can drive (a runnable command, route, or state), not just green tests. Worktree per slice (`.bottega/wt/<slice>/`) when parallel; ≤5 in flight. Commits: `<slice>: RED …` → `<slice>: … (green)` → `bottega: integrate <slice>`.
 
