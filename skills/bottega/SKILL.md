@@ -20,7 +20,7 @@ Bottega is self-contained: its agents (`agents/`) and skills (`skills/implementi
 
 **Architecture — yours alone.** Design the spine before any dispatch: the modules, each module's **interface** (everything a caller must know: signature, invariants, ordering, error modes), its **depth** (behavior hidden behind that interface — deep = much behavior, small interface), the **seams** between them (places behavior can change without editing in place; one adapter = hypothetical seam, two = real). Apply the **deletion test** to every module: delete it — if complexity just vanishes, it was hiding nothing; if it reappears across callers, it earns its place. Design it twice; keep the shape simpler for callers. Output: a per-slice interface contract inside each dossier. Workers implement within it and never invent boundaries.
 
-**Slices.** Vertical, independently shippable, cut along the seams. Worktree per slice (`.bottega/wt/<slice>/`) when parallel; ≤5 in flight. Commits: `<slice>: RED …` → `<slice>: … (green)` → `bottega: integrate <slice>`.
+**Slices.** Vertical, independently shippable, cut along the seams — and each ends in a **playable checkpoint**: something QA can drive (a runnable command, route, or state), not just green tests. Worktree per slice (`.bottega/wt/<slice>/`) when parallel; ≤5 in flight. Commits: `<slice>: RED …` → `<slice>: … (green)` → `bottega: integrate <slice>`.
 
 **Build.** Dispatch implementors with self-contained dossiers: slice intent, red tests, interface contract, owned files, and the instruction to follow `skills/implementing`. One task per invocation — the worker commits, reports, stops.
 
@@ -31,6 +31,8 @@ Bottega is self-contained: its agents (`agents/`) and skills (`skills/implementi
 **Verify.** `bottega verify` + acceptance run + acceptance mutation **against a COPY of the feature file** (`cp features/x.feature build/acceptance-mutation/` — the mutator writes a differential-cache block into whatever it reads; that cache must never land in the signed file, where byte-hashing reads it as tampering). Survivors are findings: kill or justify in `equivalent-mutants.json`. Archive everything at `.bottega/verify/<sha>/`.
 
 **Deliver.** PR body: scenario checklist, evidence links, findings fixed, decisions log, release decision, and a **decision-coverage check** — every commission decision and patron instruction from the session maps to an artifact or an explicit not-done flag. Completion: a delivery that only proves the code is not a delivery.
+
+**Close.** After delivery, rewrite the commission doc from a build plan into a durable record: outcome, what shipped where (pointers at code and `.bottega/verify/<sha>/`), and the decisions as rationale — the parts that stay true after the code moves on. Mark it closed; it is history now, not operational truth.
 
 ## Routing
 

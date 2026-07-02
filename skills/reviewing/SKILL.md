@@ -34,7 +34,7 @@ Judge the code against what the maestro dispatched, in this vocabulary:
 - **Contract:** does the implementation match the dossier's interface — signature, invariants, ordering, error modes? Any silent widening or narrowing is a finding.
 - **Depth:** is the interface still small relative to what it hides? A module whose interface is as complicated as its implementation should be inlined — flag it.
 - **Deletion test:** for each new module or wrapper — delete it mentally; if complexity just vanishes, it was hiding nothing (negative code); if it reappears across callers, it earns its place.
-- **Complexity:** speculative structure (unused parameters, single-caller abstractions, config nobody set, seams where nothing varies) is a finding. Capability the commission names is never a finding.
+- **Complexity:** speculative structure (unused parameters, single-caller abstractions, config nobody set, seams where nothing varies) is a finding. So is **compatibility sediment** — old and new shapes both kept alive, shims and re-exports layered instead of ownership moved to one clean concept. Capability the commission names is never a finding.
 
 ## Report
 
