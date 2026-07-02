@@ -44,7 +44,7 @@ Human gates are clickable HTML pages (approve / request changes), never walls of
 
 ## The two artifacts a human ever reads
 
-**In:** the commission (`docs/specs/NNNN-*.md` + `features/*.feature`) — intent in two sentences, non-goals, Given/When/Then with example values, a rendered prototype screenshot for UI work. One page, signed in minutes.
+**In:** the commission (`docs/specs/NNNN-*.md` + `features/*.feature`) — intent in two sentences, non-goals, Given/When/Then with example values, a storyboard of rendered screens per signed flow for UI work. One page, signed in minutes.
 
 **Out:** the delivery PR — scenario checklist, evidence from `.bottega/verify/<sha>/`, findings fixed, and the decisions log: every call the commission underdetermined, made and flagged, because decisions in an unsupervised run are reviewed after, not asked before.
 

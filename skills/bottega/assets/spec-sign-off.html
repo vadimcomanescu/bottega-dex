@@ -14,6 +14,11 @@
   pre.gherkin { background:#fff; border:1px solid var(--line); padding:16px 20px; overflow:auto; font:13px/1.6 ui-monospace, monospace; white-space:pre; }
   ul { padding-left:20px; } li { margin:4px 0; }
   img.proto { max-width:100%; border:1px solid var(--line); }
+  img.proto.phone { max-width:375px; display:block; }
+  section.flow { margin:0 0 28px; }
+  section.flow h3 { font-size:14px; margin:0 0 8px; }
+  figure { margin:0 0 16px; }
+  figcaption { color:var(--mut); font-size:13px; margin-top:6px; }
   .actions { display:flex; gap:12px; margin-top:40px; }
   button { font:inherit; padding:10px 22px; cursor:pointer; border:1px solid var(--ink); background:var(--ink); color:#fff; }
   button.secondary { background:#fff; color:var(--ink); }
@@ -38,8 +43,16 @@
   <h2>Not in this commission</h2>
   <ul>{{NON_GOALS_LI}}</ul>
 
-  <!-- For UI commissions the maestro replaces this comment with:
-       <h2>Direction</h2><img class="proto" src="{{PROTOTYPE}}" alt="rendered prototype"> -->
+  <!-- For UI commissions the maestro replaces this comment with a Direction section:
+       one storyboard block per signed flow, one figure per screen in sequence, each caption
+       naming the scenario the screen proves. Screens render on the host's design system;
+       phone-first flows use class="proto phone".
+       <h2>Direction</h2>
+       <section class="flow">
+         <h3>{{FLOW_NAME}}</h3>
+         <figure><img class="proto" src="{{SCREEN}}" alt=""><figcaption>{{SCENARIO_IT_PROVES}}</figcaption></figure>
+       </section>
+       UI-heavy commissions may append: <p><a href="{{PROTOTYPE_HTML}}">clickable prototype</a></p> -->
 
   <h2>Decisions already made</h2>
   <ul>{{DECISIONS_LI}}</ul>
