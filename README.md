@@ -35,7 +35,7 @@ commission signed (HTML gate → bottega sign) ─▶ acceptance RED
   ─▶ QA drives it ─▶ verify: lock + acceptance + mutation, evidence archived ─▶ delivery PR
 ```
 
-Human gates are clickable HTML pages (approve / request changes), never walls of markdown.
+Human gates are clickable HTML pages (approve / request changes), never walls of markdown. The entire run is isolated: branch `bottega/<commission-id>` in its own worktree, every commit lands there, and the PR is the only path to trunk — the patron's merge click is the only act that lands it. After delivery, the commission is rewritten into a closed, durable record pointing at code and evidence.
 
 ## The two artifacts a human ever reads
 
