@@ -23,13 +23,16 @@ Unsupervised runs fail by satisfying a proxy for the goal, so every gate that ca
 | **Simplifier** | [`agents/bottega-simplifier.md`](agents/bottega-simplifier.md) — shrink interfaces, delete speculative structure, never capability | strong |
 | **Examiner** | [`agents/bottega-examiner.md`](agents/bottega-examiner.md) — drives the artifact as a user; evidence or it didn't happen | any + agent-browser |
 
-Doctrine is saved; control flow is not. The maestro authors the orchestration fresh for every run — a stored pipeline is a plan document wearing a costume. The only invariants are the gates:
+Doctrine is saved; control flow within a phase is authored fresh per run. The phase sequence is the patron's pipeline design (`agents-skills/pipeline-design.html` v3 — seven phases, each deletion-tested, sources quoted there); bottega adds the layer v3 lacks: acceptance criteria as APS-locked feature files, frozen at sign-off, mutation-proven at review.
 
 ```
-commission signed ──▶ acceptance RED ──▶ slices built in worktrees
-      ──▶ adversary + simplifier (maestro arbitrates) ──▶ examiner drives it
-      ──▶ verify: lock + acceptance + mutation, evidence archived ──▶ delivery PR
+0 Research ─▶ 1 Discover (goal + features signed: bottega sign) ─▶ 2 Spec (writer + opposite-model critic)
+  ─▶ 3 Design (screens.html, UI only) ─▶ 4 Plan (atomic tasks, DAG, editor loop ×5)
+  ─▶ 5 Build (workers, worktrees, HARD STOP, alternating families)
+  ─▶ 6 Review (fresh opposite-model judge ×8, test ratchet; verify + acceptance mutation; evidence wall)
 ```
+
+Every human gate is a clickable HTML page (approve / request changes), never a wall of markdown.
 
 ## The two artifacts a human ever reads
 
@@ -65,4 +68,4 @@ Requires Node ≥ 22.18 (the bin shim runs TypeScript through native type stripp
 
 ## Provenance
 
-The doctrine is distilled, then owned — the sources are read at build time and out of the loop at run time: [Acceptance Pipeline Specification](https://github.com/unclebob/Acceptance-Pipeline-Specification) (Robert C. Martin) and its [multi-language kit](https://github.com/vadimcomanescu/acceptance-pipeline-kit) · *A Philosophy of Software Design* (Ousterhout) — deep modules, design it twice · [ponytail](https://github.com/DietrichGebert/ponytail) — simplicity discipline, tempered: YAGNI targets speculative complexity, never product quality · validated run mechanics from the June 2026 bottega playgrounds (slice worktrees, pinned toolchains, per-sha evidence archives).
+Primary origin: the patron's own [pipeline design v3](https://github.com/vadimcomanescu/agents-skills/blob/main/pipeline-design.html) and [agents-skills](https://github.com/vadimcomanescu/agents-skills) pack (methodology loaded, never duplicated). Enforcement layer: [Acceptance Pipeline Specification](https://github.com/unclebob/Acceptance-Pipeline-Specification) (Robert C. Martin) via its [multi-language kit](https://github.com/vadimcomanescu/acceptance-pipeline-kit). Vocabulary: Pocock's LANGUAGE.md (module / interface / depth / seam / deletion test). Builder discipline: [ponytail](https://github.com/DietrichGebert/ponytail)'s seven-rung ladder — lazy, not negligent. Run mechanics validated in the June 2026 bottega playgrounds (worktrees, pinned toolchains, per-sha evidence archives).
