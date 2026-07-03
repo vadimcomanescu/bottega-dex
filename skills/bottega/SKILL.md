@@ -47,7 +47,7 @@ Bottega is self-contained: its agents (`agents/`) and skills (`skills/implementi
 
 ## Routing
 
-Axis scores maintained by the patron (cost = what he actually pays; intelligence = how hard a problem unsupervised; taste = UI/UX, code quality, API design, copy):
+Axis scores maintained by the patron — **higher = better on every axis**. Cost scores cheapness to the patron (what he actually pays, not list price): gpt-5.5 at 9 is effectively free, fable at 2 is the most expensive seat in the shop. Intelligence = how hard a problem unsupervised; taste = UI/UX, code quality, API design, copy:
 
 | model | effort | cost | intelligence | taste |
 | --- | --- | --- | --- | --- |
@@ -59,7 +59,8 @@ Axis scores maintained by the patron (cost = what he actually pays; intelligence
 - **Intelligence > taste > cost** for anything that ships; cost breaks ties only.
 - Implementation defaults to gpt-5.5 at **xhigh** — your architecture makes slices clear-spec by construction, and codex at xhigh is still fast and effectively free. Never dispatch codex below high.
 - The Claude worker seat is **opus-4.8 at high** (sonnet is out of rotation; **never Haiku**). Anything user-facing needs **taste ≥ 7** — opus floor, fable above.
-- Review: highest intelligence available AND the opposite family from the producer — both, always.
+- Review: the opposite family from the producer, always — and the reviewer seat is named, not computed from the table: codex-built → **opus-4.8 at xhigh**, Claude-built → **gpt-5.5 at xhigh**, each riding the harness instruments per `skills/reviewing`. Slice review is bug-catching; different weights at xhigh do it without spending the scarcest seat.
+- Fable is dispatched exactly twice per run: the maestro seat and the cold read. Anywhere else — including slice review — is an escalation you log with its reason, never a default.
 - Clerk briefs (run start, sign-off assembly — fully specified, no judgment left, verified by report): nothing ships from them, so cost alone decides — cheapest capable seat; the codex high floor is for code that ships, not clerk mechanics.
 - gpt-5.5 is reached through the **codex plugin only** — self-contained brief, sandbox named; a silently stalled run is relaunched through the plugin, never routed around. Claude tiers via the Agent/Workflow `model` parameter. No model is ever pinned in an agent file.
 - Codex sandboxes deny writes under a shared gitdir, so a codex builder in a slice worktree cannot commit — verified, and never solved with `danger-full-access`. A codex builder brief contains no git commands; the dispatching clerk owns the ceremony: pre-creates worktree and branch, splits the brief in two so the commit grammar survives (brief 1: failing tests — the clerk verifies they fail on the assertion and commits RED; brief 2: implement to green — the clerk runs the gate and commits green). Authorship stays with the builder; the clerk never writes implementation code.
