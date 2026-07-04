@@ -57,7 +57,7 @@ bottega sign      # hash features/**/*.feature into .bottega/commission.lock
 bottega verify    # clean → 0 · drift (modified/removed/added) → 1 · unsigned → 2 · corrupt → 3
 ```
 
-Layout: `src/` + `bin/` the CLI · `tests/` unit · `features/` signed commission · `build/` IR · `acceptance/generated/` generated entrypoints · `handlers/` step handlers · `.bottega/` runtime (pinned toolchain in `aps.lock`, evidence in `verify/<sha>/`, worktrees in `wt/`).
+Layout: `src/` + `bin/` the CLI · `tests/` unit · `features/` signed commission · `build/` IR · `acceptance/generated/` generated entrypoints · `handlers/` step handlers · `hooks/` route guard (unrouted or fable worker dispatches rejected) · `.bottega/` runtime (pinned toolchain in `aps.lock`, evidence in `verify/<sha>/`, worktrees in `wt/`).
 
 ```bash
 npm install
