@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}} — spec {{ID}} · bottega gate</title>
+<style>
+/* ── NadicodeAI design-system tokens (functional tier) ─────────────── */
+:root {
+  --canvas:#ffffff; --canvas-soft:#fafafa; --canvas-soft-2:#f5f5f5;
+  --ink:#171717; --body:#4d4d4d; --muted:#888888;
+  --line:#e5e5e5; --seam:#e4e7ec; --cross:#a1a1a1; --input:#c9c9c9;
+  --primary:#008c45; --on-primary:#ffffff;
+  --link:#007a3c; --link-deep:#00602f; --link-bg-soft:#d9f6e4;
+  --accent:#cd212a; --info:#2743d8;
+  --error:#b80022; --error-soft:#fce4e4;
+  --warning:#f5a623; --warning-soft:#fff1cf; --warning-deep:#8f4a06;
+  --state-ready:#4d4d4d; --state-running:#2743d8; --state-review:#f5a623;
+  --state-blocked:#b80022; --state-complete:#008c45;
+  --sans:Geist,Inter,system-ui,-apple-system,sans-serif;
+  --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,monospace;
+}
+[data-theme="dark"] {
+  --canvas:#0a0a0a; --canvas-soft:#171717; --canvas-soft-2:#262626;
+  --ink:#f5f5f5; --body:#d4d4d4; --muted:#a3a3a3;
+  --line:#2e2e2e; --seam:#1f1f1f; --cross:#5d5d5d; --input:#5d5d5d;
+  --primary:#ededed; --on-primary:#0a0a0a;
+  --link:#9fe6bc; --link-deep:#c3f0d4; --link-bg-soft:#00301a;
+  --error:#f7b3b5; --error-soft:#4a000e;
+  --warning:#ffd97d; --warning-soft:#452301; --warning-deep:#ffe9b3;
+}
+* { box-sizing:border-box; }
+html { -webkit-text-size-adjust:100%; }
+body { margin:0; background:var(--canvas-soft); color:var(--ink); font:400 16px/25px var(--sans); }
+::selection { background:var(--ink); color:var(--canvas); }
+
+/* ── page grammar: frame, rows, lane ───────────────────────────────── */
+.page-system { padding:64px 24px; }
+.page-frame { max-width:1392px; margin:0 auto; position:relative; background:var(--canvas); border:1px solid var(--line); }
+.page-frame > .marker { position:absolute; width:21px; height:21px; color:var(--cross); }
+.page-frame > .marker svg { display:block; width:100%; height:100%; }
+.marker.tl { top:-11px; left:-11px; } .marker.tr { top:-11px; right:-11px; }
+.page-row { border-bottom:1px solid var(--line); padding:48px 24px; }
+.page-row:last-child { border-bottom:0; }
+.active-lane { max-width:920px; margin:0 auto; }
+
+/* ── typography tiers ──────────────────────────────────────────────── */
+.eyebrow { font:500 12px/16px var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin:0 0 12px; display:flex; gap:8px; align-items:center; }
+h1 { font:600 30px/32px var(--sans); margin:0 0 8px; text-wrap:balance; }
+.title-sm { font:600 22px/25px var(--sans); margin:0 0 4px; }
+.body-lg { font:400 18px/27px var(--sans); color:var(--ink); }
+.caption-mono { font:500 12px/16px var(--mono); }
+
+/* ── header, tags, presence ────────────────────────────────────────── */
+.gate-meta { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:16px; }
+.status-tag { display:inline-flex; align-items:center; height:28px; padding:5px 9px; font:500 12px/16px var(--mono); border-radius:4px; background:var(--canvas-soft); color:var(--body); border:1px solid var(--line); }
+.state-tag { display:inline-flex; align-items:center; height:26px; padding:0 8px; font:500 12px/16px var(--mono); border-radius:4px; background:var(--canvas); color:var(--ink); border:1px solid var(--line); border-left:3px solid var(--state-ready); }
+.state-tag[data-state="review"]   { border-left-color:var(--state-review); }
+.state-tag[data-state="reading"]  { border-left-color:var(--state-running); }
+.state-tag[data-state="revising"] { border-left-color:var(--state-running); }
+.state-tag[data-state="complete"] { border-left-color:var(--state-complete); }
+.state-tag[data-state="blocked"]  { border-left-color:var(--state-blocked); }
+.rev-chip { display:inline-flex; align-items:center; height:20px; padding:0 6px; font:500 12px/16px var(--mono); border-radius:4px; background:var(--link-bg-soft); color:var(--link-deep); }
+.work-chip { display:inline-flex; align-items:center; height:20px; padding:0 6px; font:500 12px/16px var(--mono); border-radius:4px; background:var(--canvas-soft); color:var(--body); border:1px solid var(--line); border-left:3px solid var(--state-running); text-transform:uppercase; }
+@media (prefers-reduced-motion:no-preference) {
+  .row-flash { animation:rowflash .9s ease-out; }
+  @keyframes rowflash { 0% { background:var(--link-bg-soft); } 100% { background:transparent; } }
+}
+#theme-toggle { margin-left:auto; cursor:pointer; background:none; border:1px solid var(--line); border-radius:4px; height:26px; padding:0 8px; font:500 12px/16px var(--mono); color:var(--muted); }
+/* review layer: approve/revisit per scenario */
+.approve-bar { display:flex; gap:8px; margin-top:16px; }
+.approve-btn { cursor:pointer; height:26px; padding:0 10px; font:500 12px/16px var(--mono); border-radius:4px; background:var(--canvas); color:var(--muted); border:1px solid var(--line); border-left:3px solid var(--line); }
+.approve-btn[data-on="1"][data-kind="ok"] { background:var(--link-bg-soft); color:var(--link-deep); border-left-color:var(--state-complete); }
+.approve-btn[data-on="1"][data-kind="fix"] { background:var(--warning-soft); color:var(--warning-deep); border-left-color:var(--state-review); }
+/* live feedback panel — playground-style prompt output, composes as you interact */
+#feedback-panel { display:none; position:sticky; bottom:0; z-index:20; background:var(--canvas); border-top:1px solid var(--line); padding:12px 24px 16px; }
+#feedback-panel .panel-head { font:500 12px/16px var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px; display:flex; gap:8px; align-items:center; }
+#live-prompt { margin:0 0 10px; padding:12px 14px; max-height:160px; overflow:auto; background:var(--canvas-soft); border:1px solid var(--line); font:400 13px/20px var(--mono); color:var(--ink); white-space:pre-wrap; }
+#panel-status { font:500 12px/16px var(--mono); color:var(--link-deep); }
+#theme-toggle:focus-visible, .btn:focus-visible, .comment-add:focus-visible, textarea:focus-visible, figure.frame img:focus-visible { outline:2px solid var(--link); outline-offset:2px; }
+
+/* ── gherkin ───────────────────────────────────────────────────────── */
+pre.gherkin { margin:0; padding:16px 20px; overflow-x:auto; background:var(--canvas-soft); border:1px solid var(--line); font:400 13px/20px var(--mono); color:var(--ink); white-space:pre; }
+.gh-kw { color:var(--link); font-weight:500; }
+.gh-top { color:var(--ink); font-weight:600; }
+.gh-str { color:var(--info); }
+.gh-param { color:var(--warning-deep); }
+.gh-table { color:var(--muted); }
+[data-theme="dark"] .gh-str { color:#7d99f2; }
+
+/* ── storyboard: full-width evidence under its scenario ────────────── */
+.storyboard { display:flex; flex-direction:column; gap:24px; margin-top:24px; }
+figure.frame { margin:0; padding:16px; position:relative; background:var(--canvas-soft); background-image:radial-gradient(var(--seam) 1px, transparent 1px); background-size:12px 12px; border:1px solid var(--line); }
+figure.frame img { display:block; width:100%; height:auto; border:1px solid var(--line); background:var(--canvas); cursor:zoom-in; }
+figure.frame.phone img { width:auto; max-width:min(375px,100%); margin:0 auto; }
+figcaption { font:400 14px/20px var(--sans); color:var(--body); margin-top:10px; }
+figcaption .proves { font:500 12px/16px var(--mono); color:var(--link); display:block; margin-bottom:2px; }
+#lightbox { display:none; position:fixed; inset:0; z-index:50; background:rgba(10,10,10,.92); cursor:zoom-out; align-items:center; justify-content:center; padding:24px; }
+#lightbox img { max-width:min(1600px,94vw); max-height:92vh; border:1px solid var(--cross); background:var(--canvas); }
+#lightbox .caption-mono { position:fixed; bottom:16px; left:24px; color:#a3a3a3; }
+
+/* ── lists ─────────────────────────────────────────────────────────── */
+ul.non-goals { list-style:none; margin:0; padding:0; }
+ul.non-goals li { padding:6px 0 6px 24px; position:relative; color:var(--body); font:400 16px/25px var(--sans); }
+ul.non-goals li::before { content:"×"; position:absolute; left:2px; color:var(--accent); font:600 16px/25px var(--sans); }
+ul.decisions, ul.domain { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+ul.decisions li { background:var(--canvas-soft); border-radius:4px; padding:8px 12px; font:400 14px/20px var(--sans); color:var(--ink); }
+ul.domain li { background:var(--canvas-soft); border-radius:4px; padding:8px 12px; font:400 14px/20px var(--sans); color:var(--body); }
+ul.domain li b { font:500 12px/16px var(--mono); color:var(--link-deep); text-transform:uppercase; letter-spacing:.03em; display:block; margin-bottom:2px; }
+
+/* ── threads: patron comments + maestro replies, in place ──────────── */
+.annot { position:relative; }
+.comment-add { position:absolute; top:0; right:0; z-index:2; cursor:pointer; background:var(--canvas); color:var(--muted); border:1px solid var(--line); border-radius:4px; height:26px; padding:0 8px; font:500 12px/16px var(--mono); opacity:.6; transition:opacity .12s ease-out; }
+.annot:hover > .comment-add, .annot:focus-within > .comment-add { opacity:1; color:var(--link); }
+figure.frame > .comment-add { top:8px; right:8px; }
+.comment-add:hover { color:var(--link); border-color:var(--link); }
+.composer { margin-top:12px; }
+.composer textarea, .thread-reply textarea { width:100%; min-height:64px; resize:vertical; font:400 14px/20px var(--sans); color:var(--ink); background:var(--canvas); border:1px solid var(--input); border-radius:4px; padding:10px 12px; }
+.composer-actions { display:flex; gap:8px; margin-top:8px; }
+.thread { margin-top:12px; border-left:3px solid var(--state-review); border-radius:4px; background:var(--canvas-soft); padding:10px 12px; }
+.thread.resolved { border-left-color:var(--state-complete); opacity:.75; }
+.thread .meta { font:500 12px/16px var(--mono); color:var(--muted); display:flex; gap:8px; align-items:center; }
+.thread .meta .who-patron { color:var(--warning-deep); }
+.thread .meta .who-maestro { color:var(--link-deep); }
+.thread .meta .resolved-tag { color:var(--link-deep); }
+.thread .meta .del { margin-left:auto; cursor:pointer; background:none; border:0; color:var(--muted); font:500 12px/16px var(--mono); }
+.thread .meta .del:hover { color:var(--error); }
+.thread .text { font:400 14px/20px var(--sans); color:var(--ink); margin-top:4px; white-space:pre-wrap; }
+.thread .reply { margin-top:10px; padding:8px 12px; background:var(--canvas); border:1px solid var(--line); border-radius:4px; }
+.thread .reply-btn, .thread-reply .btn { margin-top:8px; }
+.thread .reply-btn { cursor:pointer; background:none; border:0; padding:0; font:500 12px/16px var(--mono); color:var(--link); }
+
+/* ── approval gate & buttons ───────────────────────────────────────── */
+.approval-gate { background:var(--warning-soft); border-radius:6px; padding:16px; }
+.approval-gate p { margin:0 0 16px; font:400 14px/20px var(--sans); color:var(--ink); }
+.actions { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+.btn { cursor:pointer; border-radius:6px; padding:11px 22px; font:500 14px/18px var(--sans); border:1px solid transparent; }
+.btn.primary { background:var(--primary); color:var(--on-primary); }
+.btn.primary:hover { filter:brightness(1.07); }
+.btn.secondary { background:var(--canvas); color:var(--ink); border-color:var(--input); }
+.btn.secondary:hover { border-color:var(--ink); }
+.btn.small { padding:5px 12px; font:500 12px/16px var(--mono); border-radius:4px; }
+.btn:disabled { opacity:.45; cursor:default; }
+.count-chip { font:500 12px/16px var(--mono); color:var(--muted); }
+.banner { display:none; margin-top:16px; padding:12px 16px; border-radius:6px; font:500 14px/20px var(--sans); border-left:3px solid transparent; }
+.banner.signed { background:var(--link-bg-soft); color:var(--link-deep); border-left-color:var(--link); }
+.banner.waiting { background:var(--canvas-soft); color:var(--body); border-left-color:var(--state-running); }
+.hint { font:400 12px/16px var(--sans); color:var(--muted); margin:4px 0 0; }
+.foot { display:flex; flex-wrap:wrap; gap:16px; align-items:center; padding:16px 24px; color:var(--muted); }
+
+/* ── motion: Settle on load, Confirm on arrival — nothing else ─────── */
+@media (prefers-reduced-motion:no-preference) {
+  .page-row { animation:settle .18s ease-out both; }
+  @keyframes settle { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+  .confirm { animation:confirm .4s ease-out; }
+  @keyframes confirm { 0% { background:var(--link-bg-soft); } 100% { background:var(--canvas-soft); } }
+}
+@media (max-width:720px) { .page-system { padding:24px 8px; } .page-row { padding:32px 16px; } }
+</style>
+</head>
+<body>
+<div class="page-system">
+<div class="page-frame">
+  <span class="marker tl"><svg viewBox="0 0 21 21" fill="none"><path d="M10.5 0v21M0 10.5h21" stroke="currentColor" stroke-width="1"/></svg></span>
+  <span class="marker tr"><svg viewBox="0 0 21 21" fill="none"><path d="M10.5 0v21M0 10.5h21" stroke="currentColor" stroke-width="1"/></svg></span>
+
+  <header class="page-row">
+    <div class="active-lane">
+      <p class="eyebrow">Bottega · spec gate</p>
+      <h1>{{TITLE}}</h1>
+      <div class="gate-meta">
+        <span class="status-tag">SPEC {{ID}}</span>
+        <span class="status-tag" id="rev-tag">REV {{REVISION}}</span>
+        <span class="state-tag" id="gate-state" data-state="review">AWAITING YOUR REVIEW</span>
+        <span class="status-tag" id="conn-tag">…</span>
+        <button id="theme-toggle" type="button" aria-label="Toggle color theme">THEME</button>
+      </div>
+      <div class="banner signed" id="signed-banner">Signed. The contract is frozen — the run is starting. You can close this page.</div>
+      <div class="banner waiting" id="waiting-banner">The maestro is revising — changed sections update right here, in place, when the new revision lands.</div>
+      <div class="banner waiting" id="static-banner">The maestro republishes this page in place as the spec evolves — refresh to pull the latest revision. Changed sections get badged; the conversation shows under the blocks it's about.</div>
+    </div>
+  </header>
+
+  <section class="page-row annot" data-anchor="intent" data-label="Intent">
+    <div class="active-lane">
+      <p class="eyebrow">Intent</p>
+      <p class="body-lg">{{INTENT}}</p>
+      <div class="comment-slot"></div>
+    </div>
+  </section>
+
+  <!-- FLOW ROWS — one row per signed scenario; evidence sits WITH its scenario,
+       full width below the Gherkin, each frame its own comment anchor.
+       The filling worker replaces {{FLOW_ROWS}} with N copies of this unit:
+
+  <section class="page-row annot" data-anchor="scenario:N" data-label="Scenario N — NAME">
+    <div class="active-lane">
+      <p class="eyebrow">Scenario N</p>
+      <h2 class="title-sm">NAME</h2>
+      <pre class="gherkin">RAW GHERKIN, HTML-ESCAPED</pre>
+      <div class="comment-slot"></div>
+      <div class="storyboard">
+        <figure class="frame annot" data-anchor="scenario:N:frame:M" data-label="Scenario N, frame M — CAPTION">
+          <img src="assets/FILE.png" alt="ALT" tabindex="0">      (add class="phone" on the figure for phone flows)
+          <figcaption><span class="proves">proves: SCENARIO NAME</span>CAPTION</figcaption>
+          <div class="comment-slot"></div>
+        </figure>
+      </div>
+    </div>
+  </section>
+  -->
+{{FLOW_ROWS}}
+
+  <section class="page-row annot" data-anchor="domain" data-label="Domain model">
+    <div class="active-lane">
+      <p class="eyebrow">Domain — the words this spec is written in</p>
+      <ul class="domain">{{DOMAIN_LI}}</ul>
+      <div class="comment-slot"></div>
+    </div>
+  </section>
+
+  <section class="page-row annot" data-anchor="non-goals" data-label="Non-goals">
+    <div class="active-lane">
+      <p class="eyebrow">Not in this commission</p>
+      <ul class="non-goals">{{NON_GOALS_LI}}</ul>
+      <div class="comment-slot"></div>
+    </div>
+  </section>
+
+  <section class="page-row annot" data-anchor="decisions" data-label="Decisions log">
+    <div class="active-lane">
+      <p class="eyebrow">Decisions already made</p>
+      <ul class="decisions">{{DECISIONS_LI}}</ul>
+      <div class="comment-slot"></div>
+    </div>
+  </section>
+
+  <section class="page-row" id="action-row">
+    <div class="active-lane">
+      <p class="eyebrow">Your call</p>
+      <div class="approval-gate">
+        <p id="gate-help">Comment on any block — scenarios, frames, terms (hover it). Signing freezes every scenario above into executable acceptance tests no agent can edit, and starts the run.</p>
+        <div class="actions">
+          <button class="btn primary" id="sign">Sign off</button>
+          <button class="btn secondary" id="changes">Request changes</button>
+          <span class="count-chip" id="comment-count"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="feedback-panel">
+    <div class="panel-head"><span id="panel-title">YOUR FEEDBACK — BUILDS AS YOU REVIEW</span><span id="panel-status"></span></div>
+    <pre id="live-prompt"></pre>
+    <div class="actions">
+      <button class="btn secondary small" id="copy">Copy for your session</button>
+      <span class="hint" id="copy-hint"></span>
+    </div>
+  </div>
+
+  <footer class="foot caption-mono">
+    <span>bottega gate</span><span>·</span><span>spec {{ID}}</span><span>·</span><span id="foot-mode">detecting transport…</span>
+  </footer>
+</div>
+</div>
+<div id="lightbox" role="dialog" aria-label="Storyboard frame, enlarged"><img alt=""><span class="caption-mono">CLICK OR ESC TO CLOSE</span></div>
+
+<!-- On hosted republishes the maestro bakes the assembled thread here, so the
+     conversation is visible even where no server can be reached. -->
+<script type="application/json" id="baked-thread">{{THREAD_JSON}}</script>
+
+<script>
+(() => {
+  const ID = "{{ID}}";
+  let REVISION = Number("{{REVISION}}") || 1;
+  const KEY = `bottega-gate-${ID}-r${REVISION}`;
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
+  /* storage can throw in sandboxed iframes (hosted artifact viewers) — never let it kill the page */
+  const store = {
+    get(k)    { try { return localStorage.getItem(k) } catch { return null } },
+    set(k, v) { try { localStorage.setItem(k, v) } catch {} },
+    sget(k)   { try { return sessionStorage.getItem(k) } catch { return null } },
+    sset(k, v){ try { sessionStorage.setItem(k, v) } catch {} },
+    sdel(k)   { try { sessionStorage.removeItem(k) } catch {} },
+  };
+
+  /* theme */
+  const themeKey = "bottega-gate-theme";
+  const applyTheme = t => document.documentElement.setAttribute("data-theme", t);
+  applyTheme(store.get(themeKey) || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+  $("#theme-toggle").addEventListener("click", () => {
+    const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    store.set(themeKey, next); applyTheme(next);
+  });
+
+  /* gherkin highlight — escape first, then decorate; strings before any
+     injected markup so the "…" regex can never eat a class attribute */
+  const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  function highlight(root) {
+    $$("pre.gherkin", root).forEach(pre => {
+      pre.innerHTML = pre.textContent.split("\n").map(raw => {
+        const line = esc(raw);
+        if (/^\s*\|/.test(line)) return `<span class="gh-table">${line}</span>`;
+        return line
+          .replace(/("[^"]*")/g, '<span class="gh-str">$1</span>')
+          .replace(/(&lt;[\w -]+&gt;)/g, '<span class="gh-param">$1</span>')
+          .replace(/^(\s*)(Feature|Scenario Outline|Scenario|Background|Examples)(:)/, '$1<span class="gh-top">$2$3</span>')
+          .replace(/^(\s*)(Given|When|Then|And|But)(\s)/, '$1<span class="gh-kw">$2</span>$3');
+      }).join("\n");
+    });
+  }
+  highlight(document);
+
+  /* lightbox */
+  const lb = $("#lightbox");
+  function bindZoom(root) {
+    $$("figure.frame img", root).forEach(img => {
+      if (img.dataset.zoom) return; img.dataset.zoom = "1";
+      const openLb = () => { $("img", lb).src = img.src; $("img", lb).alt = img.alt; lb.style.display = "flex"; };
+      img.addEventListener("click", openLb);
+      img.addEventListener("keydown", e => { if (e.key === "Enter") openLb(); });
+    });
+  }
+  bindZoom(document);
+  lb.addEventListener("click", () => lb.style.display = "none");
+  addEventListener("keydown", e => { if (e.key === "Escape") lb.style.display = "none"; });
+
+  /* state */
+  let local = JSON.parse(store.get(KEY) || "[]");             // static-mode comments (new, unsent)
+  let thread = [];                                            // served-mode: server is truth
+  let served = false, decided = null, status = "review", pollTimer = null;
+  const persist = () => store.set(KEY, JSON.stringify(local));
+  const baked = (() => {                                      // hosted republish: prior rounds baked in
+    try { const t = JSON.parse($("#baked-thread").textContent); return Array.isArray(t) ? t.map(c => ({ ...c, baked: true })) : []; }
+    catch { return []; }
+  })();
+  const bakedIds = new Set(baked.map(c => c.id));
+  local = local.filter(c => !bakedIds.has(c.id));             // sent comments came back baked — drop the drafts
+  persist();
+  const allComments = () => served ? thread : baked.concat(local);
+  const outgoing = () => served ? thread : local;
+  let approvals = JSON.parse(store.get(KEY + "-ap") || "{}"); // anchor -> "ok" | "fix"
+  const persistAp = () => store.set(KEY + "-ap", JSON.stringify(approvals));
+  const labelFor = a => { const s = $(`[data-anchor="${CSS.escape(a)}"]`); return s ? s.dataset.label : a; };
+
+  /* commenting */
+  function addCommentButtons(root) {
+    const secs = $$(".annot", root);
+    if (root !== document && root.matches && root.matches(".annot")) secs.unshift(root);
+    secs.forEach(sec => {
+      if ($(":scope > .comment-add", sec)) return;
+      const btn = document.createElement("button");
+      btn.type = "button"; btn.className = "comment-add"; btn.textContent = "+ COMMENT";
+      sec.appendChild(btn);
+      btn.addEventListener("click", e => { e.stopPropagation(); openComposer(sec); });
+    });
+  }
+  addCommentButtons(document);
+
+  /* review toggles: approve / revisit per scenario row */
+  function injectApproveBars(root) {
+    const rows = $$('section.page-row.annot[data-anchor^="scenario:"]', root);
+    if (root !== document && root.matches && /^scenario:/.test(root.dataset.anchor || "")) rows.unshift(root);
+    rows.forEach(row => {
+      if (row.dataset.anchor.includes(":frame:") || $(".approve-bar", row)) return;
+      const lane = $(":scope > .active-lane", row) || row;
+      const bar = document.createElement("div"); bar.className = "approve-bar";
+      [["ok", "✓ APPROVE"], ["fix", "✗ REVISIT"]].forEach(([kind, txt]) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "approve-btn"; b.dataset.kind = kind; b.textContent = txt;
+        b.addEventListener("click", () => {
+          approvals[row.dataset.anchor] = approvals[row.dataset.anchor] === kind ? undefined : kind;
+          if (!approvals[row.dataset.anchor]) delete approvals[row.dataset.anchor];
+          persistAp(); renderApprovals(); renderPrompt();
+        });
+        bar.appendChild(b);
+      });
+      lane.appendChild(bar);
+    });
+  }
+  function renderApprovals() {
+    $$(".approve-bar").forEach(bar => {
+      const a = bar.closest("[data-anchor]").dataset.anchor;
+      $$(".approve-btn", bar).forEach(b => b.dataset.on = approvals[a] === b.dataset.kind ? "1" : "0");
+    });
+  }
+  injectApproveBars(document); renderApprovals();
+  function openComposer(sec) {
+    if ($(":scope > .comment-slot > .composer", sec) || $(":scope > .active-lane > .comment-slot > .composer", sec)) return;
+    const slot = $(":scope > .comment-slot", sec) || $(":scope > .active-lane > .comment-slot", sec);
+    const c = document.createElement("div");
+    c.className = "composer";
+    c.innerHTML = `<textarea placeholder="What's wrong or missing here — meaning, not wording."></textarea>
+      <div class="composer-actions">
+        <button class="btn secondary small save" type="button">${served ? "Send to maestro" : "Add comment"}</button>
+        <button class="btn secondary small cancel" type="button">Cancel</button>
+      </div>`;
+    slot.appendChild(c);
+    const ta = $("textarea", c); ta.focus();
+    $(".cancel", c).addEventListener("click", () => c.remove());
+    $(".save", c).addEventListener("click", async () => {
+      const text = ta.value.trim(); if (!text) return;
+      const cm = { id: uid(), anchor: sec.dataset.anchor, label: sec.dataset.label, text,
+                   at: new Date().toISOString(), revision: REVISION, by: "patron" };
+      c.remove();
+      if (served) { thread.push({ ...cm, replies: [] }); render(); post("gate/comment", cm); }
+      else { local.push(cm); persist(); render(); }
+    });
+  }
+  async function post(path, payload) {
+    try { const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); if (!r.ok) throw 0; }
+    catch { toStatic("canvas — live link lost mid-send; tell the maestro in your session"); local = allComments(); persist(); render(); }
+  }
+
+  function render() {
+    $$(".annot").forEach(sec => {
+      const slot = $(":scope > .comment-slot", sec) || $(":scope > .active-lane > .comment-slot", sec);
+      if (!slot) return;
+      $$(".thread", slot).forEach(n => n.remove());
+      allComments().filter(cm => cm.anchor === sec.dataset.anchor).forEach(cm => slot.appendChild(threadCard(cm)));
+    });
+    const n = served ? thread.length : outgoing().length;
+    $("#comment-count").textContent = !n ? "" :
+      served ? `${n} comment${n > 1 ? "s" : ""} — with the maestro` : `${n} comment${n > 1 ? "s" : ""} in your review`;
+    renderPrompt();
+  }
+  function threadCard(cm) {
+    const t = document.createElement("div");
+    t.className = "thread" + (cm.resolved ? " resolved" : "");
+    const meta = document.createElement("div"); meta.className = "meta";
+    meta.innerHTML = `<span class="who-patron">YOU</span>` + (cm.resolved ? `<span class="resolved-tag">✓ RESOLVED</span>` : "");
+    if (!served && !cm.baked) {
+      const del = document.createElement("button"); del.className = "del"; del.type = "button"; del.textContent = "DELETE";
+      del.addEventListener("click", () => { local = local.filter(x => x.id !== cm.id); persist(); render(); });
+      meta.appendChild(del);
+    }
+    const text = document.createElement("div"); text.className = "text"; text.textContent = cm.text;
+    t.append(meta, text);
+    (cm.replies || []).forEach(rp => {
+      const r = document.createElement("div"); r.className = "reply" + (rp.justArrived ? " confirm" : "");
+      const who = rp.by === "patron" ? `<span class="who-patron">YOU</span>` : `<span class="who-maestro">MAESTRO</span>`;
+      r.innerHTML = `<div class="meta">${who}</div>`;
+      const rt = document.createElement("div"); rt.className = "text"; rt.textContent = rp.text;
+      r.appendChild(rt); t.appendChild(r);
+    });
+    if (served && !cm.resolved && !decided) {
+      const rb = document.createElement("button"); rb.className = "reply-btn"; rb.type = "button"; rb.textContent = "REPLY";
+      rb.addEventListener("click", () => {
+        if ($(".thread-reply", t)) return;
+        const box = document.createElement("div"); box.className = "thread-reply";
+        box.innerHTML = `<textarea placeholder="Reply to the maestro…"></textarea>
+          <div class="composer-actions"><button class="btn secondary small" type="button">Send</button></div>`;
+        t.appendChild(box);
+        const ta = $("textarea", box); ta.focus();
+        $(".btn", box).addEventListener("click", () => {
+          const text = ta.value.trim(); if (!text) return;
+          const rp = { id: uid(), replyTo: cm.id, text, at: new Date().toISOString(), by: "patron" };
+          (cm.replies = cm.replies || []).push(rp); box.remove(); render();
+          post("gate/comment", rp);
+        });
+      });
+      t.appendChild(rb);
+    }
+    return t;
+  }
+
+  /* live feedback message — playground-style: composes itself as you review */
+  function composeFeedback(decision) {
+    const ok  = Object.keys(approvals).filter(a => approvals[a] === "ok").map(labelFor);
+    const fix = Object.keys(approvals).filter(a => approvals[a] === "fix").map(labelFor);
+    const cs = outgoing();
+    if (decision === "signed" && !cs.length && !fix.length) return `SIGNED ${ID}`;
+    const head = decision === "signed" ? `SIGNED ${ID} rev ${REVISION} — with notes:`
+      : decision === "changes" ? `FEEDBACK ${ID} rev ${REVISION} — request changes:`
+      : `Spec ${ID} rev ${REVISION} — review so far:`;
+    const parts = [];
+    if (ok.length)  parts.push(`Approved: ${ok.join(" · ")}`);
+    if (fix.length) parts.push(`Revisit: ${fix.join(" · ")}`);
+    cs.forEach(c => parts.push(`- [${c.label}] ${c.text}`));
+    return [head, ...(parts.length ? parts : ["(nothing marked yet)"])].join("\n");
+  }
+  function renderPrompt() {
+    const active = outgoing().length || Object.keys(approvals).length || decided;
+    $("#feedback-panel").style.display = active ? "block" : "none";
+    if (!active) return;
+    $("#live-prompt").textContent = composeFeedback(decided);
+    if (served) {
+      $("#panel-title").textContent = "YOUR REVIEW — LIVE WITH THE MAESTRO";
+      $("#panel-status").textContent = "sent as you go";
+      $("#copy").style.display = "none";
+    } else {
+      $("#panel-title").textContent = decided ? "YOUR FEEDBACK — COPY IT INTO YOUR BOTTEGA SESSION" : "YOUR FEEDBACK — BUILDS AS YOU REVIEW";
+      $("#panel-status").textContent = "";
+      $("#copy").style.display = "";
+    }
+  }
+
+  /* presence + transport */
+  const PRESENCE = { review: "AWAITING YOUR REVIEW", reading: "MAESTRO IS READING YOUR COMMENTS", revising: "MAESTRO REVISING — CHANGES LAND IN PLACE" };
+  const bail = () => { store.sset("bottega-gate-scroll", String(scrollY)); location.reload(); };
+  let morphing = false;
+  async function morphTo(s) {
+    if (morphing) return; morphing = true;
+    try {
+      const doc = new DOMParser().parseFromString(await (await fetch("./", { cache: "no-store" })).text(), "text/html");
+      const oldRows = $$("section.page-row.annot");
+      const newRows = Array.from(doc.querySelectorAll("section.page-row.annot"));
+      if (newRows.length !== oldRows.length || newRows.some((r, i) => r.dataset.anchor !== oldRows[i].dataset.anchor)) return bail();
+      const changed = s.changed || [];
+      oldRows.forEach(row => {
+        const a = row.dataset.anchor;
+        if (changed.length && !changed.some(x => x === a || x.startsWith(a + ":"))) return;
+        const fresh = doc.querySelector(`section.page-row.annot[data-anchor="${CSS.escape(a)}"]`);
+        if (!fresh || fresh.innerHTML === row.innerHTML) return;
+        row.innerHTML = fresh.innerHTML;
+        highlight(row); bindZoom(row); addCommentButtons(row); injectApproveBars(row); renderApprovals();
+        row.classList.remove("row-flash"); void row.offsetWidth; row.classList.add("row-flash");
+      });
+      const h1 = doc.querySelector("h1");
+      if (h1 && $("h1").textContent !== h1.textContent) $("h1").textContent = h1.textContent;
+      REVISION = s.revision;
+      $("#rev-tag").textContent = `REV ${REVISION}`;
+      render();
+    } catch { bail(); }
+    finally { morphing = false; }
+  }
+  function applyServerState(s) {
+    if (s.revision && s.revision !== REVISION) { morphTo(s); return; }
+    if (s.status && s.status !== status && !decided) {
+      status = s.status;
+      const el = $("#gate-state"); el.dataset.state = status; el.textContent = PRESENCE[status] || status.toUpperCase();
+      $("#waiting-banner").style.display = status === "revising" ? "block" : "none";
+    }
+    $$(".work-chip").forEach(n => n.remove());
+    Object.entries(s.working || {}).forEach(([anchor, note]) => {
+      const sec = $(`[data-anchor="${CSS.escape(anchor)}"]`); if (!sec) return;
+      const chip = document.createElement("span"); chip.className = "work-chip";
+      chip.textContent = note || "MAESTRO — APPLYING CHANGE…";
+      ($(":scope > .active-lane > .eyebrow", sec) || $("figcaption", sec) || sec).appendChild(chip);
+    });
+    (s.changed || []).forEach(anchor => {
+      const sec = $(`[data-anchor="${CSS.escape(anchor)}"]`);
+      if (sec && !$(".rev-chip", sec)) {
+        const chip = document.createElement("span"); chip.className = "rev-chip"; chip.textContent = `REVISED IN REV ${REVISION}`;
+        ($(".eyebrow", sec) || sec).appendChild(chip);
+      }
+    });
+    if (Array.isArray(s.thread)) {
+      const seen = new Set(thread.flatMap(c => [c.id, ...(c.replies || []).map(r => r.id)]));
+      s.thread.forEach(c => { (c.replies || []).forEach(r => { r.justArrived = !seen.has(r.id) && r.by !== "patron"; }); });
+      thread = s.thread; render();
+    }
+    if (s.decision === "signed") showSigned();
+  }
+  async function probe() {
+    try {
+      const r = await fetch("gate/state", { cache: "no-store" }); if (!r.ok) throw 0;
+      served = true;
+      $("#conn-tag").textContent = "LIVE"; $("#foot-mode").textContent = "live — comments reach the maestro as you save them";
+      $("#gate-help").textContent = "Comment on any block — scenarios, frames, terms (hover it). Comments reach the maestro as you save them; its replies appear right underneath, and changes land in place. Signing freezes every scenario above into executable acceptance tests no agent can edit, and starts the run.";
+      applyServerState(await r.json());
+      pollTimer = setInterval(poll, 2500);
+    } catch { toStatic("canvas — talk to the maestro in your session; this page updates in place"); }
+    render();
+  }
+  async function poll() {
+    try { applyServerState(await (await fetch("gate/state", { cache: "no-store" })).json()); }
+    catch { toStatic("canvas — live link lost; talk to the maestro in your session"); }
+  }
+  function toStatic(msg) {
+    if (served) { local = thread.filter(c => !bakedIds.has(c.id)).map(c => ({ ...c })); persist(); }
+    served = false; if (pollTimer) clearInterval(pollTimer);
+    document.body.setAttribute("data-static", "");
+    $("#conn-tag").textContent = "CANVAS"; $("#foot-mode").textContent = msg;
+    $("#gate-help").textContent = `Review this like a tool: mark each scenario ✓ APPROVE or ✗ REVISIT, comment on any block or frame (+ COMMENT), zoom the screens. The panel at the bottom writes your feedback message as you go — press Request changes or Sign off, copy it, give it to the maestro in your bottega session. One message, already written for you. (Served by a running bottega, this same page sends everything live and changes land in place.)`;
+    if (!decided) { $("#static-banner").style.display = "block"; $("#waiting-banner").style.display = "none"; }
+    render();
+  }
+  const savedScroll = store.sget("bottega-gate-scroll");
+  if (savedScroll) { scrollTo(0, Number(savedScroll)); store.sdel("bottega-gate-scroll"); }
+
+  /* decisions */
+  function showSigned() {
+    decided = "signed";
+    $("#gate-state").dataset.state = "complete"; $("#gate-state").textContent = "SIGNED";
+    $("#signed-banner").style.display = "block"; $("#waiting-banner").style.display = "none";
+    $("#sign").disabled = true; $("#changes").disabled = true;
+  }
+  async function send(decision) {
+    decided = decision;
+    const payload = { spec: ID, revision: REVISION, decision, comments: allComments(), approvals,
+                      feedback: composeFeedback(decision), at: new Date().toISOString() };
+    if (served) {
+      try {
+        const r = await fetch("gate/decision", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        if (!r.ok) throw 0;
+        if (decision === "signed") showSigned();
+        else { status = "revising"; const el = $("#gate-state"); el.dataset.state = "revising"; el.textContent = PRESENCE.revising; $("#waiting-banner").style.display = "block"; $("#sign").disabled = true; $("#changes").disabled = true; }
+        renderPrompt(); return;
+      } catch { toStatic("canvas — live link lost; talk to the maestro in your session"); }
+    }
+    const el = $("#gate-state");
+    if (decision === "signed") { el.dataset.state = "complete"; el.textContent = "SIGNED — COPY THE MESSAGE BELOW"; }
+    else { el.dataset.state = "blocked"; el.textContent = "FEEDBACK READY — COPY THE MESSAGE BELOW"; }
+    renderPrompt();
+    $("#feedback-panel").scrollIntoView({ block: "nearest" });
+    navigator.clipboard && navigator.clipboard.writeText(composeFeedback(decision)).catch(() => {});
+  }
+  $("#sign").addEventListener("click", () => send("signed"));
+  $("#changes").addEventListener("click", () => {
+    const hasFix = Object.values(approvals).includes("fix");
+    if (!allComments().length && !hasFix) { openComposer($(".annot")); $("#comment-count").textContent = "mark a scenario ✗ REVISIT or add a comment so the maestro knows what to change"; return; }
+    send("changes");
+  });
+  $("#copy").addEventListener("click", () => {
+    navigator.clipboard.writeText($("#live-prompt").textContent)
+      .then(() => { $("#copy-hint").textContent = "Copied — paste it into your bottega session."; })
+      .catch(() => {
+        const r = document.createRange(); r.selectNodeContents($("#live-prompt"));
+        const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+        $("#copy-hint").textContent = "Clipboard is blocked here — the message is selected, copy it with ⌘C / Ctrl-C.";
+      });
+  });
+
+  probe();
+})();
+</script>
+</body>
+</html>
