@@ -1,7 +1,6 @@
 ---
 name: spec
-description: Write the commission — the interview, the contract, the storyboards, the gate. Entered via /bottega:run (which continues into skills/execute), or /bottega:spec to commission without running.
-disable-model-invocation: true
+description: Write the commission — the interview, the contract, the storyboards, the gate. Invoke when the user asks to spec or commission bottega work, via /bottega:spec or in their own words; never proactively. Also entered from /bottega:run, which continues into skills/execute.
 ---
 
 # Spec — the commission

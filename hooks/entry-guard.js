@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 
-// UserPromptSubmit entry guard. The bottega skill is user-invoked only
-// (disable-model-invocation), so a natural-language "run bottega" prompt
-// leaves the session freelancing phase-1 discovery on the priced maestro
-// seat — the nadia-0001 run burned ~20 fable tool calls that way before the
-// user interrupted and invoked the skill by hand. When a prompt in a bottega
-// workshop reads like run intent and isn't already a slash command, inject
-// the reminder; otherwise stay silent.
+// UserPromptSubmit entry guard. A natural-language "run bottega" prompt can
+// leave the session freelancing discovery on the priced maestro seat instead
+// of loading the skill — the nadia-0001 run burned ~20 fable tool calls that
+// way before the user interrupted and invoked the skill by hand. When a
+// prompt in a bottega workshop reads like run intent and isn't already a
+// slash command, inject the reminder; otherwise stay silent.
 
 import { existsSync } from "node:fs";
 import { join } from "node:path";
@@ -19,11 +18,11 @@ const INTENT = /(?<![./])\bbottega\b|\bcommission\b(?![-.]lock)/i;
 
 const REMINDER =
   "This repo is a bottega workshop and the prompt reads like run intent. If " +
-  "this is bottega work, invoke /bottega:run before acting — or " +
-  "/bottega:spec to commission without running, or /bottega:execute to run " +
-  "an already-signed commission. The skills are user-invoked only and cannot " +
-  "be self-loaded; acting without them freelances discovery on the maestro " +
-  "seat and re-derives what the skills already carry.";
+  "this is bottega work, invoke the matching skill before acting — " +
+  "/bottega:run for the whole loop, /bottega:spec to commission without " +
+  "running, /bottega:execute to run an already-signed commission. Acting " +
+  "without them freelances discovery on the maestro seat and re-derives " +
+  "what the skills already carry.";
 
 function readStdin() {
   return new Promise((resolve) => {

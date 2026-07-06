@@ -1,7 +1,6 @@
 ---
 name: run
-description: Run the whole bottega loop in one sitting — commission → autonomous build → evidenced delivery. User-invoked via /bottega:run, never auto-triggered — a run costs hours of autonomous fleet work and starts with a sign-off gate. To do the halves separately, /bottega:spec signs without running and /bottega:execute runs what is signed.
-disable-model-invocation: true
+description: Run the whole bottega loop in one sitting — commission → autonomous build → evidenced delivery. Invoke when the user asks for a full bottega run, via /bottega:run or in their own words; never proactively — a run costs hours of autonomous fleet work, gated by the sign-off inside. To do the halves separately, /bottega:spec signs without running and /bottega:execute runs what is signed.
 ---
 
 # Run — commission, then execute
