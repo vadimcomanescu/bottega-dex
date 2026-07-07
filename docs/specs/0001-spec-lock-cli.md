@@ -1,6 +1,6 @@
 # Commission 0001 — the commission lock CLI
 
-**Status:** signed · **Acceptance:** `features/commission-lock.feature` · **Lock:** `.bottega/commission.lock`
+**Status:** closed · **Acceptance:** was `features/commission-lock.feature` (delivered 2026-07; the CLI it commissioned was removed on 2026-07-08 — the lock never held more than git and PR review already hold, see the simplify PR)
 
 ## Intent
 
