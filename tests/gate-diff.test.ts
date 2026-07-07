@@ -1,7 +1,8 @@
-// gate-diff is the sign-blocking fence: the hosted gate doc's gherkin fences
-// must carry every line of the feature files, in order. Slicing into
-// per-scenario fences and re-indenting are licensed; editing and dropping are
-// not.
+// gate-diff is the sign-blocking fence: the hosted gate doc's walkthrough
+// blocks must equal gate-render's reading of the feature files, block for
+// block, in order. Frames and checks between blocks are licensed; edited
+// steps, forged scenario sections, raw gherkin fences, and dropped
+// walkthroughs are not.
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -20,42 +21,43 @@ const GATE_DIFF = join(
 const FEATURE = `Feature: Saved searches
 
   Scenario: Save a search
-    Given a signed-in shopper
-    When they save "red sneakers"
+    Given you're signed in as a shopper
+    When you save the search "red sneakers"
     Then "red sneakers" appears under Saved searches
 
-  Scenario: Remove a saved search
-    Given "red sneakers" is saved
-    When the shopper removes it
-    Then Saved searches is empty
+  Scenario Outline: Search results honor the query
+    When you search for "<query>"
+    Then every result matches "<query>"
+
+    Examples:
+      | query           |
+      | red sneakers    |
+      | size 44 sandals |
 `;
 
-// The gate rendering slices the file into per-scenario fences and dedents.
+// The gate doc carries the renderer's blocks with frames and checks between
+// them — never inside one.
 const HOSTED_CLEAN = `# Gate doc
 
 Standing header prose, never compared.
 
-\`\`\`gherkin
-Feature: Saved searches
-\`\`\`
-
 ## Scenario — Save a search
 
-\`\`\`gherkin
-Scenario: Save a search
-  Given a signed-in shopper
-  When they save "red sneakers"
-  Then "red sneakers" appears under Saved searches
-\`\`\`
+1. You're signed in as a shopper
+2. You save the search "red sneakers"
+3. "red sneakers" appears under Saved searches
 
-## Scenario — Remove a saved search
+*Frame 1.1 — the save control, prototype.*
 
-\`\`\`gherkin
-Scenario: Remove a saved search
-  Given "red sneakers" is saved
-  When the shopper removes it
-  Then Saved searches is empty
-\`\`\`
+**Acceptance checks**
+- sign out and back in: "red sneakers" still listed under Saved searches
+
+## Scenario — Search results honor the query
+
+1. You search for "red sneakers"
+2. Every result matches "red sneakers"
+
+*Also proven with: query "size 44 sandals".*
 `;
 
 const cleanups: string[] = [];
@@ -81,28 +83,50 @@ function runDiff(dir: string) {
 }
 
 describe("gate-diff", () => {
-  it("passes a sliced, re-indented rendering that carries every line", () => {
+  it("passes the renderer's blocks with frames and checks between them", () => {
     const result = runDiff(gateDir(HOSTED_CLEAN));
     expect(result.stderr).toBe("");
     expect(result.status).toBe(0);
   });
 
   it("blocks an edited step", () => {
-    const result = runDiff(gateDir(HOSTED_CLEAN.replace('"red sneakers"', '"blue sneakers"')));
+    const result = runDiff(
+      gateDir(HOSTED_CLEAN.replace('You save the search "red sneakers"', 'You save the search "blue sneakers"')),
+    );
+    expect(result.status).toBe(1);
+    expect(result.stderr).toMatch(/mismatch/);
+  });
+
+  it("blocks an edited also-proven value", () => {
+    const result = runDiff(gateDir(HOSTED_CLEAN.replace("size 44 sandals", "size 43 sandals")));
     expect(result.status).toBe(1);
     expect(result.stderr).toMatch(/mismatch/);
   });
 
   it("blocks a rendering that dropped a scenario", () => {
-    const withoutLast = HOSTED_CLEAN.slice(0, HOSTED_CLEAN.indexOf("## Scenario — Remove"));
+    const withoutLast = HOSTED_CLEAN.slice(0, HOSTED_CLEAN.indexOf("## Scenario — Search results"));
     const result = runDiff(gateDir(withoutLast));
     expect(result.status).toBe(1);
-    expect(result.stderr).toMatch(/extra line/);
+    expect(result.stderr).toMatch(/missing or out-of-order walkthrough/);
   });
 
-  it("blocks a doc with no gherkin fences at all", () => {
+  it("blocks a forged scenario section no feature file carries", () => {
+    const forged = `${HOSTED_CLEAN}\n## Scenario — Bulk export\n\n1. You export every saved search\n`;
+    const result = runDiff(gateDir(forged));
+    expect(result.status).toBe(1);
+    expect(result.stderr).toMatch(/forgery/);
+  });
+
+  it("blocks a raw gherkin fence on the doc", () => {
+    const withFence = `${HOSTED_CLEAN}\n\`\`\`gherkin\nScenario: Save a search\n\`\`\`\n`;
+    const result = runDiff(gateDir(withFence));
+    expect(result.status).toBe(1);
+    expect(result.stderr).toMatch(/gherkin fence/);
+  });
+
+  it("blocks a doc with no walkthroughs at all", () => {
     const result = runDiff(gateDir("# Gate doc\n\nprose only\n"));
     expect(result.status).toBe(1);
-    expect(result.stderr).toMatch(/no gherkin fences/);
+    expect(result.stderr).toMatch(/missing or out-of-order walkthrough/);
   });
 });
