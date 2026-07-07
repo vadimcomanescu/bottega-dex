@@ -6,48 +6,34 @@
 // (103 of 132 dispatches rode general-purpose seats the old guard never saw):
 //
 //   1. Named bottega worker seats (builder, reviewer, qa) — always fenced,
-//      lock or no lock: an unrouted dispatch inherits the dispatching seat's
+//      run or no run: an unrouted dispatch inherits the dispatching seat's
 //      model (from the maestro that is a silent fable escalation), and fable
 //      never rides a worker seat. The cold read is not an exception here —
 //      it never rides a builder/reviewer/qa seat by doctrine.
 //
-//   2. Every other dispatch, but only while a commission is in flight —
-//      signed (.bottega/commission.lock) OR forming (.bottega/gates/ exists,
-//      or a docs/specs/*.md holds a draft/gate-open status): the spec phase
-//      dispatches render seats and clerks before any lock exists, and an
-//      unrouted dispatch there inherits fable exactly like a run-phase one.
-//      Same two fences, with one whitelist — a dispatch whose text names the
-//      cold read may route fable, because the cold read is one of the two
+//   2. Every other dispatch, but only while a run is live — a .bottega/wt/
+//      worktree entry exists. That is the one signal with a real teardown:
+//      the run worktree exists from run start until the Close step reaps it.
+//      Never contract state (locks, gate records, spec-doc status strings)
+//      and never branch refs — nothing retires those (a PR merge deletes only
+//      the remote ref), so either would arm the guard forever after a
+//      delivered run and fence unrelated work in every later session. Same
+//      two fences, with one whitelist — a dispatch whose description begins
+//      "cold read" may route fable, because the cold read is one of the two
 //      sanctioned fable seats. Outside all of that the guard stays silent so
 //      the plugin never breaks unrelated sessions.
 //
 // Fences are mechanical, not trusted to memory.
 
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
 
-// A commission is forming when a spec draft or gate record exists on disk —
-// the pre-sign window where render/clerk dispatches already carry real cost.
-function commissionForming(cwd) {
-  if (existsSync(join(cwd, ".bottega", "gates"))) return true;
-  const specs = join(cwd, "docs", "specs");
-  let entries;
+function runLive(cwd) {
   try {
-    entries = readdirSync(specs);
+    return readdirSync(join(cwd, ".bottega", "wt")).length > 0;
   } catch {
     return false; // a guard must never break unrelated dispatches
   }
-  for (const f of entries) {
-    if (!f.endsWith(".md")) continue;
-    let head;
-    try {
-      head = readFileSync(join(specs, f), "utf8").slice(0, 400);
-    } catch {
-      continue; // one unreadable entry never silences the rest of the scan
-    }
-    if (/\*\*Status:\*\*\s*(draft|gate-open)/.test(head)) return true;
-  }
-  return false;
 }
 
 const WORKER_SEAT = /(^|:)bottega-(builder|reviewer|qa)$/;
@@ -75,15 +61,15 @@ const DENY_FABLE =
   "budget, never a self-serve seat.";
 
 const DENY_UNROUTED_RUN =
-  "a commission is in flight or forming (lock, gate record, or spec draft " +
-  "present) and this dispatch names no model — an omitted model inherits the dispatching seat's own " +
+  "a bottega run is live (worktree present under .bottega/wt/) and this dispatch " +
+  "names no model — an omitted model inherits the dispatching seat's own " +
   "model, which from the maestro seat silently escalates the seat to fable; " +
   "re-issue with an explicit model from the routing table in " +
   "skills/execute/SKILL.md.";
 
 const DENY_FABLE_RUN =
-  "a commission is in flight or forming (lock, gate record, or spec draft " +
-  "present) and this dispatch routes fable — fable runs exactly twice per run, the maestro seat and the " +
+  "a bottega run is live (worktree present under .bottega/wt/) and this dispatch " +
+  "routes fable — fable runs exactly twice per run, the maestro seat and the " +
   "cold read; a cold-read dispatch's description begins with 'cold read', and " +
   "anything else re-issues from the routing table in " +
   "skills/execute/SKILL.md or goes to the user as an escalation.";
@@ -134,11 +120,10 @@ if (typeof seat === "string" && WORKER_SEAT.test(seat)) {
   process.exit(0);
 }
 
-// Scope 2 — everything else, while a commission is in flight or forming.
+// Scope 2 — everything else, while a run is live.
 const cwd =
   typeof event.cwd === "string" && event.cwd.length > 0 ? event.cwd : process.cwd();
-if (!existsSync(join(cwd, ".bottega", "commission.lock")) && !commissionForming(cwd))
-  process.exit(0);
+if (!runLive(cwd)) process.exit(0);
 
 if (!routed) deny(DENY_UNROUTED_RUN);
 if (FABLE.test(model)) {

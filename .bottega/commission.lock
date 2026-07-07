@@ -1,9 +1,0 @@
-{
-  "version": 1,
-  "files": [
-    {
-      "path": "features/commission-lock.feature",
-      "sha256": "3d7d5a73c1e6edded16b039d991f3c403abaca453056274332746756f074b2ae"
-    }
-  ]
-}

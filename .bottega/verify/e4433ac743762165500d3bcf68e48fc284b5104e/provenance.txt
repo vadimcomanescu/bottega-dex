@@ -1,1 +1,0 @@
-Provenance: examiner-transcript.txt and adversary-fixture-matrix.txt in ../0108e886*/ were produced against commit 0108e886; the only delta to e4433ac743762165500d3bcf68e48fc284b5104e is symlink rejection under features/ (31-test suite green at e4433ac743762165500d3bcf68e48fc284b5104e covers it; no driven scenario involves symlinks).

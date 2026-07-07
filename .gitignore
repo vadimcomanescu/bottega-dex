@@ -1,7 +1,4 @@
 node_modules/
-.bottega/bin/
-.bottega/wt/
-.bottega/tmp/
+.bottega/
 build-artifacts/
 *.tsbuildinfo
-build/acceptance-mutation/

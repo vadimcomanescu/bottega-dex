@@ -12,7 +12,7 @@ import { join } from "node:path";
 
 // Path mentions are not run intent: the lookbehind keeps ".bottega/…" and
 // "hooks/route-guard.js"-style path talk silent, the lookahead keeps
-// "commission-lock"/"commission.lock" filenames silent. Corpus-tested against
+// commission[-.]lock-style filename talk silent. Corpus-tested against
 // this session's real prompts; residual false fires cost one paragraph.
 const INTENT = /(?<![./])\bbottega\b|\bcommission\b(?![-.]lock)/i;
 

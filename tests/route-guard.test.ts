@@ -30,13 +30,29 @@ afterEach(() => {
   while (cleanups.length > 0) rmSync(cleanups.pop()!, { recursive: true, force: true });
 });
 
-function workshopDir(withLock: boolean): string {
+// A live run is a .bottega/wt/ worktree entry — the one signal Close reaps.
+function workshopDir(live: boolean): string {
   const dir = mkdtempSync(join(tmpdir(), "bottega-guard-"));
   cleanups.push(dir);
-  if (withLock) {
-    mkdirSync(join(dir, ".bottega"), { recursive: true });
-    writeFileSync(join(dir, ".bottega", "commission.lock"), "{}");
-  }
+  if (live) mkdirSync(join(dir, ".bottega", "wt", "s1"), { recursive: true });
+  return dir;
+}
+
+function git(dir: string, ...args: string[]): void {
+  const result = spawnSync(
+    "git",
+    ["-C", dir, "-c", "user.email=t@t", "-c", "user.name=t", ...args],
+    { encoding: "utf-8" },
+  );
+  expect(result.status).toBe(0);
+}
+
+function runBranchDir(): string {
+  const dir = mkdtempSync(join(tmpdir(), "bottega-guard-git-"));
+  cleanups.push(dir);
+  git(dir, "init", "-q");
+  git(dir, "commit", "--allow-empty", "-q", "-m", "seed");
+  git(dir, "branch", "bottega/saved-searches");
   return dir;
 }
 
@@ -70,7 +86,7 @@ describe("route-guard: bottega worker seats (always fenced)", () => {
   });
 });
 
-describe("route-guard: all other seats, gated on commission.lock", () => {
+describe("route-guard: all other seats, gated on a live run", () => {
   it("stays silent outside a run, whatever the dispatch", () => {
     const cwd = workshopDir(false);
     for (const tool_input of [
@@ -81,12 +97,25 @@ describe("route-guard: all other seats, gated on commission.lock", () => {
     }
   });
 
-  it("denies an unrouted general-purpose dispatch during a run", () => {
+  it("denies an unrouted general-purpose dispatch while a worktree entry exists", () => {
     const out = run(ROUTE_GUARD, {
       cwd: workshopDir(true),
       tool_input: { subagent_type: "general-purpose", prompt: "clerk mechanics" },
     });
-    expect(denialOf(out)).toMatch(/commission is in flight/);
+    expect(denialOf(out)).toMatch(/run is live/);
+  });
+
+  it("stays silent on a leftover bottega/* branch — a delivered run's local ref must never arm the guard", () => {
+    // A PR merge deletes only the remote ref; the local bottega/<slug> branch
+    // survives delivery on the user's machine. Only the run worktree — which
+    // Close reaps — may arm scope 2.
+    const cwd = runBranchDir();
+    for (const tool_input of [
+      { subagent_type: "general-purpose", prompt: "unrouted, unrelated work" },
+      { subagent_type: "general-purpose", model: "fable", prompt: "unrelated work" },
+    ]) {
+      expect(run(ROUTE_GUARD, { cwd, tool_input })).toBe("");
+    }
   });
 
   it("denies a fable-routed general-purpose dispatch during a run", () => {
@@ -136,49 +165,39 @@ describe("route-guard: all other seats, gated on commission.lock", () => {
   });
 });
 
-describe("route-guard: forming commission (pre-sign, no lock)", () => {
-  function formingDir(kind: "gates" | "draft" | "signed"): string {
-    const dir = mkdtempSync(join(tmpdir(), "bottega-guard-"));
+describe("route-guard: stale contract state never arms the guard", () => {
+  // The old activation keyed off locks, gate records, and spec-doc status
+  // strings — state nothing retires, so one delivered commission fenced every
+  // later session in the repo. Only live-run state may arm scope 2.
+  function staleDir(): string {
+    const dir = mkdtempSync(join(tmpdir(), "bottega-guard-stale-"));
     cleanups.push(dir);
-    if (kind === "gates") {
-      mkdirSync(join(dir, ".bottega", "gates"), { recursive: true });
-    } else {
-      mkdirSync(join(dir, "docs", "specs"), { recursive: true });
-      writeFileSync(
-        join(dir, "docs", "specs", "2026-07-06-saved-searches.md"),
-        `# Saved searches\n\n**Status:** ${kind} · **Acceptance:** \`features/saved-searches.feature\`\n`,
-      );
-    }
+    mkdirSync(join(dir, ".bottega", "gates"), { recursive: true });
+    writeFileSync(join(dir, ".bottega", "commission.lock"), "{}");
+    mkdirSync(join(dir, "docs", "specs"), { recursive: true });
+    writeFileSync(
+      join(dir, "docs", "specs", "2026-07-06-saved-searches.md"),
+      "# Saved searches\n\n**Status:** draft\n",
+    );
     return dir;
   }
 
-  it("denies an unrouted dispatch while a spec doc is in draft", () => {
-    const out = run(ROUTE_GUARD, {
-      cwd: formingDir("draft"),
-      tool_input: { subagent_type: "general-purpose", prompt: "render variants" },
-    });
-    expect(denialOf(out)).toMatch(/forming/);
+  it("stays silent on a stale lock, gate record, and draft spec doc", () => {
+    const cwd = staleDir();
+    for (const tool_input of [
+      { subagent_type: "general-purpose", prompt: "unrouted, unrelated work" },
+      { subagent_type: "general-purpose", model: "fable", prompt: "unrelated work" },
+    ]) {
+      expect(run(ROUTE_GUARD, { cwd, tool_input })).toBe("");
+    }
   });
 
-  it("denies a fable-routed dispatch once a gate record exists", () => {
+  it("still fences worker seats there (scope 1 is unconditional)", () => {
     const out = run(ROUTE_GUARD, {
-      cwd: formingDir("gates"),
-      tool_input: {
-        subagent_type: "general-purpose",
-        model: "fable",
-        description: "Assemble the gate doc",
-        prompt: "assemble",
-      },
+      cwd: staleDir(),
+      tool_input: { subagent_type: "bottega-builder", prompt: "build" },
     });
-    expect(denialOf(out)).toMatch(/routes fable/);
-  });
-
-  it("stays silent when every spec is signed and no lock or gate record exists", () => {
-    const out = run(ROUTE_GUARD, {
-      cwd: formingDir("signed"),
-      tool_input: { subagent_type: "general-purpose", prompt: "anything" },
-    });
-    expect(out).toBe("");
+    expect(denialOf(out)).toMatch(/names no model/);
   });
 });
 

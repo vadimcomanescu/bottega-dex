@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // The SIGNED cascade's one mechanical check — invoked verbatim, never
 // re-authored per commission: the scenario text the user signed on the hosted
-// gate doc is the scenario text `bottega sign` freezes.
+// gate doc is the scenario text the sign commit freezes.
 //
 //   gate-diff.mjs <hosted.md> <feature-file...>
 //

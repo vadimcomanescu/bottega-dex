@@ -3,13 +3,8 @@
   "version": "0.1.0",
   "description": "An autonomous long-running agent system built for Fable to orchestrate.",
   "type": "module",
-  "bin": {
-    "bottega": "bin/bottega.js"
-  },
   "scripts": {
     "test": "vitest run",
-    "test:unit": "vitest run tests",
-    "test:acceptance": "vitest run acceptance/generated",
     "typecheck": "tsc --noEmit"
   },
   "engines": {
@@ -17,7 +12,6 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@aps-kit/typescript": "https://github.com/vadimcomanescu/acceptance-pipeline-kit/releases/download/v0.1.0/aps-kit-typescript-0.1.0.tgz",
     "@types/node": "^26.1.0",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
