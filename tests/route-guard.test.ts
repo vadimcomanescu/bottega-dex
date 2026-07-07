@@ -30,7 +30,7 @@ afterEach(() => {
   while (cleanups.length > 0) rmSync(cleanups.pop()!, { recursive: true, force: true });
 });
 
-// A live run is a .bottega/wt/ worktree entry or a bottega/<slug> branch.
+// A live run is a .bottega/wt/ worktree entry — the one signal Close reaps.
 function workshopDir(live: boolean): string {
   const dir = mkdtempSync(join(tmpdir(), "bottega-guard-"));
   cleanups.push(dir);
@@ -105,12 +105,17 @@ describe("route-guard: all other seats, gated on a live run", () => {
     expect(denialOf(out)).toMatch(/run is live/);
   });
 
-  it("denies an unrouted general-purpose dispatch while a run branch exists", () => {
-    const out = run(ROUTE_GUARD, {
-      cwd: runBranchDir(),
-      tool_input: { subagent_type: "general-purpose", prompt: "clerk mechanics" },
-    });
-    expect(denialOf(out)).toMatch(/run is live/);
+  it("stays silent on a leftover bottega/* branch — a delivered run's local ref must never arm the guard", () => {
+    // A PR merge deletes only the remote ref; the local bottega/<slug> branch
+    // survives delivery on the user's machine. Only the run worktree — which
+    // Close reaps — may arm scope 2.
+    const cwd = runBranchDir();
+    for (const tool_input of [
+      { subagent_type: "general-purpose", prompt: "unrouted, unrelated work" },
+      { subagent_type: "general-purpose", model: "fable", prompt: "unrelated work" },
+    ]) {
+      expect(run(ROUTE_GUARD, { cwd, tool_input })).toBe("");
+    }
   });
 
   it("denies a fable-routed general-purpose dispatch during a run", () => {

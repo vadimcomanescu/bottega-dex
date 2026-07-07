@@ -11,38 +11,26 @@
 //      never rides a worker seat. The cold read is not an exception here —
 //      it never rides a builder/reviewer/qa seat by doctrine.
 //
-//   2. Every other dispatch, but only while a run is live — a bottega/<slug>
-//      branch or a .bottega/wt/ worktree entry exists. Live-run state, never
-//      contract state: keying this scope off locks, gate records, or spec-doc
-//      status strings left the guard armed forever after a delivered run and
-//      fenced unrelated work in every later session. Same two fences, with
-//      one whitelist — a dispatch whose description begins "cold read" may
-//      route fable, because the cold read is one of the two sanctioned fable
-//      seats. Outside all of that the guard stays silent so the plugin never
-//      breaks unrelated sessions.
+//   2. Every other dispatch, but only while a run is live — a .bottega/wt/
+//      worktree entry exists. That is the one signal with a real teardown:
+//      the run worktree exists from run start until the Close step reaps it.
+//      Never contract state (locks, gate records, spec-doc status strings)
+//      and never branch refs — nothing retires those (a PR merge deletes only
+//      the remote ref), so either would arm the guard forever after a
+//      delivered run and fence unrelated work in every later session. Same
+//      two fences, with one whitelist — a dispatch whose description begins
+//      "cold read" may route fable, because the cold read is one of the two
+//      sanctioned fable seats. Outside all of that the guard stays silent so
+//      the plugin never breaks unrelated sessions.
 //
 // Fences are mechanical, not trusted to memory.
 
-import { execFileSync } from "node:child_process";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 
-// A run is live while its branch or its worktrees exist; both are cleaned up
-// at delivery (the PR merge deletes the branch, the close step reaps wt/).
 function runLive(cwd) {
   try {
-    const entries = readdirSync(join(cwd, ".bottega", "wt"));
-    if (entries.length > 0) return true;
-  } catch {
-    // no worktree dir — fall through to the branch check
-  }
-  try {
-    const refs = execFileSync(
-      "git",
-      ["for-each-ref", "--format=%(refname)", "refs/heads/bottega/"],
-      { cwd, timeout: 2000 }
-    );
-    return refs.toString().trim().length > 0;
+    return readdirSync(join(cwd, ".bottega", "wt")).length > 0;
   } catch {
     return false; // a guard must never break unrelated dispatches
   }
@@ -73,14 +61,14 @@ const DENY_FABLE =
   "budget, never a self-serve seat.";
 
 const DENY_UNROUTED_RUN =
-  "a bottega run is live (run branch or worktree present) and this dispatch " +
+  "a bottega run is live (worktree present under .bottega/wt/) and this dispatch " +
   "names no model — an omitted model inherits the dispatching seat's own " +
   "model, which from the maestro seat silently escalates the seat to fable; " +
   "re-issue with an explicit model from the routing table in " +
   "skills/execute/SKILL.md.";
 
 const DENY_FABLE_RUN =
-  "a bottega run is live (run branch or worktree present) and this dispatch " +
+  "a bottega run is live (worktree present under .bottega/wt/) and this dispatch " +
   "routes fable — fable runs exactly twice per run, the maestro seat and the " +
   "cold read; a cold-read dispatch's description begins with 'cold read', and " +
   "anything else re-issues from the routing table in " +
