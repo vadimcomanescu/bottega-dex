@@ -22,12 +22,15 @@
 //
 // Steps are authored in second person (skills/spec), so stripping the keyword
 // yields a sentence, never a fragment. Anything this renderer cannot carry
-// faithfully — docstrings, step data tables, Rule: blocks — is a loud error,
-// never a silent omission: restructure the feature, don't hand-render it.
+// faithfully — docstrings, step data tables, Rule: blocks, nameless
+// scenarios, ragged or pipe-escaped Examples rows — is a loud error, never a
+// silent omission: restructure the feature, don't hand-render it.
 //
 // Exit 0 clean · 1 unrenderable feature · 2 usage.
 
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const STEP = /^(Given|When|Then|And|But|\*)\s+(.*)$/;
 const HEAD = /^(Feature|Background|Scenario Outline|Scenario|Examples|Rule):\s*(.*)$/;
@@ -76,6 +79,7 @@ export function parse(text) {
         inExamples = true;
         continue;
       }
+      if (!name) fail("a scenario needs a name");
       current = { name, steps: [], outline: kind === "Scenario Outline", rows: null };
       scenarios.push(current);
       target = current.steps;
@@ -84,6 +88,8 @@ export function parse(text) {
 
     if (line.startsWith("|")) {
       if (!inExamples) fail("step data tables are unrenderable — restructure the feature");
+      if (line.includes("\\|"))
+        fail("escaped pipes in Examples are unrenderable — restructure the feature");
       current.rows.push(parseRow(line));
       continue;
     }
@@ -105,6 +111,8 @@ export function renderScenario({ name, steps, outline, rows }) {
     if (!rows || rows.length < 2)
       fail(`scenario outline "${name}" needs an Examples table with at least one value row`);
     const [headers, first, ...rest] = rows;
+    if (rows.some((row) => row.length !== headers.length))
+      fail(`scenario outline "${name}" has a ragged Examples row — every row needs ${headers.length} cell(s)`);
     steps = steps.map((s) =>
       s.replace(/<([^>]+)>/g, (_, p) => {
         const i = headers.indexOf(p.trim());
@@ -130,7 +138,7 @@ export function renderScenario({ name, steps, outline, rows }) {
 export const renderFiles = (files) =>
   [...files].sort().flatMap((f) => parse(readFileSync(f, "utf8")).map(renderScenario));
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   const files = process.argv.slice(2);
   if (files.length === 0) {
     console.error("usage: gate-render.mjs <feature-file...>");

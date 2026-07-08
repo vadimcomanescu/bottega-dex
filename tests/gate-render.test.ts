@@ -105,6 +105,26 @@ describe("gate-render", () => {
     ).toThrow(/data table/);
   });
 
+  it("refuses a ragged Examples row instead of rendering undefined", () => {
+    expect(() =>
+      render(
+        'Feature: F\n\n  Scenario Outline: S\n    When you buy "<item>" with code "<code>"\n\n    Examples:\n      | item  | code |\n      | boots |\n',
+      ),
+    ).toThrow(/ragged Examples row/);
+  });
+
+  it("refuses an escaped pipe instead of truncating the signed value", () => {
+    expect(() =>
+      render(
+        "Feature: F\n\n  Scenario Outline: S\n    When you type <text>\n\n    Examples:\n      | text  |\n      | a\\|b |\n",
+      ),
+    ).toThrow(/escaped pipe/);
+  });
+
+  it("refuses a nameless scenario", () => {
+    expect(() => render("Feature: F\n\n  Scenario:\n    When you act\n")).toThrow(/needs a name/);
+  });
+
   it("refuses a placeholder with no Examples column", () => {
     expect(() =>
       render(
