@@ -29,12 +29,10 @@
 - <check — e.g. "sign out and back in: 'red sneakers' still listed under Saved searches">
 - <check — e.g. "appears on a second signed-in device within 30 seconds of saving">
 
-## Testing strategy
-- **Automated:** <which scenarios run as generated acceptance tests>
-- **Load-bearing values:** <the Examples values whose flip must fail the suite — and why these are the ones that matter>
-- **Edges to probe:** <the failure shapes this feature actually has, each named — empty, duplicate, boundary, casing, concurrent — never the generic list>
-- **Manual (QA):** <what to attack beyond the scripted scenarios — surfaces, devices, the weird paths worth an hour; QA reads this as its starting hunt list>
-- **Not tested:** <what deliberately goes unverified, and why that is acceptable>
+## Testing
+- <scenario name>: <open x, do y, see z — and the evidence: screenshot / recording / output>
+- Also probed: <same concreteness, for what the scenarios don't cover — e.g. "save the same query twice: the list shows one entry">
+- Not verified: <what deliberately goes unchecked, and why>
 
 ## Decisions log
 **You said**
@@ -47,7 +45,7 @@
 Rules the template can't show:
 
 - Scenario sections appear in feature-file order — files sorted by name, scenarios in file order — so the doc and the gate doc read the same sequence.
-- A testing-strategy line names its how. "QA will test it" is not a strategy; "drive the save flow signed out, at phone width, against a 300-item list" is.
+- A testing line names its how. "Will be tested" says nothing; "open /search signed in, save 'red sneakers', screenshot Saved searches showing it" is a plan.
 - Examples tables carry mutation-bearing values — a value that can flip and fail the suite. A table of placeholders signs nothing.
 - Strip slots hold placeholders only until the render brief returns; the doc never reaches the gate with a placeholder in it.
 - Mid-run: Decisions log appends (flagged), Direction supersedes with notice on the status block, scenarios never move. At Close the doc is rewritten into the durable record per `skills/execute`.

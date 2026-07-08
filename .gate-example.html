@@ -1,0 +1,239 @@
+<title>Bottega gate — saved searches (example handoff)</title>
+<style>
+:root {
+  --canvas:#ffffff; --canvas-soft:#fafafa;
+  --ink:#171717; --body:#4d4d4d; --muted:#888888;
+  --line:#e5e5e5; --seam:#e4e7ec; --cross:#a1a1a1;
+  --primary:#008c45; --link:#007a3c; --link-deep:#00602f; --link-bg-soft:#d9f6e4;
+  --accent:#cd212a; --warning-soft:#fff1cf; --warning-deep:#8f4a06;
+  --annot:#e5007d;
+  --sans:Geist,Inter,system-ui,-apple-system,sans-serif;
+  --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas:#0a0a0a; --canvas-soft:#171717;
+    --ink:#f5f5f5; --body:#d4d4d4; --muted:#a3a3a3;
+    --line:#2e2e2e; --seam:#1f1f1f; --cross:#5d5d5d;
+    --primary:#ededed; --link:#9fe6bc; --link-deep:#c3f0d4; --link-bg-soft:#00301a;
+    --accent:#f7b3b5; --warning-soft:#452301; --warning-deep:#ffe9b3;
+    --annot:#ff5ca8;
+  }
+}
+:root[data-theme="dark"] {
+  --canvas:#0a0a0a; --canvas-soft:#171717;
+  --ink:#f5f5f5; --body:#d4d4d4; --muted:#a3a3a3;
+  --line:#2e2e2e; --seam:#1f1f1f; --cross:#5d5d5d;
+  --primary:#ededed; --link:#9fe6bc; --link-deep:#c3f0d4; --link-bg-soft:#00301a;
+  --accent:#f7b3b5; --warning-soft:#452301; --warning-deep:#ffe9b3;
+  --annot:#ff5ca8;
+}
+:root[data-theme="light"] {
+  --canvas:#ffffff; --canvas-soft:#fafafa;
+  --ink:#171717; --body:#4d4d4d; --muted:#888888;
+  --line:#e5e5e5; --seam:#e4e7ec; --cross:#a1a1a1;
+  --primary:#008c45; --link:#007a3c; --link-deep:#00602f; --link-bg-soft:#d9f6e4;
+  --accent:#cd212a; --warning-soft:#fff1cf; --warning-deep:#8f4a06;
+  --annot:#e5007d;
+}
+body { margin:0; background:var(--canvas-soft); color:var(--ink); font:400 16px/25px var(--sans); }
+.page { max-width:1080px; margin:48px auto 64px; background:var(--canvas); border:1px solid var(--line); position:relative; }
+.page::before, .page::after { content:"+"; position:absolute; top:-13px; color:var(--cross); font:400 18px/18px var(--mono); }
+.page::before { left:-7px; } .page::after { right:-7px; }
+.row { border-bottom:1px solid var(--line); padding:44px 28px; }
+.row:last-child { border-bottom:0; }
+.lane { max-width:820px; margin:0 auto; }
+.eyebrow { font:500 12px/16px var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin:0 0 12px; }
+h1 { font:600 29px/33px var(--sans); margin:0 0 10px; text-wrap:balance; }
+h2 { font:600 21px/26px var(--sans); margin:0 0 6px; }
+p { margin:0 0 12px; color:var(--body); max-width:66ch; }
+p.lead { font:400 18px/28px var(--sans); color:var(--ink); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.chip { display:inline-flex; align-items:center; height:26px; padding:0 9px; font:500 12px/16px var(--mono); border-radius:4px; background:var(--canvas-soft); color:var(--body); border:1px solid var(--line); }
+.chip.state { border-left:3px solid var(--warning-deep); }
+.how { margin:16px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:10px; }
+.how li { padding-left:14px; border-left:2px solid var(--line); color:var(--body); max-width:70ch; }
+.how li strong { color:var(--ink); font-weight:600; }
+pre.gherkin { margin:0; padding:16px 20px; overflow-x:auto; background:var(--canvas-soft); border:1px solid var(--line); font:400 13px/21px var(--mono); color:var(--ink); white-space:pre; }
+pre.gherkin .kw { color:var(--link); font-weight:500; }
+pre.gherkin .str { color:var(--accent); }
+.checks { margin:18px 0 0; }
+.checks .eyebrow { margin-bottom:8px; }
+.checks ul { margin:0; padding-left:18px; color:var(--body); }
+.checks li { margin:4px 0; max-width:64ch; }
+.strip { display:flex; gap:20px; flex-wrap:wrap; margin-top:24px; }
+figure.frame { margin:0; padding:14px; background:var(--canvas-soft); background-image:radial-gradient(var(--seam) 1px, transparent 1px); background-size:12px 12px; border:1px solid var(--line); }
+figure.frame svg { display:block; background:var(--canvas); border:1px solid var(--line); }
+figcaption { font:400 13px/19px var(--sans); color:var(--body); margin-top:10px; max-width:250px; }
+figcaption .proves { display:block; font:500 11px/16px var(--mono); color:var(--link); margin-bottom:2px; }
+.strategy { display:grid; grid-template-columns:150px 1fr; gap:10px 18px; margin-top:8px; }
+.strategy dt { font:500 12px/20px var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:.03em; }
+.strategy dd { margin:0; color:var(--body); max-width:62ch; }
+.strategy dd em { color:var(--ink); font-style:normal; font-weight:600; }
+ul.plain { margin:0; padding-left:18px; color:var(--body); }
+ul.plain li { margin:5px 0; max-width:66ch; }
+.log h3 { font:500 12px/16px var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin:18px 0 8px; }
+.log h3:first-of-type { margin-top:4px; }
+.veto { color:var(--warning-deep); background:var(--warning-soft); padding:1px 6px; border-radius:3px; font:500 12px/16px var(--mono); }
+.open-q { border:1px solid var(--line); border-left:3px solid var(--warning-deep); padding:12px 16px; background:var(--canvas-soft); max-width:66ch; color:var(--body); }
+.sign { border:1px solid var(--line); border-left:3px solid var(--primary); background:var(--canvas-soft); padding:16px 20px; max-width:66ch; }
+.sign code, .veto-note code, p code { font:500 13px/16px var(--mono); background:var(--link-bg-soft); color:var(--link-deep); padding:1px 5px; border-radius:3px; }
+.foot { display:flex; gap:10px; padding:14px 28px; color:var(--muted); font:500 12px/16px var(--mono); }
+.note { font:400 13px/19px var(--sans); color:var(--muted); max-width:70ch; }
+@media (max-width:640px){ .strategy { grid-template-columns:1fr; gap:2px 0; } .strategy dd { margin-bottom:10px; } .row { padding:32px 18px; } }
+</style>
+
+<div class="page">
+
+  <div class="row"><div class="lane">
+    <p class="eyebrow">Bottega gate · the handoff you sign</p>
+    <h1>Saved searches</h1>
+    <p class="lead">Save a search and it stays with your account — on this phone, on your laptop, after you sign out.</p>
+    <div class="meta">
+      <span class="chip state">gate-open · awaiting your call</span>
+      <span class="chip">spec saved-searches</span>
+      <span class="chip">features/saved-searches.feature</span>
+      <span class="chip">revision 1</span>
+    </div>
+    <ul class="how">
+      <li><strong>To change anything, comment on it.</strong> To approve, comment <span class="veto">SIGNED saved-searches</span>.</li>
+      <li><strong>Done means every scenario on this page works in the finished product.</strong> A tester performs each one on the finished build, and the delivery shows you the recording of that session — one checked scenario at a time.</li>
+      <li><strong>Every check can fail:</strong> we flip the exact values you sign here and the tests must break — proof the tests really read this contract. Checks listed beneath a scenario have no generated test; the tester verifies each one on the finished product.</li>
+      <li><strong>Anything we decided without you sits under Our calls</strong> — veto it with a comment; signing accepts it.</li>
+      <li><strong>You'll only hear from the run</strong> if a discovery changes the Direction, the work splits, something needs credentials, or a step would be destructive. Otherwise the next thing you read is the delivery.</li>
+    </ul>
+  </div></div>
+
+  <div class="row"><div class="lane">
+    <p class="eyebrow">Intent</p>
+    <p>Anyone shopping can save a search and find it again under <em>Saved searches</em> — across devices, across sessions. Today a good query is retyped from memory or lost; regulars rebuild the same search weekly.</p>
+    <div class="strip">
+      <figure class="frame">
+        <svg width="232" height="180" viewBox="0 0 232 180" role="img" aria-label="Results page with Save search control">
+          <rect x="14" y="12" width="140" height="16" rx="3" fill="var(--canvas-soft)" stroke="var(--line)"/>
+          <text x="22" y="24" font-family="var(--mono)" font-size="9" fill="var(--body)">red sneakers</text>
+          <rect x="162" y="12" width="56" height="16" rx="3" fill="var(--link-bg-soft)"/>
+          <text x="169" y="23" font-family="var(--mono)" font-size="8" fill="var(--link-deep)">Save search</text>
+          <circle cx="190" cy="20" r="15" fill="none" stroke="var(--annot)" stroke-width="2"/>
+          <g fill="var(--canvas-soft)" stroke="var(--line)">
+            <rect x="14" y="42" width="98" height="56" rx="3"/><rect x="120" y="42" width="98" height="56" rx="3"/>
+            <rect x="14" y="106" width="98" height="56" rx="3"/><rect x="120" y="106" width="98" height="56" rx="3"/>
+          </g>
+          <g fill="var(--line)">
+            <rect x="22" y="82" width="60" height="6" rx="2"/><rect x="128" y="82" width="60" height="6" rx="2"/>
+            <rect x="22" y="146" width="60" height="6" rx="2"/><rect x="128" y="146" width="60" height="6" rx="2"/>
+          </g>
+        </svg>
+        <figcaption><span class="proves">proves: Save a search</span>Frame 1.1 — the Save control on the results page (prototype)</figcaption>
+      </figure>
+      <figure class="frame">
+        <svg width="232" height="180" viewBox="0 0 232 180" role="img" aria-label="Saved searches list">
+          <text x="14" y="24" font-family="var(--sans)" font-size="12" font-weight="600" fill="var(--ink)">Saved searches</text>
+          <g stroke="var(--line)" fill="var(--canvas-soft)">
+            <rect x="14" y="38" width="204" height="30" rx="3"/><rect x="14" y="76" width="204" height="30" rx="3"/><rect x="14" y="114" width="204" height="30" rx="3"/>
+          </g>
+          <g font-family="var(--mono)" font-size="9" fill="var(--body)">
+            <text x="24" y="57">red sneakers</text><text x="24" y="95">size 44 sandals</text><text x="24" y="133">trail jacket</text>
+          </g>
+          <g font-family="var(--mono)" font-size="8" fill="var(--muted)">
+            <text x="168" y="57">just now</text><text x="176" y="95">2d ago</text><text x="176" y="133">3w ago</text>
+          </g>
+        </svg>
+        <figcaption><span class="proves">proves: Save a search</span>Frame 1.2 — the saved list, newest first (prototype)</figcaption>
+      </figure>
+    </div>
+  </div></div>
+
+  <div class="row"><div class="lane">
+    <p class="eyebrow">Direction — the one bet you co-sign</p>
+    <p>A saved search belongs to your <em>account</em>, not to a device. The list lives with your profile and follows you; search itself — how results are ranked and shown — is untouched by this work.</p>
+    <p class="eyebrow" style="margin-top:20px">Glossary</p>
+    <ul class="plain">
+      <li><strong>saved search</strong> — a query stored on your account, reopenable from any signed-in device.</li>
+      <li><strong>Saved searches</strong> — the list of them, newest first, reachable from your profile.</li>
+    </ul>
+  </div></div>
+
+  <div class="row"><div class="lane">
+    <p class="eyebrow">Scenario 1 of 2</p>
+    <h2>Save a search</h2>
+    <pre class="gherkin"><span class="kw">Scenario:</span> Save a search
+  <span class="kw">Given</span> you're signed in and searching for <span class="str">"red sneakers"</span>
+  <span class="kw">When</span> you tap Save search on the results page
+  <span class="kw">Then</span> <span class="str">"red sneakers"</span> appears under Saved searches</pre>
+  </div></div>
+
+  <div class="row"><div class="lane">
+    <p class="eyebrow">Scenario 2 of 2</p>
+    <h2>A saved search survives sign-out</h2>
+    <pre class="gherkin"><span class="kw">Scenario Outline:</span> A saved search survives sign-out
+  <span class="kw">Given</span> you saved the search <span class="str">"&lt;query&gt;"</span>
+  <span class="kw">When</span> you sign out and sign back in
+  <span class="kw">Then</span> <span class="str">"&lt;query&gt;"</span> is still listed under Saved searches
+
+  <span class="kw">Examples:</span>
+    | query           |
+    | red sneakers    |
+    | size 44 sandals |</pre>
+    <div class="checks">
+      <p class="eyebrow">Acceptance checks — verified by the tester on the finished product</p>
+      <ul>
+        <li>A search saved on your phone appears on a second signed-in device within <strong>30 seconds</strong>.</li>
+      </ul>
+    </div>
+  </div></div>
+
+  <div class="row"><div class="lane">
+    <p class="eyebrow">Testing strategy — how these promises get attacked</p>
+    <dl class="strategy">
+      <dt>Automated</dt>
+      <dd>Both scenarios above run as generated acceptance tests on every build of the run.</dd>
+      <dt>Load-bearing values</dt>
+      <dd><em>"red sneakers"</em>, <em>"size 44 sandals"</em>, and the <em>30-second</em> sync window — each gets flipped in CI and the suite must fail, proof the tests read this exact contract.</dd>
+      <dt>Edges to probe</dt>
+      <dd>Saving the same query twice keeps one entry, not two. An empty search can't be saved — the control stays disabled. A list of 300 saved searches still opens in under a second.</dd>
+      <dt>Manual (QA)</dt>
+      <dd>Drive both flows at phone width. Try to save while signed out and expect the sign-in prompt. Watch the second-device sync live, recorded.</dd>
+      <dt>Not tested</dt>
+      <dd>Search result relevance itself — owned by the existing search suite, unchanged by this commission.</dd>
+    </dl>
+  </div></div>
+
+  <div class="row"><div class="lane">
+    <p class="eyebrow">Not in this commission</p>
+    <ul class="plain">
+      <li>No alerts or notifications when a saved search has new results — a later commission if wanted.</li>
+      <li>No sharing a saved search with another account.</li>
+    </ul>
+  </div></div>
+
+  <div class="row"><div class="lane">
+    <p class="eyebrow">Open question — overrule by one word</p>
+    <div class="open-q">List order — <strong>default: newest first</strong> (already written into the scenarios) · or: alphabetical. Comment either word; signing accepts the default.</div>
+  </div></div>
+
+  <div class="row"><div class="lane">
+    <p class="eyebrow">Decisions log</p>
+    <div class="log">
+      <h3>You said</h3>
+      <ul class="plain">
+        <li>Saved searches are per-account, never per-device — the whole point is finding them on the laptop.</li>
+      </ul>
+      <h3>Our calls — <span class="veto">veto by comment</span></h3>
+      <ul class="plain">
+        <li>The list caps at 300, oldest drops first — keeps it scannable; nobody rebuilds search #301 from memory.</li>
+        <li>Saving an identical query twice keeps one entry and bumps it to the top — duplicates would bury the list.</li>
+      </ul>
+    </div>
+  </div></div>
+
+  <div class="row"><div class="lane">
+    <p class="eyebrow">Your call</p>
+    <div class="sign">
+      <p style="margin:0 0 8px"><strong>Comment on any block to change it</strong> — you'll watch the revision land on this page. To approve everything as written, comment <code>SIGNED saved-searches</code>. Signing freezes the two scenarios above into executable acceptance tests and starts the autonomous run.</p>
+      <p class="note" style="margin:0">The next thing you read after signing is the delivery: this same scenario list, checked, each row with a recording from the finished product.</p>
+    </div>
+  </div></div>
+
+  <div class="foot"><span>bottega gate</span><span>·</span><span>spec saved-searches</span><span>·</span><span>this page is a filled example — frames are wireframe stand-ins; a real gate carries captures of the launched product or its prototypes</span></div>
+</div>
