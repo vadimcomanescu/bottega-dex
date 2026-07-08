@@ -1,8 +1,9 @@
 // gate-diff is the sign-blocking fence: the hosted gate doc's walkthrough
 // blocks must equal gate-render's reading of the feature files, block for
 // block, in order. Frames and checks between blocks are licensed; edited
-// steps, appended walkthrough-shaped lines, lookalike scenario headings,
-// Gherkin-carrying fences, and dropped or reordered walkthroughs are not.
+// steps, stale sections, gherkin fences, and dropped or reordered
+// walkthroughs are not. It checks drift, never deceit — the adversarial
+// forgery layer was deliberately removed.
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -111,26 +112,6 @@ describe("gate-diff", () => {
     expect(result.stderr).toMatch(/mismatch/);
   });
 
-  it("blocks a forged step appended inside a matched block's section", () => {
-    const forged = HOSTED_CLEAN.replace(
-      '3. "red sneakers" appears under Saved searches\n',
-      '3. "red sneakers" appears under Saved searches\n4. Every saved search is exported to your email as CSV\n',
-    );
-    const result = runDiff(gateDir(forged));
-    expect(result.status).toBe(1);
-    expect(result.stderr).toMatch(/forgery: line continues the walkthrough/);
-  });
-
-  it("blocks a forged also-proven line under a plain scenario", () => {
-    const forged = HOSTED_CLEAN.replace(
-      '3. "red sneakers" appears under Saved searches\n',
-      '3. "red sneakers" appears under Saved searches\n\n*Also proven with: query "any string the forger likes".*\n',
-    );
-    const result = runDiff(gateDir(forged));
-    expect(result.status).toBe(1);
-    expect(result.stderr).toMatch(/forgery: line continues the walkthrough/);
-  });
-
   it("blocks a rendering that dropped a scenario", () => {
     const withoutLast = HOSTED_CLEAN.slice(0, HOSTED_CLEAN.indexOf("## Scenario — Search results"));
     const result = runDiff(gateDir(withoutLast));
@@ -147,39 +128,18 @@ ${BLOCK_SAVE}${SECTION_SAVE_EXTRAS}`;
     expect(result.stderr).toMatch(/missing or out-of-order walkthrough/);
   });
 
-  it("blocks a forged scenario section no feature file carries", () => {
-    const forged = `${HOSTED_CLEAN}\n## Scenario — Bulk export\n\n1. You export every saved search\n`;
-    const result = runDiff(gateDir(forged));
+  it("blocks a stale scenario section no feature file carries", () => {
+    const stale = `${HOSTED_CLEAN}\n## Scenario — Bulk export\n\n1. You export every saved search\n`;
+    const result = runDiff(gateDir(stale));
     expect(result.status).toBe(1);
-    expect(result.stderr).toMatch(/forgery/);
+    expect(result.stderr).toMatch(/stale/);
   });
 
-  it("blocks a lookalike heading — en dash, deeper level, missing space", () => {
-    for (const heading of ["## Scenario – Bulk export", "### Scenario — Bulk export", "## Scenario —Bulk export"]) {
-      const forged = `${HOSTED_CLEAN}\n${heading}\n\n1. You export every saved search\n`;
-      const result = runDiff(gateDir(forged));
-      expect(result.status).toBe(1);
-      expect(result.stderr).toMatch(/forgery: scenario heading/);
-    }
-  });
-
-  it("blocks a tagged gherkin fence", () => {
-    const withFence = `${HOSTED_CLEAN}\n\`\`\`gherkin\nnothing even needs to be inside\n\`\`\`\n`;
+  it("blocks a raw gherkin fence", () => {
+    const withFence = `${HOSTED_CLEAN}\n\`\`\`gherkin\nScenario: Save a search\n\`\`\`\n`;
     const result = runDiff(gateDir(withFence));
     expect(result.status).toBe(1);
-    expect(result.stderr).toMatch(/fenced Gherkin/);
-  });
-
-  it("blocks an untagged or indented fence carrying Gherkin", () => {
-    for (const fence of [
-      "```\nScenario: Bulk export\n  When you export everything\n```",
-      "   ```md\n   Given you're signed in\n   ```",
-      "~~~\nWhen you export everything\n~~~",
-    ]) {
-      const result = runDiff(gateDir(`${HOSTED_CLEAN}\n${fence}\n`));
-      expect(result.status).toBe(1);
-      expect(result.stderr).toMatch(/fenced Gherkin/);
-    }
+    expect(result.stderr).toMatch(/gherkin fence/);
   });
 
   it("passes an innocuous code fence", () => {
