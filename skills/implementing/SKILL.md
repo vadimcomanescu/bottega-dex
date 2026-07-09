@@ -15,7 +15,7 @@ description: Bottega builder discipline — one slice, test-first, inside a give
    does this need to exist at all → already in this codebase, reuse it → stdlib does it → native platform feature → an installed dependency does it → one line if one line → only then the minimum new code that works.
    An unfamiliar library call is verified against the installed version, never your memory of its API; what you can't verify, you flag as unverified.
 4. Repeat 2–3 until the slice's acceptance tests are green. Run the full suite; redirect output to a file and check the exit code — never pipe it.
-5. Commit — stage your owned files by explicit path, never `git add -A`. If your sandbox denies gitdir writes (codex seats in shared-gitdir worktrees), the commit is the dispatcher's: report the exact file list and the test line you watched, and stop there — never work around the sandbox. Report honestly, stop. One task per invocation — never the next task, never scope decisions.
+5. Commit — stage your owned files by explicit path, never `git add -A`. If your sandbox denies gitdir writes (codex seats in shared-gitdir worktrees), the commit is the dispatcher's — never work around the sandbox. Report status `green|stuck`, the test summary line you watched, files touched, the commit SHA (or the exact file list when your sandbox cannot commit), every decision the dossier did not determine, and anything noticed outside your files as noticed-not-touched. Report honestly, stop. One task per invocation — never the next task, never scope decisions.
 
 ## The fences
 

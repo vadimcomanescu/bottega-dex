@@ -17,7 +17,7 @@ description: Bottega doc-sync discipline — one dispatch after the last integra
    - Discoverability: would a fresh agent reading the instruction file find what the run added — the new subsystem, command, directory? A capability the docs never surface might as well not exist; add the smallest line that surfaces it.
    On a large docs tree, fan the sweep out to ephemeral subagents of your own seat, one per doc area, returning falsified-claim lists you verify against the diff yourself; a harness without subagents does the same sweep inline in chunks and says so. Their output is candidates, never edits — every edit stays yours.
 3. Edit under the fences below. Then check each edited claim the way a reader would — resolve every path and name you wrote against the tree; a command or example you cannot verify is flagged as unverified, never asserted.
-4. Commit your owned files by explicit path — never `git add -A`. If your sandbox denies gitdir writes, report the exact file list and stop. Report honestly; one dispatch, then done.
+4. Commit your owned files by explicit path — never `git add -A`. If your sandbox denies gitdir writes, the commit is the dispatcher's — never work around the sandbox. Report honestly; one dispatch, then done.
 
 ## The fences
 
@@ -32,4 +32,4 @@ description: Bottega doc-sync discipline — one dispatch after the last integra
 
 ## Report
 
-Files edited; per edit, the falsified claim and the code that falsified it (commit or path). Then the out-of-warrant list: stale docs noticed and left, `CONCEPTS.md` drift, anything unverified. Nothing to sync is a valid report — say what you swept.
+Files edited and the commit SHA (or the exact file list when your sandbox cannot commit); per edit, the falsified claim and the code that falsified it (commit or path). Then the out-of-warrant list: stale docs noticed and left, `CONCEPTS.md` drift, anything unverified. Nothing to sync is a valid report — say what you swept.

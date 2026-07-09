@@ -8,13 +8,23 @@ One-turn seats (review, clerk mechanics):
 codex exec --ignore-user-config -m <model> -c model_reasoning_effort=<effort> -s <sandbox> -C <worktree> --json -o <msg> < brief.md > <events>
 ```
 
-Builders take `-s workspace-write`; consultation and clerk reads take `-s read-only`. A codex **reviewer** takes `-s workspace-write` too — in a disposable copy of the slice worktree the clerk sweeps after the round: read-only starves the suites and probes reviewing demands, and disposability, not the sandbox, is what keeps the reviewer's hands off the product tree. A **QA** seat takes `-s workspace-write -C` the run worktree — evidence lands under `.bottega/verify/<feature-slug>/` and fixtures in the temp dir, both inside that sandbox.
+Builders take `-s workspace-write`; consultation and clerk reads take `-s read-only`. A codex **reviewer** takes `-s workspace-write`; its isolation and instrument staging are in Codex reviewer preparation below. A **QA** seat takes `-s workspace-write -C` the run worktree — evidence lands under `.bottega/verify/<feature-slug>/` and fixtures in the temp dir, both inside that sandbox.
 
 ## What every brief carries
 
 - Skills and files by absolute path. `$CLAUDE_PLUGIN_ROOT`, slash commands, and subagents do not exist for a codex seat — a brief naming any of them stalls the seat. Bulk work a Claude seat would fan out to subagents, a codex brief chunks inline.
 - The gate commands verbatim, split into seat-run and clerk-run. The sandbox blocks localhost binds as well as gitdir writes, so any binding gate — dev server, browser, integration suite — is the clerk's by name, or the seat burns its turn on `listen EPERM` and ships code it never saw run.
 - An output contract ending in a fenced JSON block — verdict, files touched, evidence paths, anomalies — so the `-o` message is parsed like every other seat's report, never hand-read prose.
+
+## Codex reviewer preparation
+
+Before every codex reviewer dispatch, a clerk creates a disposable copy of the
+slice worktree at the reviewed green tip. The clerk pre-runs every instrument
+named by `skills/reviewing` that the codex seat's harness lacks and puts the
+resulting findings files in the dossier. Run the reviewer from the disposable
+copy with `-s workspace-write`: read-only starves the suites and probes reviewing
+demands, and disposability, not the sandbox, keeps the reviewer's hands off the
+product tree. Sweep the copy after the round.
 
 ## The two-brief builder sequence
 
