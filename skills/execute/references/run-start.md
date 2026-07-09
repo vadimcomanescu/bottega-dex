@@ -22,7 +22,11 @@ The brief, in order:
    promise cannot be kept on this repo. A lock with no binaries (fresh worktree or
    clone; `.bottega/bin` is never committed) reinstalls to the pinned hashes.
 3. **Bare-checkout provisioning.** Treat the fresh worktree as a bare checkout:
-   dependencies installed, env files copied. Otherwise the RED gate lies.
+   dependencies installed, env files copied by named need — the brief lists which
+   files the suite reads, never every `.env*` the checkout holds; a production
+   credential the run never needs never enters a worktree, and a suite that needs
+   a real credential is an external-effects escalation before the copy, never a
+   silent inherit. Otherwise the RED gate lies.
 4. **Wire acceptance.** Generate the test entrypoints from `features/*.feature`,
    wire the suite, run it, and confirm it fails RED (the features are unimplemented;
    a passing or erroring-for-tooling-reasons suite is a defect to report, not RED).

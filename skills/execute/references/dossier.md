@@ -7,6 +7,7 @@ Before every builder dispatch, write a self-contained dossier carrying:
 - the interface contract;
 - the exact files the builder owns;
 - the gate commands verbatim;
+- the external-effects rule's worker form from [SKILL.md](../SKILL.md#standing-rules), verbatim;
 - the territory's existing owners — the files, modules, and local conventions
   that repo spelunking would otherwise have had to discover;
 - the pointer to `.bottega/run/baseline.json`;
