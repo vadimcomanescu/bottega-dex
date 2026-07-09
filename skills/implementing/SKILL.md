@@ -1,6 +1,6 @@
 ---
 name: implementing
-description: Bottega implementor discipline — one slice, test-first, inside a given architecture. Loaded by every builder dispatch; also reach for it when judging whether builder output followed the rules.
+description: Bottega builder discipline — one slice, test-first, inside a given architecture. Loaded by every builder dispatch; also reach for it when judging whether builder output followed the rules.
 ---
 
 # Implementing
