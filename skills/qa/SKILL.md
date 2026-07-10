@@ -25,4 +25,4 @@ description: Bottega QA discipline — drive the delivered artifact as a user an
 
 A functional pass is not a design pass. Scroll it, resize it, read it. A feature that works and looks broken fails — report it as a finding with a screenshot.
 
-The signed prototype is the visual target: put the shipped screenshot next to the commission's prototype image and name where they diverge and by how much — never accept visuals on vibes. Then have an unprimed second look (an agent shown only the target and the result, none of your context) confirm or contest your verdict before it ships.
+The signed strip is the visual target, compared at the level it promises. A capture strip promises the drawn change: put the shipped screenshot next to it and name where the change diverges and by how much. A wireframe strip promises structure, never pixels: every named element present, placed, and reachable as drawn. Never accept visuals on vibes. Then have an unprimed second look (an agent shown only the target and the result, none of your context) confirm or contest your verdict before it ships.

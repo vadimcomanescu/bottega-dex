@@ -46,7 +46,7 @@ Human gates are one hosted collaborative doc — comment to change anything, com
 
 ## The two artifacts a human ever reads
 
-**In:** the commission — `docs/specs/<YYYY-MM-DD>-<feature-slug>.md` plus the `features/*.feature` files it points at: intent in two sentences, non-goals, a Direction (the domain-model delta and the hard-to-reverse calls, in plain words), each scenario as Given/When/Then with its example values, a testing line per scenario (open x, do y, see z, and the evidence that comes back), and a storyboard of rendered screens per signed flow for UI work. One page of contract prose, signed in minutes.
+**In:** the commission — `docs/specs/<YYYY-MM-DD>-<feature-slug>.md` plus the `features/*.feature` files it points at: intent in two sentences, non-goals, a Direction (the domain-model delta and the hard-to-reverse calls, in plain words), each scenario as Given/When/Then with its example values, a testing line per scenario (open x, do y, see z, and the evidence that comes back), and a flow strip per signed on-screen flow — a capture with the change drawn on it where the screen exists, wireframes where it doesn't. One page of contract prose, signed in minutes.
 
 **Out:** the delivery PR — scenario checklist, the evidence in the PR body, per-slice provenance (who built, who reviewed, families and models), findings fixed, and the decisions log: every call the commission underdetermined, made and flagged, because decisions in an unsupervised run are reviewed after, not asked before.
 
