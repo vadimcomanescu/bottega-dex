@@ -228,14 +228,38 @@ describe("route-guard: stale contract state never arms the guard", () => {
   });
 });
 
+describe("route-guard: a patch job arms the same run fence", () => {
+  it("fences unrouted and fable dispatches while a patch worktree exists", () => {
+    const dir = mkdtempSync(join(tmpdir(), "bottega-guard-patch-"));
+    cleanups.push(dir);
+    mkdirSync(join(dir, ".bottega", "wt", "patch", "fix-pagination"), { recursive: true });
+    const unrouted = run(ROUTE_GUARD, {
+      cwd: dir,
+      tool_input: { subagent_type: "general-purpose", prompt: "sweep the diff" },
+    });
+    expect(denialOf(unrouted)).toMatch(/names no model/);
+    const fabled = run(ROUTE_GUARD, {
+      cwd: dir,
+      tool_input: { subagent_type: "general-purpose", model: "fable", prompt: "review" },
+    });
+    expect(denialOf(fabled)).toMatch(/routes fable/);
+    const routed = run(ROUTE_GUARD, {
+      cwd: dir,
+      tool_input: { subagent_type: "bottega-reviewer", model: "opus", prompt: "review the diff" },
+    });
+    expect(routed).toBe("");
+  });
+});
+
 describe("entry-guard", () => {
-  it("reminds on run-intent prose in a workshop", () => {
+  it("reminds on run-intent prose in a workshop, naming every entry command", () => {
     const out = run(ENTRY_GUARD, {
       cwd: workshopDir(true),
       prompt: "run bottega, the commission is signed",
     });
     const parsed = JSON.parse(out);
     expect(parsed.hookSpecificOutput.additionalContext).toMatch(/\/bottega:run/);
+    expect(parsed.hookSpecificOutput.additionalContext).toMatch(/\/bottega:patch/);
   });
 
   it("stays silent on slash commands, non-workshop dirs, and unrelated prompts", () => {

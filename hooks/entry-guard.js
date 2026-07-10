@@ -20,7 +20,9 @@ const REMINDER =
   "This repo is a bottega workshop and the prompt reads like run intent. If " +
   "this is bottega work, invoke the matching skill before acting — " +
   "/bottega:run for the whole loop, /bottega:spec to commission without " +
-  "running, /bottega:execute to run an already-signed commission. Acting " +
+  "running, /bottega:execute to run an already-signed commission, " +
+  "/bottega:patch for a fix or small improvement too small to commission. " +
+  "Acting " +
   "without them freelances discovery on the maestro seat and re-derives " +
   "what the skills already carry.";
 

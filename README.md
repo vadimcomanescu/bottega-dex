@@ -2,7 +2,7 @@
 
 An autonomous long-running agent system built for Fable to orchestrate.
 
-The operating model: the user signs a one-page commission, a fleet of agents builds, reviews, and examines the work autonomously, and the delivery is a PR with evidence. The maestro (Fable) holds all design and routing authority; worker agents execute. The user interacts exactly twice — signing the commission and receiving the delivery — and the run is otherwise unsupervised.
+The operating model: the user signs a one-page commission, a fleet of agents builds, reviews, and examines the work autonomously, and the delivery is a PR with evidence. The maestro (Fable) holds all design and routing authority; worker agents execute. The user interacts exactly twice — signing the commission and receiving the delivery — and the run is otherwise unsupervised. Two levers trade ceremony for speed, both only on the user's word: a patch (a fix or small improvement with no contract to sign) skips the commission entirely, and an unattended run auto-signs from a GitHub issue so the delivery PR is the only human touchpoint.
 
 ## Why it holds without supervision
 
@@ -68,7 +68,7 @@ npm test          # guard unit tests
 
 That is the whole install. The plugin carries everything: the maestro skill, the actor skills, the agents, the guards, and the sign-off machinery. One requirement the run checks itself and fails loudly without: the codex CLI (cross-family dispatch). On a host's first run a dispatched clerk bootstraps the [acceptance-pipeline-kit](https://github.com/vadimcomanescu/acceptance-pipeline-kit) toolchain into `.bottega/` (gitignored) and pins its hashes in `aps.lock` — never a manual step, and never maestro tokens.
 
-Then commission work with `/bottega:run <task>` — the whole loop in one sitting — or split it: `/bottega:spec <task>` signs a commission without running it, and `/bottega:execute <feature-slug>` later runs a signed one (it refuses anything unsigned or already run). The maestro seat is fable-tier: run the session on the strongest model available — loaded on a lower tier, the skill says so instead of proceeding silently.
+Then commission work with `/bottega:run <task>` — the whole loop in one sitting — or split it: `/bottega:spec <task>` signs a commission without running it, and `/bottega:execute <feature-slug>` later runs a signed one (it refuses anything unsigned or already run). `/bottega:patch <task>` takes a fix or small improvement with no contract to sign — no spec, no gate, still isolated, opposite-family reviewed, and delivered as a PR. Add `--unattended` (or say it) and point at a GitHub issue to skip yourself: the issue is the interview, the spec auto-signs, escalations land on the issue thread, and you review contract and build together at the PR. The maestro seat is fable-tier: run the session on the strongest model available — loaded on a lower tier, the skill says so instead of proceeding silently.
 
 ## Provenance
 

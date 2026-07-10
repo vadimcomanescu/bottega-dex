@@ -2,8 +2,8 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "bottega",
   "displayName": "Bottega",
-  "version": "0.27.0",
-  "description": "Autonomous commission -> build -> evidenced delivery. /bottega:run is the whole loop, /bottega:spec the commission alone, /bottega:execute a signed commission: signed Gherkin acceptance, cross-family review, mutation-proofed delivery PR.",
+  "version": "0.28.0",
+  "description": "Autonomous commission -> build -> evidenced delivery. /bottega:run is the whole loop, /bottega:spec the commission alone, /bottega:execute a signed commission, /bottega:patch the small job without one: signed Gherkin acceptance, cross-family review, mutation-proofed delivery PR; unattended runs auto-sign from an issue.",
   "author": {
     "name": "Vadim Comanescu"
   },

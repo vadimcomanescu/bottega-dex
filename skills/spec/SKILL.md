@@ -1,6 +1,7 @@
 ---
 name: spec
-description: Write the commission — the interview, the contract, the storyboards, the gate. Invoke when the user asks to spec or commission bottega work, via /bottega:spec or in their own words; never proactively. Also entered from /bottega:run, which continues into skills/execute.
+description: Write the commission — the interview, the contract, the storyboards, the gate. Invoke when the user asks to spec or commission bottega work, via /bottega:spec or in their own words; never proactively. Also entered from /bottega:run, which continues into skills/execute. With --unattended, the pointed issue is the interview and the sign cascades without the gate.
+argument-hint: "[--unattended] <task, or issue URL>"
 ---
 
 # Spec — the commission
@@ -30,5 +31,14 @@ This is a maestro-seat skill: it needs the routing table's top intelligence row.
 
 12. **Cross-read**, only for a contract drafted in your own turns (the small-commission path of step 5) — a panel-drafted contract already crossed independent minds and a judge, and skips it. Before the gate opens: dispatch codex (xhigh, read-only) with the draft, the feature files, and the repo; headless `codex exec` per `codex-dispatch.md` in `skills/execute`, never a codex plugin or wrapper agent the host happens to carry. Its hunt list is what the author and a skimming user systematically miss: a Then no actor can observe, a Given QA cannot build, Examples without mutation-bearing values, HOW leaked past the altitude guard, a non-goal contradicting a scenario, a logged decision no scenario carries, names off the glossary, an *our call* one question would have retired, an actor a Given names whom the interview never touched, a zero, a many, or a failure no scenario visits, a testing line with no how. Findings are sensor data: arbitrate each; an overruled finding lands in the Decisions log. Re-run only after a substantive rewrite, never per comment.
 13. Hand to `skills/signoff`: one collaborative doc, comments answered where made, `SIGNED <feature-slug>` as the go signal. **Invoked standalone, the gate is the finish line:** on SIGNED the cascade runs and the signed commission (spec doc marked signed, `features/`, gate record) is the deliverable. Say "execute it with `/bottega:execute` when you choose" and stop. The phase's durable state is entirely on disk (the spec doc, `features/`, `.bottega/gates/<feature-slug>/` with doc credentials, frames, wireframe sources, panel record, thread mirror), so any later session on any machine picks up cold: signed → `/bottega:execute`; unsigned → resume the same hosted doc from the gate record. No session memory is ever part of the handoff.
+
+## Unattended — the sign delegated
+
+Only on the user's explicit ask in the invocation — `--unattended` in the arguments, or their own words ("unattended", "auto-sign", equivalents), usually pointing at a GitHub issue; never inferred, never offered. The delegation covers the interview and the gate, nothing else: every other step of this skill runs as written, and with no user reading the contract, the panel and the cross-read are the only independent eyes it gets.
+
+- The pointed source — the issue, its thread, whatever it links — is the interview transcript. Read it the way step 2 reads the user: classify the request, note what it underdetermines, and close every question you would have asked as an our-call in the Decisions log, its default written into the scenarios. The silent-user discipline of step 3, applied to the whole interview.
+- No gate. Skip `skills/signoff`; run the SIGNED cascade yourself — the status flip and `features/` in one sign commit — and open the Decisions log with the delegation: the user's instruction quoted, the source linked, marked auto-signed.
+- The source issue's thread replaces the gate doc from sign onward: status updates and escalations that doctrine sends to the status block land there as issue comments, and the delivery PR names and closes the issue.
+- The delivery PR discloses the unattended sign in its first line: the user reviews contract and build in one sitting, and their merge click is the run's only human act. What delegation never buys: the real-users rail, the fable fence, and the `features/` freeze all stand.
 
 **Done when** the feature files run as acceptance without a follow-up question, and a non-engineer reading the gate doc could say what will change for them.

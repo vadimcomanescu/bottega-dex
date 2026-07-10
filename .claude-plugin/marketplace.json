@@ -11,7 +11,7 @@
     {
       "name": "bottega",
       "source": "./",
-      "description": "Three entry points — /bottega:run (spec then execute), /bottega:spec (sign without running), /bottega:execute (run a signed spec): the maestro signs a spec with the user, then runs build -> review -> QA -> verify autonomously and delivers a PR with evidence.",
+      "description": "Four entry points — /bottega:run (spec then execute), /bottega:spec (sign without running), /bottega:execute (run a signed spec), /bottega:patch (the small job, no spec): the maestro signs a spec with the user — or auto-signs from an issue with --unattended — then runs build -> review -> QA -> verify autonomously and delivers a PR with evidence.",
       "author": {
         "name": "Vadim Comanescu"
       },
