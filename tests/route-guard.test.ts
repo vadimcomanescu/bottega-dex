@@ -74,15 +74,42 @@ describe("route-guard: bottega worker seats (always fenced)", () => {
         prompt: "cold read of the run",
       },
     });
-    expect(denialOf(out)).toMatch(/never rides a builder\/reviewer\/qa seat/);
+    expect(denialOf(out)).toMatch(/never rides a worker seat/);
   });
 
-  it("allows a routed non-fable worker dispatch", () => {
+  it("allows a routed worker dispatch on the seat's table model", () => {
+    const out = run(ROUTE_GUARD, {
+      cwd: workshopDir(true),
+      tool_input: { subagent_type: "bottega-qa", model: "sonnet", prompt: "drive scenarios" },
+    });
+    expect(out).toBe("");
+  });
+
+  it("denies a misrouted worker dispatch — qa rides sonnet, never opus", () => {
     const out = run(ROUTE_GUARD, {
       cwd: workshopDir(true),
       tool_input: { subagent_type: "bottega-qa", model: "opus", prompt: "drive scenarios" },
     });
-    expect(out).toBe("");
+    expect(denialOf(out)).toMatch(/qa\/documenter\/mechanic: sonnet/);
+  });
+
+  it("fences the mechanic and storyboarder seats too", () => {
+    const cwd = workshopDir(false);
+    const unrouted = run(ROUTE_GUARD, {
+      cwd,
+      tool_input: { subagent_type: "bottega:bottega-mechanic", prompt: "run the gate suite" },
+    });
+    expect(denialOf(unrouted)).toMatch(/names no model/);
+    const misrouted = run(ROUTE_GUARD, {
+      cwd,
+      tool_input: { subagent_type: "bottega-storyboarder", model: "sonnet", prompt: "render shots" },
+    });
+    expect(denialOf(misrouted)).toMatch(/storyboarder/);
+    const routed = run(ROUTE_GUARD, {
+      cwd,
+      tool_input: { subagent_type: "bottega-mechanic", model: "sonnet", prompt: "run the gate suite" },
+    });
+    expect(routed).toBe("");
   });
 });
 

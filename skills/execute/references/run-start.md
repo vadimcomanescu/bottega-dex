@@ -1,7 +1,7 @@
-# Run start — the clerk brief
+# Run start — the mechanic brief
 
 Everything between SIGNED and the first dossier is fully specifiable, so it is one
-self-contained clerk brief, sandboxed to the run worktree. The maestro verifies the
+self-contained mechanic brief, sandboxed to the run worktree. The maestro verifies the
 report (contract committed, suite RED, exit codes), never re-performs the steps.
 The user never runs an installer. Like every command-running brief, this one
 carries the worker rail (`skills/execute`, Standing rules), verbatim.
@@ -25,7 +25,7 @@ The brief, in order:
 3. **Bare-checkout provisioning.** Treat the fresh worktree as a bare checkout:
    dependencies installed, env values copied by named variable — the brief lists
    the variables the suite reads, from the maestro's read of the host loader, and
-   the clerk writes only those into the worktree's env file, never a whole `.env*`
+   the mechanic writes only those into the worktree's env file, never a whole `.env*`
    from the checkout; a variable holding a real credential goes to the maestro
    before the copy, never a silent inherit. Otherwise the RED gate lies.
 4. **Wire acceptance.** Generate the test entrypoints from `features/*.feature`,

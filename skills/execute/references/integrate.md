@@ -1,8 +1,8 @@
-# Slice integration — the clerk protocol
+# Slice integration — the mechanic protocol
 
-The slice lifecycle's mechanics are clerk work. Apply each at its named moment;
+The slice lifecycle's mechanics are mechanic work. Apply each at its named moment;
 an ownership breach, merge conflict, or new suite failure is a report to the
-maestro, never a judgment the clerk makes.
+maestro, never a judgment the mechanic makes.
 
 1. **Cross-check ownership.** Before parallel builder dispatches, compare the
    dossiers' owned-files lists. An overlap without a written ordering blocks those
@@ -16,7 +16,7 @@ maestro, never a judgment the clerk makes.
 4. **Merge.** In the run worktree, merge only the reviewed green slice tip. Keep
    its RED and green commits intact and create the integration commit required by
    gate 4 even when Git could fast-forward. A conflict goes back to the maestro;
-   the clerk never resolves it by editing product code.
+   the mechanic never resolves it by editing product code.
 5. **Prove the integration.** Run the full host suite on the run branch, compare
    its failures with `.bottega/run/baseline.json`, and report the exit code plus
    every failure beyond that baseline.

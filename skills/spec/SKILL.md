@@ -7,7 +7,7 @@ description: Write the commission — the interview, the contract, the storyboar
 
 The user signs product, never execution. Everything here is written for a reader who leaves.
 
-This is a maestro-seat skill: it needs the routing table's top intelligence row. Loaded on a lower model, say so before drafting (same rule as `skills/execute`). Dispatches route from that skill's table with model and effort named on every call; a render seat produces user-facing pixels and needs taste ≥ 7, never a clerk. Judgment stays in your turns: the interview, every scenario, the Direction, the shot list, arbitration, every reply in the gate's comment loop. Dispatched: frame production (`skills/storyboarding`), gate assembly, the SIGNED cascade, the `CONCEPTS.md` write-out, and on a large host, read-only sweeps. A sweep's findings are leads you verify against the load-bearing files you read yourself; a spec grounded on a scout's summary inherits the scout's blindness.
+This is a maestro-seat skill: it needs the routing table's top intelligence row. Loaded on a lower model, say so before drafting (same rule as `skills/execute`). Dispatches route from that skill's table with model and effort named on every call; a render seat produces user-facing pixels and needs taste ≥ 7, never a mechanic. Judgment stays in your turns: the interview, every scenario, the Direction, the shot list, arbitration, every reply in the gate's comment loop. Dispatched: frame production (`skills/storyboarding`), gate assembly, the SIGNED cascade, the `CONCEPTS.md` write-out, and on a large host, read-only sweeps. A sweep's findings are leads you verify against the load-bearing files you read yourself; a spec grounded on a scout's summary inherits the scout's blindness.
 
 ## Read, then maybe ask
 

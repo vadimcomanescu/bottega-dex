@@ -5,11 +5,15 @@
 // Two scopes, because the nadia-0001 run proved the narrow one insufficient
 // (103 of 132 dispatches rode general-purpose seats the old guard never saw):
 //
-//   1. Named bottega worker seats (builder, reviewer, qa) — always fenced,
-//      run or no run: an unrouted dispatch inherits the dispatching seat's
-//      model (from the maestro that is a silent fable escalation), and fable
-//      never rides a worker seat. The cold read is not an exception here —
-//      it never rides a builder/reviewer/qa seat by doctrine.
+//   1. Named bottega worker seats (builder, reviewer, qa, documenter,
+//      storyboarder, mechanic) — always fenced, run or no run: an unrouted
+//      dispatch inherits the dispatching seat's model (from the maestro that
+//      is a silent fable escalation), fable never rides a worker seat, and
+//      each named seat has exactly one Claude model in the routing table —
+//      a mismatch is a misroute, denied. Effort is not a dispatch parameter
+//      this hook can see; it rides the agent frontmatter defaults and the
+//      table. The cold read is not an exception here — it never rides a
+//      worker seat by doctrine.
 //
 //   2. Every other dispatch, but only while a run is live — a .bottega/wt/
 //      worktree entry exists. That is the one signal with a real teardown:
@@ -36,8 +40,22 @@ function runLive(cwd) {
   }
 }
 
-const WORKER_SEAT = /(^|:)bottega-(builder|reviewer|qa)$/;
+const WORKER_SEAT = /(^|:)bottega-(builder|reviewer|qa|documenter|storyboarder|mechanic)$/;
 const FABLE = /fable/i;
+// The Claude column of the routing table (skills/execute/SKILL.md). Codex
+// seats (gpt-5.6-sol) ride `codex exec`, never the Agent tool, so every
+// Claude dispatch of a named seat is fully checkable here: a Claude builder
+// is the user-facing slice (opus), a Claude reviewer reviews codex-built
+// code (opus); qa, documenter, and mechanic are sonnet; the storyboarder
+// produces the signed visual target (opus).
+const SEAT_MODEL = {
+  builder: /opus/i,
+  reviewer: /opus/i,
+  qa: /sonnet/i,
+  documenter: /sonnet/i,
+  storyboarder: /opus/i,
+  mechanic: /sonnet/i,
+};
 // Anchored, description-only: replaying the nadia-0001 run, a loose match on
 // prompt text passed 3 non-cold-read seats (fix cycles that merely *mention*
 // cold-read findings); a description that BEGINS "cold read" passed only the
@@ -49,16 +67,28 @@ const DENY_UNROUTED =
   "inherits the dispatching seat's own model, which from the maestro seat " +
   "silently escalates the worker to fable; re-issue the same dispatch with an " +
   "explicit model from the routing table in skills/execute/SKILL.md (Claude " +
-  "worker seat: opus — builder/qa at high, reviewer at xhigh).";
+  "seats: builder/reviewer/storyboarder ride opus, qa/documenter/mechanic " +
+  "ride sonnet).";
 
 const DENY_FABLE =
   "the dispatch was rejected because it routes a worker seat to fable — fable " +
   "runs exactly twice per run, the maestro seat and the cold read, and the " +
-  "cold read never rides a builder/reviewer/qa seat; re-issue from the routing " +
-  "table in skills/execute/SKILL.md (Claude worker seat: opus — builder/qa at " +
-  "high, reviewer at xhigh), and if you believe this slice genuinely needs " +
-  "fable-tier judgment, stop and put the escalation to the user — their " +
-  "budget, never a self-serve seat.";
+  "cold read never rides a worker seat; re-issue from the routing table in " +
+  "skills/execute/SKILL.md (Claude seats: builder/reviewer/storyboarder ride " +
+  "opus, qa/documenter/mechanic ride sonnet), and if you believe this slice " +
+  "genuinely needs fable-tier judgment, stop and put the escalation to the " +
+  "user — their budget, never a self-serve seat.";
+
+function denyMisrouted(role, model) {
+  return (
+    "the dispatch was rejected because it routes the " + role + " seat to '" +
+    model + "' — the routing table in skills/execute/SKILL.md gives each " +
+    "named Claude seat exactly one model (builder/reviewer/storyboarder: " +
+    "opus; qa/documenter/mechanic: sonnet); re-issue with the table's model, " +
+    "and treat wanting a different one as a doctrine change to propose, " +
+    "never a per-dispatch override."
+  );
+}
 
 const DENY_UNROUTED_RUN =
   "a bottega run is live (worktree present under .bottega/wt/) and this dispatch " +
@@ -114,9 +144,12 @@ const model = input.model;
 const routed = typeof model === "string" && model.length > 0;
 
 // Scope 1 — named bottega worker seats, unconditional.
-if (typeof seat === "string" && WORKER_SEAT.test(seat)) {
+const seatMatch = typeof seat === "string" ? seat.match(WORKER_SEAT) : null;
+if (seatMatch) {
+  const role = seatMatch[2];
   if (!routed) deny(DENY_UNROUTED);
   if (FABLE.test(model)) deny(DENY_FABLE);
+  if (!SEAT_MODEL[role].test(model)) deny(denyMisrouted(role, model));
   process.exit(0);
 }
 
