@@ -92,17 +92,17 @@ describe("route-guard: bottega worker agents (always checked)", () => {
   it("allows a routed worker dispatch on the table's model", () => {
     const out = run(ROUTE_GUARD, {
       cwd: repoWithRun(true),
-      tool_input: { subagent_type: "bottega-qa", model: "sonnet", prompt: "drive scenarios" },
+      tool_input: { subagent_type: "bottega-qa", model: "opus", prompt: "drive scenarios" },
     });
     expect(out).toBe("");
   });
 
-  it("denies a misrouted worker dispatch: qa runs on sonnet, never opus", () => {
+  it("denies a misrouted worker dispatch: qa runs on opus, never sonnet", () => {
     const out = run(ROUTE_GUARD, {
       cwd: repoWithRun(true),
-      tool_input: { subagent_type: "bottega-qa", model: "opus", prompt: "drive scenarios" },
+      tool_input: { subagent_type: "bottega-qa", model: "sonnet", prompt: "drive scenarios" },
     });
-    expect(denialOf(out)).toMatch(/qa\/documenter\/mechanic: sonnet/);
+    expect(denialOf(out)).toMatch(/mechanic: sonnet/);
   });
 
   it("checks the mechanic and storyboarder too", () => {

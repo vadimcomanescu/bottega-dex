@@ -67,15 +67,15 @@ const WORKER_AGENT = /(^|:)bottega-(builder|reviewer|qa|documenter|storyboarder|
 const FABLE = /fable/i;
 // The Claude column of the routing table (skills/run/SKILL.md). Codex
 // workers run through `codex exec`, never the Agent tool, so every Claude
-// dispatch of a named worker is fully checkable here: a Claude builder is
-// the user-facing slice (opus), a Claude reviewer reviews codex-built code
-// (opus); qa, documenter, and mechanic are sonnet; the storyboarder produces
-// the signed visual target (opus).
+// dispatch of a named worker is fully checkable here: builder, reviewer, qa,
+// documenter, and storyboarder all issue judgment-bearing work and run on
+// opus; only the mechanic, forbidden judgment by design and dispatched on
+// short closed command lists, runs on sonnet.
 const WORKER_MODEL = {
   builder: /opus/i,
   reviewer: /opus/i,
-  qa: /sonnet/i,
-  documenter: /sonnet/i,
+  qa: /opus/i,
+  documenter: /opus/i,
   storyboarder: /opus/i,
   mechanic: /sonnet/i,
 };
@@ -90,16 +90,16 @@ const DENY_UNROUTED =
   "inherits the dispatching session's own model, which from the orchestrator " +
   "silently escalates the worker to fable; re-issue the same dispatch with an " +
   "explicit model from the routing table in skills/run/SKILL.md (Claude " +
-  "workers: builder/reviewer/storyboarder run on opus, qa/documenter/mechanic " +
-  "run on sonnet).";
+  "workers: builder/reviewer/qa/documenter/storyboarder run on opus, the " +
+  "mechanic runs on sonnet).";
 
 const DENY_FABLE =
   "the dispatch was rejected because it routes a worker agent to fable. " +
   "Fable runs exactly twice per run, the orchestrator's own session and the " +
   "cold read, and the cold read never runs on a worker agent; re-issue from " +
   "the routing table in skills/run/SKILL.md (Claude workers: " +
-  "builder/reviewer/storyboarder run on opus, qa/documenter/mechanic run on " +
-  "sonnet), and if you believe this slice genuinely needs fable-tier " +
+  "builder/reviewer/qa/documenter/storyboarder run on opus, the mechanic " +
+  "runs on sonnet), and if you believe this slice genuinely needs fable-tier " +
   "judgment, stop and put the escalation to the user; their budget, never a " +
   "self-serve dispatch.";
 
@@ -107,8 +107,8 @@ function denyMisrouted(role, model) {
   return (
     "the dispatch was rejected because it routes the " + role + " agent to '" +
     model + "'. The routing table in skills/run/SKILL.md gives each " +
-    "named Claude worker exactly one model (builder/reviewer/storyboarder: " +
-    "opus; qa/documenter/mechanic: sonnet); re-issue with the table's model, " +
+    "named Claude worker exactly one model (builder/reviewer/qa/documenter/" +
+    "storyboarder: opus; mechanic: sonnet); re-issue with the table's model, " +
     "and treat wanting a different one as a routing-table change to propose, " +
     "never a per-dispatch override."
   );

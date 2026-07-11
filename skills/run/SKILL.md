@@ -89,7 +89,7 @@ Every dispatch names model and effort; the route guard (`hooks/route-guard.js`) 
 | user-facing builder; storyboarder | opus-4.8 | high |
 | reviewer of Claude-built code | gpt-5.6-sol (codex) | xhigh |
 | reviewer of codex-built code | opus-4.8 | xhigh |
-| QA; documenter | sonnet-5 | high |
+| QA; documenter | opus-4.8 | high |
 | mechanic | sonnet-5 | low |
 
 - These are defaults, not limits: raise a worker's model or effort when the work's risk demands it, except to fable. Fable runs at most twice per run: this role and a cold read (the panel's dispatches are written into its own workflow script and are not run dispatches). Work that genuinely needs fable-tier judgment is yours by definition: do the hard part yourself (the design, the tricky decision, even the code when a brief would be harder to write than the thing itself) and dispatch the rest. Your own turns are the sanctioned fable use; the route guard checks dispatches, never your own work, and whatever you write still gets its opposite-family review. Never stall a run waiting for permission.
