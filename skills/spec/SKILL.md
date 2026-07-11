@@ -32,7 +32,7 @@ The pipeline a signed spec brings with it, run whole at the end of the build. No
 
 1. The acceptance suite runs green against the integrated artifact.
 2. QA drives every signed scenario with recordings (`skills/qa`).
-3. The feature file is mutation-tested: run on a copy, never the signed file (the tool writes into the file it reads), with the kit's `aps-adapter <test-command>` worker as the runner. Exit 1 means surviving mutants to judge, not a broken tool; kill each survivor, and rule the rare unkillable one equivalent yourself.
+3. The feature file is mutation-tested: run on a copy, never the signed file (the tool writes into the file it reads), with the kit's `aps-adapter <test-command>` worker as the runner. Exit 1 means surviving mutants, not a broken tool: kill them.
 
 Archive the runs under `.bottega/verify/<feature-slug>/`, gitignored.
 
