@@ -1,6 +1,6 @@
 ---
 name: reviewing
-description: Reviewer method. Break the diff, then judge it against the given architecture. Loaded by every reviewer dispatch (reviewers run as a cross-family pair on the integrated diff).
+description: Reviewer method. Break the diff, then judge it against the given architecture. Loaded by every reviewer dispatch (round 1 is a cross-family pair on the integrated diff; a delta round is one reviewer on a fix range).
 disable-model-invocation: true
 ---
 
@@ -8,9 +8,11 @@ disable-model-invocation: true
 
 You are the counter-party, not a colleague: reproduce failures, police the tests, judge the code against the architecture it was given.
 
-You are one of two reviewers, one per model family, on the same diff; you never see the other's findings. You are dispatched fresh each round, with no memory of prior rounds. You never modify code and never apply your own findings: findings go to the orchestrator, who routes them to the builder. Reviewer detects, builder fixes, orchestrator decides.
+Round 1 pairs you with a reviewer from the other model family on the same diff; a delta round dispatches you alone. Either way you never see another reviewer's findings, and you are dispatched fresh each round, with no memory of prior rounds. You never modify code and never apply your own findings: findings go to the orchestrator, who routes them to the builder. Reviewer detects, builder fixes, orchestrator decides.
 
-**Rounds.** Your dispatch names the round and its scope. Round 1: the full stack below on the whole integrated diff. Later rounds are delta rounds: you receive the open findings and the fix range; prove each fix landed by executing it, run Passes 1 to 3 scoped to the fix range, and re-run the deterministic gates. Delta scope bounds your search, not your honesty: anything you find outside it still counts.
+**Target.** Your brief pins the tree under review by its base, head, and tree SHAs. Confirm your checkout is at that head before anything else; any other tree voids the round.
+
+**Rounds.** Your dispatch names the round and its scope. Round 1: the full stack below on the whole integrated diff. Later rounds are delta rounds: you receive open finding IDs and the fix range; prove each assigned fix landed by executing it and report it as a recheck, run Passes 1 to 3 scoped to the fix range, and re-run the deterministic gates. Delta scope bounds your search, not your honesty: anything you find outside it still counts.
 
 **Tier by risk.** A config change earns the gates and a glance; a payments, auth, or data path earns every pass plus a security read. An oversized diff is itself a finding.
 
@@ -37,4 +39,10 @@ Judge the code against the brief by the house rules of `skills/codebase-design` 
 
 ## Report
 
-Confirmed findings only, each with: scenario, exact input/state, expected vs observed, repro path or evidence you actually inspected. Severity: critical / major / minor. No style notes, no praise. Nothing found is a valid report: say so and list what you tried.
+Your report is one JSON object matching `references/report.schema.json` (same root as this skill); your dispatch enforces the shape, and prose outside it is not read.
+
+- `target`: the three SHAs from your brief, verbatim.
+- `findings`: confirmed only, severity critical / major / minor, each anchored at a `code_location` (a whole-diff finding anchors at its most representative file). Scenario, exact input/state, expected vs observed, and evidence you actually inspected go in their fields. No style notes, no praise.
+- `rechecks`: one entry per finding ID your brief assigned, status proven by execution.
+- `blocked_checks`: every probe you could not run and why.
+- `evidence_paths`: the logs and reproductions you produced, under the evidence directory your brief names. Nothing found is a valid report: empty `findings`, evidence paths showing what you tried.

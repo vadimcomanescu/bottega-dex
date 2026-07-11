@@ -66,7 +66,13 @@ Close discovery by telling the user the plan: what you will build, how it will b
 
 ## Review
 
-Review runs once, on the integrated diff, before the PR: two fresh reviewers in parallel, one per model family (routing table), each following `skills/reviewing`, each dispatched cold (a review brief names the diff and the contracts, never anyone's findings). Rule on every finding yourself, confirmed or refuted, with the reason; delta rounds run until no finding survives you. A review still open after round 3 means the setup is wrong (slice breakdown, brief, interface): diagnose instead of re-running. A mistake reviewers confirm twice becomes a gate check when one can catch it; only what no check can catch becomes a one-line rule in later briefs. Reports live under `.bottega/evidence/<feature-slug>/` (verdicts and pointers, not full transcripts), every round appears in the PR, and review the user cannot see counts as not done.
+Review runs once, on the integrated diff, before the PR. Freeze the target first: record the diff's base, head, and tree SHAs, and have the mechanic run the full suite at that head; every review brief carries the SHAs. Round 1 is two fresh reviewers in parallel, one per model family (routing table), each following `skills/reviewing`, each dispatched cold (a review brief names the target SHAs, the diff, and the contracts, never anyone's findings).
+
+Every report is one JSON object against `skills/reviewing/references/report.schema.json`, enforced at the dispatch: the codex reviewer by `--output-schema` (references/codex-dispatch.md), the Claude reviewer by the workflow at `skills/reviewing/assets/review-dispatch.js`. A report that fails the schema, or whose echoed round, reviewer, or SHAs differ from what you dispatched, is a failed dispatch: diagnose it, never repair it. Reports land at `.bottega/evidence/<feature-slug>/review/round-<n>-<family>.json`; your ruling on every finding (confirmed or refuted, with the reason, under a canonical finding ID you assign) sits beside them in `arbitration.md`.
+
+A confirmed finding whose reproduction is a runnable command becomes a gate check the moment you confirm it; the mechanic runs it with the suite at every later SHA, and its green is the recheck. Fixes route to builders, and each fix gets one delta round: a single fresh reviewer, opposite family from the builder who wrote the fix, at high effort, briefed with the open finding IDs, the fix range, and the new SHAs. Two hard bounds: the same confirmed finding still open after two fix attempts stops the fixing (diagnose the brief, interface, or slice breakdown; never a third fix), and a review still open after round 3 means the setup is wrong (diagnose instead of re-running). A mistake reviewers confirm twice becomes a gate check when one can catch it; only what no check can catch becomes a one-line rule in later briefs.
+
+The PR opens only on a clean state derivable from the evidence directory: schema-valid reports from both families at round 1 and from each delta round at its own head SHA, every recheck fixed or its gate check green, no unresolved blocked check, and zero findings surviving your arbitration (a finding you refuted with evidence does not block; the refutation ships in the PR). Every round appears in the PR, and review the user cannot see counts as not done.
 
 ## Deliver
 
@@ -88,7 +94,8 @@ Every dispatch names model and effort; the route guard (`hooks/route-guard.js`) 
 | design second opinion | gpt-5.6-sol (codex) | ultra |
 | builder | gpt-5.6-sol (codex) | medium |
 | user-facing builder; storyboarder | opus-4.8 | high |
-| reviewer pair (one per family) | gpt-5.6-sol (codex) + opus-4.8 | xhigh |
+| reviewer pair, round 1 (one per family) | gpt-5.6-sol (codex) + opus-4.8 | xhigh |
+| delta reviewer (opposite family from the fix's builder) | gpt-5.6-sol (codex) or opus-4.8 | high |
 | QA; documenter | opus-4.8 | high |
 | mechanic | sonnet-5 | low |
 

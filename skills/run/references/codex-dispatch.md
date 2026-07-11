@@ -15,11 +15,13 @@ Builders and reviewers take `-s danger-full-access`; consultation reads take `-s
 - The safety rule (`skills/run`, Standing rules), verbatim.
 - Skills and files by absolute path. `$CLAUDE_PLUGIN_ROOT`, slash commands, and subagents do not exist for a codex worker; a brief naming any of them stalls the worker. Bulk work a Claude worker would fan out to subagents, a codex brief chunks inline.
 - The gate commands verbatim. The worker runs its own gate, including anything that binds (dev server, integration suite), and watches it pass. Green stays something the worker saw itself.
-- An output contract ending in a fenced JSON block (verdict, files touched, evidence paths, anomalies), so the `-o` message is parsed like every other worker's report instead of hand-read as prose.
+- An output contract ending in a fenced JSON block (verdict, files touched, evidence paths, anomalies), so the `-o` message is parsed like every other worker's report instead of hand-read as prose. Reviewers are the exception: their contract is the schema, below.
 
 ## Codex reviewer preparation
 
-Before every codex reviewer dispatch, have a disposable copy of the run worktree created at the green tip under review (a mechanic brief, or your own turns on a small run). Run the reviewer from the disposable copy with `-s danger-full-access`: read-only starves the suites and probes reviewing demands, and disposability, not the sandbox, keeps the reviewer's hands off the product tree. Remove the copy after the round.
+Before every codex reviewer dispatch, have a disposable copy of the run worktree created at the head SHA under review (a mechanic brief, or your own turns on a small run). Run the reviewer from the disposable copy with `-s danger-full-access`: read-only starves the suites and probes reviewing demands, and disposability, not the sandbox, keeps the reviewer's hands off the product tree. Remove the copy after the round.
+
+A reviewer dispatch adds `--output-schema <install root>/skills/reviewing/references/report.schema.json` (absolute path, like everything else here) to the `exec` line, so the `-o` message is the schema-enforced review report itself. Before accepting it, check the echoed identity against the brief: `round`, `reviewer.family`, `reviewer.model`, and all three `target` SHAs must match what you dispatched. The schema proves shape, not identity; a mismatch on either is a failed dispatch to diagnose, never a report to repair.
 
 ## The builder brief
 

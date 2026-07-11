@@ -16,7 +16,7 @@ Autonomous issue-to-PR runs for Claude Code, built for Fable to orchestrate: one
 | `agents/` | Worker identity: builder, reviewer, qa, documenter, storyboarder, mechanic, panelist, panel-judge. Agent files point at their skill, never copy it, and never pin model or effort; routing lives in the orchestrator's table, enforced by the route guard |
 | `hooks/` | Route guard (PreToolUse): named worker agents always, and any dispatch from a session that owns a live run (`.bottega/wt/<feature-slug>/` + `.bottega/run/<feature-slug>/owner`); rejected when it omits `model`, names fable (a cold read passes by naming itself), or misroutes a named worker. Workflow calls from a run-owning session are checked statically: every `agent()` in the script must name a model, fable only in the panel's own script, an unreadable script is denied. Entry guard (UserPromptSubmit) points run-intent prose at `/bottega:run` |
 | `docs/specs/` | Closed records of delivered runs |
-| `tests/` | Unit tests for the hooks |
+| `tests/` | Unit tests for the hooks and the review report contract |
 
 In host repos, a run's working state lives under `.bottega/`, gitignored; the committed artifacts are the PR and, on spec runs, the spec doc, `features/*.feature`, and the step handlers in the host's test tree. Evidence the user sees lives in the delivery PR. The one exception is the never-merged evidence branch (`bottega/evidence-<feature-slug>`), deleted after merge.
 

@@ -1,0 +1,220 @@
+export const meta = {
+  name: 'review-dispatch',
+  description: 'One Claude reviewer, report enforced against report.schema.json',
+  phases: [{ title: 'Review' }],
+}
+
+// args: { brief: string, effort?: 'xhigh' | 'high' }. Round 1 runs xhigh (the
+// default); a delta round passes 'high'. The harness rejects any final message
+// that does not match SCHEMA, so a malformed report is a failed dispatch, not
+// a parsing problem. SCHEMA is a verbatim copy of
+// ../references/report.schema.json (workflow scripts cannot read files);
+// tests/review-report.test.ts pins the two equal.
+const SCHEMA = {
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "round",
+    "reviewer",
+    "target",
+    "evidence_paths",
+    "rechecks",
+    "findings",
+    "blocked_checks"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "enum": [
+        1
+      ]
+    },
+    "round": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "reviewer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "family",
+        "model"
+      ],
+      "properties": {
+        "family": {
+          "type": "string",
+          "enum": [
+            "codex",
+            "claude"
+          ]
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "base_sha",
+        "head_sha",
+        "tree_sha"
+      ],
+      "properties": {
+        "base_sha": {
+          "type": "string",
+          "minLength": 1
+        },
+        "head_sha": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tree_sha": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "evidence_paths": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "rechecks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "finding_id",
+          "status",
+          "evidence"
+        ],
+        "properties": {
+          "finding_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fixed",
+              "open",
+              "blocked"
+            ]
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "severity",
+          "scenario",
+          "input_state",
+          "expected",
+          "observed",
+          "evidence",
+          "code_location"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "major",
+              "minor"
+            ]
+          },
+          "scenario": {
+            "type": "string",
+            "minLength": 1
+          },
+          "input_state": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expected": {
+            "type": "string",
+            "minLength": 1
+          },
+          "observed": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1
+          },
+          "code_location": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file_path",
+              "line"
+            ],
+            "properties": {
+              "file_path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "blocked_checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "check",
+          "reason"
+        ],
+        "properties": {
+          "check": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
+
+phase('Review')
+const report = await agent(args.brief, {
+  agentType: 'bottega-reviewer',
+  model: 'opus-4.8',
+  effort: args.effort === 'high' ? 'high' : 'xhigh',
+  schema: SCHEMA,
+  label: 'reviewer:claude',
+})
+return report
