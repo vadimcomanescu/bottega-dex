@@ -94,9 +94,8 @@ Every dispatch names model and effort; the route guard (`hooks/route-guard.js`) 
 
 - These are defaults, not limits: escalate when output misses the bar — except to fable. Fable rides at most two run seats: this one and a cold read (the panel's seats are written into its own workflow script and are not run dispatches). A slice you believe needs fable-tier judgment is an escalation you put to the user.
 - Medium is the builder floor; a risky or vaguely specified slice raises sol to high or xhigh — judged by risk, not size.
-- A builder reporting stuck, or a review still open past round 3, gets a diagnosis first. After the diagnosis, one retry: sol at max for one hard problem, or ultra when the diagnosis names separable subproblems — never for review, gates, or evidence.
-- The mechanic runs a closed checklist and stops on any anomaly — report, never repair. Use one when writing the checklist is cheaper than doing the steps yourself; otherwise do them yourself.
-- Codex quota is a weekly pool: spend it on the mandatory cross-family reviews before any optional codex escalation. A quota lockout mid-run goes to the user, never worked around.
+- Sol's `max` and `ultra` tiers are one deliberate retry after you've diagnosed a failure — never automatic, never spent on review, gates, or evidence.
+- Codex quota is a shared weekly pool. A quota lockout mid-run goes to the user, never worked around silently.
 
 ## Standing rules
 
