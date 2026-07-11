@@ -44,7 +44,7 @@ Nothing else is assumed about the host repo. Run state lives under `.bottega/`, 
 
 ## Roles
 
-Agent definitions in `agents/` say who a worker is; skills in `skills/` say how it works. Agent files never pin a model: the full routing table (with reasoning effort per seat) lives in [`skills/run/SKILL.md`](skills/run/SKILL.md) and is enforced by the hook. The models below mirror it; every judgment-bearing role runs on a top-tier model, and sonnet holds only the mechanic, where the work is short and judgment is forbidden by design.
+Agent definitions in `agents/` say who a worker is; skills in `skills/` say how it works. Agent files never pin a model: the full routing table (with reasoning effort per role) lives in [`skills/run/SKILL.md`](skills/run/SKILL.md) and is enforced by the hook. The models below mirror it; every judgment-bearing role runs on a top-tier model, and sonnet holds only the mechanic, where the work is short and judgment is forbidden by design.
 
 | Role | Job | Model | Method |
 | --- | --- | --- | --- |

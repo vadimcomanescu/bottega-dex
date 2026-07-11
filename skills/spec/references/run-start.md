@@ -42,5 +42,5 @@ The brief, in order:
    `.bottega/run/<feature-slug>/baseline.json` (test id + one-line failure).
    Briefs point at it; no slice worker ever re-derives it.
 6. **Commit the wiring.** Commit the generated acceptance wiring on the run
-   branch, following the commit grammar.
+   branch, following the commit message format.
 7. **Report.** Exit codes for every step, the RED evidence path, the baseline path.
