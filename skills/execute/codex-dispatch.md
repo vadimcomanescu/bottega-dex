@@ -8,13 +8,13 @@ One-turn seats (review, consultation):
 codex exec --ignore-user-config -m <model> -c model_reasoning_effort=<effort> -s <sandbox> -C <worktree> --json -o <msg> < brief.md > <events>
 ```
 
-Builders take `-s workspace-write`; consultation reads take `-s read-only`. A codex **reviewer** takes `-s workspace-write`; its isolation and instrument staging are in Codex reviewer preparation below.
+Builders and reviewers take `-s danger-full-access`; consultation reads take `-s read-only`. Full access is a decision, not a convenience — do not "fix" it back: Claude seats run unsandboxed on the same host, so the run's trust boundary is the trusted repo plus the worktree, and sandboxing only the codex family adds no safety while breaking the seat — `workspace-write` denies every socket (no localhost bind, no dev server, no database, no integration suite; probed 2026-07-11) and denies shared-gitdir writes (no commits), and its one repair knob (`sandbox_workspace_write.network_access`) is silently ignored on macOS, which breaks runs-identically-on-any-host. The sandbox returns only as role enforcement where the seat must not write: consultation reads, and the `codex review` instrument's `read-only` pin in `skills/reviewing`. If bottega ever runs on a repo the user does not trust, the sandbox comes back — for both families.
 
 ## What every brief carries
 
 - The worker rail (`skills/execute`, Standing rules), verbatim.
 - Skills and files by absolute path. `$CLAUDE_PLUGIN_ROOT`, slash commands, and subagents do not exist for a codex seat — a brief naming any of them stalls the seat. Bulk work a Claude seat would fan out to subagents, a codex brief chunks inline.
-- The gate commands verbatim, split into seat-run and mechanic-run. The sandbox blocks localhost binds as well as gitdir writes, so any binding gate — dev server, browser, integration suite — is the mechanic's by name, or the seat burns its turn on `listen EPERM` and ships code it never saw run.
+- The gate commands verbatim. The seat runs its own gate — including anything that binds (dev server, integration suite) — and watches it pass; green stays something the seat saw itself.
 - An output contract ending in a fenced JSON block — verdict, files touched, evidence paths, anomalies — so the `-o` message is parsed like every other seat's report, never hand-read prose.
 
 ## Codex reviewer preparation
@@ -23,31 +23,23 @@ Before every codex reviewer dispatch, a mechanic creates a disposable copy of th
 slice worktree at the reviewed green tip. The mechanic pre-runs every instrument
 named by `skills/reviewing` that the codex seat's harness lacks and puts the
 resulting findings files in the dossier. Run the reviewer from the disposable
-copy with `-s workspace-write`: read-only starves the suites and probes reviewing
+copy with `-s danger-full-access`: read-only starves the suites and probes reviewing
 demands, and disposability, not the sandbox, keeps the reviewer's hands off the
 product tree. Sweep the copy after the round.
 
-## The two-brief builder sequence
+## The builder brief
 
-Codex sandboxes deny writes under a shared gitdir, so a codex builder in a slice worktree cannot commit — verified, never solved with `danger-full-access`. Builder briefs contain no git commands; the dispatching mechanic owns every git step: pre-creates worktree and branch, then splits the build into two turns on one thread so the commit grammar survives. Authorship stays with the builder; the mechanic never writes implementation code. Both turns run from inside the slice worktree.
+A codex builder is one `exec` turn that owns the whole slice, same as a Claude seat: write the RED tests, watch them fail, commit RED, implement to green, commit — the brief carries the run's commit grammar and the seat commits its own work by explicit path per `skills/implementing`. The mechanic still pre-creates the worktree and branch; it never commits for the seat and never writes implementation code. The turn runs from inside the slice worktree.
 
-**RED — failing tests.** The brief says tests only — no production code, stop at red: a RED turn that runs on to green leaves the mechanic nothing true to commit, and the RED commit becomes a lie. Plain `exec`:
+## Resuming a codex thread
 
-```
-codex exec --ignore-user-config -m <model> -c model_reasoning_effort=<effort> -s workspace-write -C <worktree> --json -o red-msg.txt < brief-red.md > red-events.jsonl
-```
+Review findings go back to the builder by `codex exec resume <thread-id>` — the id is the `thread_id` field of the `thread.started` event in the events file. Never `--resume`/`--last`, which select by cwd and pick the wrong session under parallel slices. `resume` drops exactly two of `exec`'s flags; every other flag is repeated verbatim. Both dropped flags are load-bearing:
 
-The mechanic verifies the tests fail on the assertion and commits RED. The thread id is the `thread_id` field of the `thread.started` event in `red-events.jsonl`.
-
-**GREEN — implement to green.** Resume by that id — never `--resume`/`--last`, which select by cwd and pick the wrong session under parallel slices. `resume` drops exactly two of `exec`'s flags; every other flag is repeated verbatim. Both dropped flags are load-bearing:
-
-- no `-s`: the sandbox defaults to read-only — pass `-c sandbox_mode=workspace-write` or the turn is a silent no-op that still exits 0;
-- no `-C`: the writable root and the builder's file paths follow the process cwd — running from inside the slice worktree is what puts GREEN in the right tree.
+- no `-s`: the sandbox defaults to read-only — pass `-c sandbox_mode=danger-full-access` or the turn is a silent no-op that still exits 0;
+- no `-C`: the writable root and the builder's file paths follow the process cwd — run from inside the slice worktree.
 
 ```
-codex exec resume <thread-id> --ignore-user-config -m <model> -c model_reasoning_effort=<effort> -c sandbox_mode=workspace-write --json -o green-msg.txt - < brief-green.md > green-events.jsonl
+codex exec resume <thread-id> --ignore-user-config -m <model> -c model_reasoning_effort=<effort> -c sandbox_mode=danger-full-access --json -o fix-msg.txt - < brief-fix.md > fix-events.jsonl
 ```
 
-(`-` is resume's read-the-brief-from-stdin marker.) The mechanic runs the gate and commits green.
-
-The thread is context reuse, not a requirement: it lives only in that host's `CODEX_HOME` and dies with the seat. Reclaiming a seat that finished RED, dispatch GREEN as a fresh `exec` with a self-contained brief — RED is already committed.
+(`-` is resume's read-the-brief-from-stdin marker.) The thread is context reuse, not a requirement: it lives only in that host's `CODEX_HOME` and dies with the seat. A dead thread means a fresh `exec` with a self-contained brief carrying the findings and the seat's prior report.
