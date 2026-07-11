@@ -209,6 +209,86 @@ describe("route-guard: all other dispatches, gated on a live run", () => {
   });
 });
 
+describe("route-guard: workflow scripts from a run's session", () => {
+  // The observed failure: during a run, one /code-review invocation launched
+  // a workflow whose 19 agent() calls named no model, so every one inherited
+  // the orchestrator's session model, fable. None of them was an Agent
+  // dispatch, so scope 2 never saw it.
+  const CODE_REVIEW_SHAPE = `export const meta = {
+  name: 'code-review',
+  description: 'Workflow-backed code review',
+  phases: [{ title: 'Scope' }, { title: 'Find' }, { title: 'Verify' }],
+}
+phase('Scope')
+const scope = await agent(\`Pin the diff (git diff master...HEAD) and list files\`, { label: 'scope', schema: SCOPE })
+const found = await parallel(ANGLES.map(a => () => agent(a.prompt, { label: a.key, schema: FINDINGS })))
+`;
+
+  function workflowEvent(tool_input: object, session_id = OWNER, live = true) {
+    return {
+      cwd: repoWithRun(live, OWNER),
+      session_id,
+      tool_name: "Workflow",
+      tool_input,
+    };
+  }
+
+  it("denies a script whose agent() calls name no model", () => {
+    const out = run(ROUTE_GUARD, workflowEvent({ script: CODE_REVIEW_SHAPE }));
+    expect(denialOf(out)).toMatch(/names no model/);
+  });
+
+  it("denies a script that routes an agent to fable", () => {
+    const script = `export const meta = { name: 'sweep', description: 'x', phases: [] }
+const r = await agent('judge the diff', { label: 'judge', model: 'fable' })
+`;
+    expect(denialOf(run(ROUTE_GUARD, workflowEvent({ script })))).toMatch(/routes an agent to fable/);
+  });
+
+  it("allows a script with every agent() pinned off fable", () => {
+    const script = `export const meta = { name: 'sweep', description: 'x', phases: [] }
+const a = await agent('find bugs', { model: 'opus' })
+const b = await agent('run the gates', { label: 'gates', model: 'sonnet', effort: 'low' })
+`;
+    expect(run(ROUTE_GUARD, workflowEvent({ script }))).toBe("");
+  });
+
+  it("allows the shipped panel script, fable pins and all", () => {
+    const panel = join(import.meta.dirname, "..", "skills", "panel", "panel.js");
+    expect(run(ROUTE_GUARD, workflowEvent({ scriptPath: panel }))).toBe("");
+  });
+
+  it("denies fable outside the panel even when the script mentions the panel", () => {
+    const script = `export const meta = { name: 'review', description: 'like the panel', phases: [] }
+// not the panel: the meta name is what passes, never a mention
+const r = await agent('panel-style judging', { model: 'fable' })
+`;
+    expect(denialOf(run(ROUTE_GUARD, workflowEvent({ script })))).toMatch(/routes an agent to fable/);
+  });
+
+  it("denies what it cannot read: name-only invocations, dead scriptPaths, unclosed calls", () => {
+    for (const tool_input of [
+      { name: "code-review", args: "high" },
+      { scriptPath: "/nonexistent/wf.js" },
+      { script: "export const meta = { name: 'x', description: 'x' }\nagent('never closes'" },
+    ]) {
+      expect(denialOf(run(ROUTE_GUARD, workflowEvent(tool_input)))).toMatch(/cannot be checked/);
+    }
+  });
+
+  it("stays silent for bystander sessions and outside a run", () => {
+    expect(run(ROUTE_GUARD, workflowEvent({ script: CODE_REVIEW_SHAPE }, "bystander-session"))).toBe("");
+    expect(
+      run(ROUTE_GUARD, {
+        cwd: repoWithRun(false, OWNER),
+        session_id: OWNER,
+        tool_name: "Workflow",
+        tool_input: { script: CODE_REVIEW_SHAPE },
+      }),
+    ).toBe("");
+  });
+});
+
 describe("route-guard: stale contract state never arms the guard", () => {
   // The old activation keyed off locks, gate records, and spec-doc status
   // strings; state nothing retires, so one delivered run fenced every

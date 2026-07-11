@@ -14,7 +14,7 @@ orchestrator, never a judgment the mechanic makes.
 3. **Check the diff.** Before integration, diff the slice from its branch point
    and compare every changed path with its owned-files list. Any out-of-list path
    is a finding; stop before the merge and report it.
-4. **Merge.** In the run worktree, merge only the reviewed green slice tip. Keep
+4. **Merge.** In the run worktree, merge only the green slice tip. Keep
    its RED and green commits intact and create the `bottega: integrate <slice>`
    commit even when Git could fast-forward. A conflict goes back to the orchestrator;
    the mechanic never resolves it by editing product code.

@@ -1,6 +1,6 @@
 ---
 name: reviewing
-description: Reviewer method. Break the diff, then judge it against the given architecture. Loaded by every reviewer dispatch (always the opposite model family from the builder).
+description: Reviewer method. Break the diff, then judge it against the given architecture. Loaded by every reviewer dispatch (reviewers run as a cross-family pair on the integrated diff).
 disable-model-invocation: true
 ---
 
@@ -8,15 +8,15 @@ disable-model-invocation: true
 
 You are the counter-party, not a colleague: reproduce failures, police the tests, judge the code against the architecture it was given.
 
-You run on the opposite model family from whoever built the slice; if you find you share it, refuse and report the routing error. You are dispatched fresh each round, with no memory of prior rounds. You never modify code and never apply your own findings: findings go to the orchestrator, who routes them to the builder. Reviewer detects, builder fixes, orchestrator decides.
+You are one of two reviewers, one per model family, on the same diff; you never see the other's findings. You are dispatched fresh each round, with no memory of prior rounds. You never modify code and never apply your own findings: findings go to the orchestrator, who routes them to the builder. Reviewer detects, builder fixes, orchestrator decides.
 
-**Rounds.** Your dispatch names the round and its scope. Round 1: the full stack below on the whole slice diff. Later rounds are delta rounds: you receive the open findings and the fix range; prove each fix landed by executing it, run Passes 1 to 3 scoped to the fix range, re-run the deterministic gates, and skip Pass 0 unless the dispatch names a lens and a reason. Delta scope bounds your search, not your honesty: anything you find outside it still counts.
+**Rounds.** Your dispatch names the round and its scope. Round 1: the full stack below on the whole integrated diff. Later rounds are delta rounds: you receive the open findings and the fix range; prove each fix landed by executing it, run Passes 1 to 3 scoped to the fix range, and re-run the deterministic gates. Delta scope bounds your search, not your honesty: anything you find outside it still counts.
 
-**Tier by risk.** A config change earns the automated tools and a glance; a payments, auth, or data path earns every pass plus a security read. An oversized diff is itself a finding.
+**Tier by risk.** A config change earns the gates and a glance; a payments, auth, or data path earns every pass plus a security read. An oversized diff is itself a finding.
 
-## Pass 0: automated reviews (round 1 only, unless the dispatch names it)
+## Pass 0: gates and scans
 
-Run the built-in reviews as parallel detectors, using the ones your runtime has (a tool your runtime lacks arrives pre-run as a findings file in your brief): the Claude harness's `/code-review` at high effort (never `--fix`; Claude workers only), and codex's review, headless: `codex review --ignore-user-config -m gpt-5.6-sol --base <base> -c model_reasoning_effort=xhigh -c sandbox_mode=read-only > <findings-file>` (it defaults to danger-full-access; never drop the sandbox pin). Their findings are candidates, not verdicts: verify each against the actual code before it enters your report, and drop or mark unverified what you can't confirm. Run the deterministic gates (types, tests, lint) first and never soften them. Always add two scans: grep the diff for secret-shaped strings, and check anything that logs or emits telemetry for secrets, PII, and unbounded label cardinality. These block.
+Run the deterministic gates (types, tests, lint) first and never soften them. Two scans always: grep the diff for secret-shaped strings, and check anything that logs or emits telemetry for secrets, PII, and unbounded label cardinality. These block.
 
 ## Pass 1: break it
 

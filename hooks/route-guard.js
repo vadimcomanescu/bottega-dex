@@ -35,10 +35,23 @@
 //      Outside all of that the guard stays silent so the plugin never breaks
 //      unrelated sessions, concurrent or later.
 //
+//   3. Workflow tool calls, from a run-owning session only. A workflow
+//      agent() call that names no model inherits the session's model, so
+//      from the orchestrator a single workflow multiplies fable silently
+//      (observed: one /code-review invocation during a run put 19 fable
+//      agents on a diff, unseen by scope 2 because none of them was an
+//      Agent dispatch). The check is static, on the script text: every
+//      agent() call must name a model, and none may name fable. The one
+//      exception mirrors the cold read: the panel's bundled script is
+//      sanctioned to route fable and passes by naming itself in its meta.
+//      A script the guard cannot read (name-only invocation, unreadable
+//      scriptPath, unparseable call) is denied, not waved through: inside
+//      the fence, unverifiable routing is unrouted routing.
+//
 // The checks are mechanical, not trusted to memory.
 
 import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 
 // The sessions owning live runs here: .bottega/run/<slug>/owner, counted only
 // while the same slug's worktree entry .bottega/wt/<slug>/ is non-empty. Any
@@ -128,6 +141,80 @@ const DENY_FABLE_RUN =
   "description begins with 'cold read', and anything else re-issues from the " +
   "routing table in skills/run/SKILL.md or goes to the user as an escalation.";
 
+const DENY_WORKFLOW_UNPINNED_RUN =
+  "this session owns a live bottega run (its id is in .bottega/run/<slug>/owner) " +
+  "and this workflow script has an agent() call that names no model. A workflow " +
+  "agent that names no model inherits the session's model, which from the " +
+  "orchestrator silently escalates every such agent to fable; re-issue the " +
+  "workflow with an explicit model on every agent() call, from the routing " +
+  "table in skills/run/SKILL.md.";
+
+const DENY_WORKFLOW_FABLE_RUN =
+  "this session owns a live bottega run (its id is in .bottega/run/<slug>/owner) " +
+  "and this workflow script routes an agent to fable. The panel's bundled " +
+  "script is the one workflow sanctioned to route fable and passes by naming " +
+  "itself in its meta; anything else re-issues from the routing table in " +
+  "skills/run/SKILL.md or goes to the user as an escalation.";
+
+const DENY_WORKFLOW_UNCHECKED_RUN =
+  "this session owns a live bottega run (its id is in .bottega/run/<slug>/owner) " +
+  "and this workflow's script cannot be read, so its model routing cannot be " +
+  "checked. Re-issue with the script inline or at a readable scriptPath, with " +
+  "an explicit model on every agent() call.";
+
+// Anchored to the meta literal that opens every workflow script, so a script
+// merely mentioning the panel does not pass; same shape as the cold-read
+// prefix, the sanctioned caller passes by naming itself.
+const PANEL_META = /export\s+const\s+meta\s*=\s*\{\s*name\s*:\s*['"`]panel['"`]/;
+
+// The script under check: scriptPath wins over inline script, matching the
+// Workflow tool's own precedence; a name-only invocation resolves elsewhere
+// and is unreadable here.
+function workflowScript(input, cwd) {
+  const path = typeof input.scriptPath === "string" && input.scriptPath.length > 0
+    ? (isAbsolute(input.scriptPath) ? input.scriptPath : join(cwd, input.scriptPath))
+    : null;
+  if (path) {
+    try {
+      return readFileSync(path, "utf8");
+    } catch {
+      return null;
+    }
+  }
+  if (typeof input.script === "string" && input.script.length > 0) return input.script;
+  return null;
+}
+
+// The argument text of every agent(...) call, by balanced-paren scan with
+// string skipping; null when a call never closes, which the caller treats as
+// unreadable.
+function agentCalls(script) {
+  const calls = [];
+  const re = /\bagent\s*\(/g;
+  let match;
+  while ((match = re.exec(script))) {
+    let depth = 1;
+    let quote = "";
+    let i = re.lastIndex;
+    for (; i < script.length && depth > 0; i++) {
+      const ch = script[i];
+      if (quote) {
+        if (ch === "\\") i++;
+        else if (ch === quote) quote = "";
+      } else if (ch === "'" || ch === '"' || ch === "`") quote = ch;
+      else if (ch === "(") depth++;
+      else if (ch === ")") depth--;
+    }
+    if (depth > 0) return null;
+    calls.push(script.slice(re.lastIndex, i - 1));
+    re.lastIndex = i;
+  }
+  return calls;
+}
+
+const PINNED = /\bmodel\s*:/;
+const PINNED_FABLE = /\bmodel\s*:\s*['"`][^'"`]*fable/i;
+
 function readStdin() {
   return new Promise((resolve) => {
     let data = "";
@@ -182,6 +269,17 @@ const cwd =
   typeof event.cwd === "string" && event.cwd.length > 0 ? event.cwd : process.cwd();
 const session = typeof event.session_id === "string" ? event.session_id : "";
 if (!session || !liveOwners(cwd).has(session)) process.exit(0); // not a run's session
+
+// Scope 3: workflow scripts, checked statically.
+if (event.tool_name === "Workflow") {
+  const script = workflowScript(input, cwd);
+  const calls = script === null ? null : agentCalls(script);
+  if (calls === null) deny(DENY_WORKFLOW_UNCHECKED_RUN);
+  if (calls.some((call) => !PINNED.test(call))) deny(DENY_WORKFLOW_UNPINNED_RUN);
+  if (calls.some((call) => PINNED_FABLE.test(call)) && !PANEL_META.test(script))
+    deny(DENY_WORKFLOW_FABLE_RUN);
+  process.exit(0);
+}
 
 if (!routed) deny(DENY_UNROUTED_RUN);
 if (FABLE.test(model)) {

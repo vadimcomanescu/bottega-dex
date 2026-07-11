@@ -8,7 +8,7 @@ One-turn dispatches (review, consultation):
 codex exec --ignore-user-config -m <model> -c model_reasoning_effort=<effort> -s <sandbox> -C <worktree> --json -o <msg> < brief.md > <events>
 ```
 
-Builders and reviewers take `-s danger-full-access`; consultation reads take `-s read-only`. Full access is a decision, not a convenience; do not "fix" it back. Claude workers run unsandboxed on the same host, so the run's trust boundary is the trusted repo plus the worktree, and sandboxing only the codex family adds no safety while breaking the worker: `workspace-write` denies every socket (no localhost bind, no dev server, no database, no integration suite; verified 2026-07-11) and denies shared-gitdir writes (no commits). Its one repair knob, `sandbox_workspace_write.network_access`, is silently ignored on macOS, so it cannot make a dispatch run identically on any host. The sandbox returns only as role enforcement where the worker must not write: consultation reads, and the `codex review` tool's `read-only` pin in `skills/reviewing`. If bottega ever runs on a repo the user does not trust, the sandbox comes back, for both families.
+Builders and reviewers take `-s danger-full-access`; consultation reads take `-s read-only`. Full access is a decision, not a convenience; do not "fix" it back. Claude workers run unsandboxed on the same host, so the run's trust boundary is the trusted repo plus the worktree, and sandboxing only the codex family adds no safety while breaking the worker: `workspace-write` denies every socket (no localhost bind, no dev server, no database, no integration suite; verified 2026-07-11) and denies shared-gitdir writes (no commits). Its one repair knob, `sandbox_workspace_write.network_access`, is silently ignored on macOS, so it cannot make a dispatch run identically on any host. The sandbox returns only as role enforcement where the worker must not write: consultation reads. If bottega ever runs on a repo the user does not trust, the sandbox comes back, for both families.
 
 ## What every brief carries
 
@@ -19,7 +19,7 @@ Builders and reviewers take `-s danger-full-access`; consultation reads take `-s
 
 ## Codex reviewer preparation
 
-Before every codex reviewer dispatch, have a disposable copy of the slice worktree created at the reviewed green tip (a mechanic brief, or your own turns on a small run). Tools named by `skills/reviewing` that a codex worker cannot run (the Claude harness's `/code-review`) are pre-run on the dispatcher's side and land in the brief as findings files. Run the reviewer from the disposable copy with `-s danger-full-access`: read-only starves the suites and probes reviewing demands, and disposability, not the sandbox, keeps the reviewer's hands off the product tree. Remove the copy after the round.
+Before every codex reviewer dispatch, have a disposable copy of the run worktree created at the green tip under review (a mechanic brief, or your own turns on a small run). Run the reviewer from the disposable copy with `-s danger-full-access`: read-only starves the suites and probes reviewing demands, and disposability, not the sandbox, keeps the reviewer's hands off the product tree. Remove the copy after the round.
 
 ## The builder brief
 
