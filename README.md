@@ -76,7 +76,7 @@ npm test        # hook unit tests
 
 ## Credits
 
-The acceptance approach follows Robert C. Martin's [Acceptance Pipeline Specification](https://github.com/unclebob/Acceptance-Pipeline-Specification) via the [acceptance-pipeline-kit](https://github.com/vadimcomanescu/acceptance-pipeline-kit). The discovery method (interviewing for unknowns) follows Thariq Shihipar's unknowns framework. The design vocabulary is John Ousterhout's deep modules. The build-then-review split follows Addy Osmani's long-running-agent notes.
+The acceptance approach follows Robert C. Martin's [Acceptance Pipeline Specification](https://github.com/unclebob/Acceptance-Pipeline-Specification) via the [acceptance-pipeline-kit](https://github.com/vadimcomanescu/acceptance-pipeline-kit). The discovery method (interviewing for unknowns) follows Thariq Shihipar's unknowns framework. The design vocabulary is John Ousterhout's deep modules. The build-then-review split follows Addy Osmani's long-running-agent notes. The panel (blinded frontier drafts, a judge held to structured comparison) follows OpenRouter's [Fusion](https://openrouter.ai/blog/announcements/fusion-beats-frontier/), which measured fused frontier models beating any single one; bottega deviates in one place: the judge never writes the answer, synthesis stays with the orchestrator, which holds the run context the judge never sees.
 
 ## License
 

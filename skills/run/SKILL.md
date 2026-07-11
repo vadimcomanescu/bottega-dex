@@ -41,10 +41,9 @@ Every run, whatever its size, gets: its own branch and worktree, a build, the ho
 
 - **A signed spec** (spec doc and Gherkin scenarios per `skills/spec`, signed through `skills/signoff`): only when the work introduces product behavior the user should read before it ships. A spec brings its whole verification pipeline: the acceptance toolchain, the suite run green, QA driving every signed scenario with recordings, and feature-file mutation testing with survivors killed (`skills/spec`, Verifying the spec). The signing gate is for a user who is present. Told to run unattended (their explicit word, usually pointing at an issue, never inferred from the issue alone): sign it yourself, disclose that in the PR's first line, and use the issue thread for everything the gate doc would have carried.
 - **Storyboards** (`skills/storyboarding`): when a wrong guess about a user-facing screen would be expensive to build.
-- **A panel draft** (`skills/panel`): when one hard, one-shot artifact decides the run and no test can catch a wrong answer.
+- **A panel draft** (`skills/panel`): when more than one architecture would work and nothing in the repo settles the choice, panel the approach before slicing; a wrong architecture is the one mistake no later gate catches, since every slice, test, and review is built against it. A spec doc hard enough that coverage decides its quality is drafted the same way (`skills/spec`, step 2).
 - **A QA drive with recordings** (`skills/qa`): on a run with no spec, when the user needs to see it working (new user-facing behavior, a disputed fix). Green tests are not that proof; a recording is. A spec run already includes QA on every signed scenario.
 - **A docs pass** (`skills/documenting`): when the diff makes the host's agent-facing docs wrong.
-- **A second opinion on the design** (sol, ultra, read-only): when the slice breakdown is debatable. Its findings are suggestions; you rule on each one.
 - **An early interface review**: one opposite-family round on a slice whose contracts later slices consume, before the dependents build.
 - **A cold read**: a fresh fable judge (xhigh) given the request, the diff, and the evidence, none of your narrative. Use it when the danger is grading your own work: a long run, a design of your own under review. It passes the route guard by a dispatch description that begins "cold read".
 
@@ -91,7 +90,6 @@ Every dispatch names model and effort; the route guard (`hooks/route-guard.js`) 
 | role | model | effort |
 | --- | --- | --- |
 | orchestrator; cold read | fable-5 | xhigh |
-| design second opinion | gpt-5.6-sol (codex) | ultra |
 | builder | gpt-5.6-sol (codex) | medium |
 | user-facing builder; storyboarder | opus-4.8 | high |
 | reviewer pair, round 1 (one per family) | gpt-5.6-sol (codex) + opus-4.8 | xhigh |
