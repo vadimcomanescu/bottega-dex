@@ -11,12 +11,12 @@
 //          POST /gate/comment    -> appends one user comment/reply to feedback.jsonl
 //          POST /gate/decision   -> writes decision.json, appends to feedback.jsonl
 //
-// The files ARE the API between user and maestro:
-//   feedback.jsonl  user -> maestro   comments {id,anchor,label,text,at,by:"user"}
+// The files ARE the API between user and bottega:
+//   feedback.jsonl  user -> bottega   comments {id,anchor,label,text,at,by:"user"}
 //                                       replies  {id,replyTo,text,at,by:"user"}
-//   replies.jsonl   maestro -> user   {replyTo:<comment id>,text,at,by:"maestro",resolve?:true}
-//   state.json      maestro -> page     {revision,status:"review"|"reading"|"revising",changed:[anchors]}
-//   decision.json   user -> maestro   durable observable; watch it like any dispatch
+//   replies.jsonl   bottega -> user   {replyTo:<comment id>,text,at,by:"bottega",resolve?:true}
+//   state.json      bottega -> page     {revision,status:"review"|"reading"|"revising",changed:[anchors]}
+//   decision.json   user -> bottega   durable observable; watch it like any dispatch
 // To publish a revision: rewrite gate.html, bump state.json revision, status
 // "review" — every open page reloads itself and badges the changed anchors.
 
@@ -45,14 +45,14 @@ async function jsonl(name) {
 }
 async function assembleThread() {
   const user = (await jsonl("feedback.jsonl")).filter(e => !e.decision);
-  const maestro = await jsonl("replies.jsonl");
+  const bottega = await jsonl("replies.jsonl");
   const comments = user.filter(e => e.anchor).map(c => ({ ...c, replies: [], resolved: false }));
   const byId = new Map(comments.map(c => [c.id, c]));
-  for (const r of [...user.filter(e => e.replyTo), ...maestro]) {
+  for (const r of [...user.filter(e => e.replyTo), ...bottega]) {
     const parent = byId.get(r.replyTo); if (!parent) continue;
     if (r.resolve) parent.resolved = true;
     if (typeof r.text === "string" && r.text.trim())
-      parent.replies.push({ id: r.id ?? `m-${parent.replies.length}-${r.at ?? ""}`, text: r.text, at: r.at, by: r.by ?? "maestro" });
+      parent.replies.push({ id: r.id ?? `m-${parent.replies.length}-${r.at ?? ""}`, text: r.text, at: r.at, by: r.by ?? "bottega" });
   }
   for (const c of comments) c.replies.sort((a, b) => String(a.at).localeCompare(String(b.at)));
   return comments.sort((a, b) => String(a.at).localeCompare(String(b.at)));

@@ -1,6 +1,6 @@
 # The spec template
 
-`docs/specs/<YYYY-MM-DD>-<feature-slug>.md`. Contract prose holds a one-page ceiling. Section order is fixed; a section with nothing true to say is omitted, never padded. Scenario text lives only in `features/*.feature` — the doc points at it, the gate doc shows it verbatim.
+`docs/specs/<YYYY-MM-DD>-<feature-slug>.md`. Spec prose holds a one-page ceiling. Section order is fixed; a section with nothing true to say is omitted, never padded. Scenario text lives only in `features/*.feature` — the doc points at it, the gate doc shows it verbatim.
 
 ```markdown
 # <Feature name>
@@ -15,7 +15,7 @@
 - <Cut item — with the why when it isn't obvious.>
 
 ## Open questions
-- <A call the maestro wants eyes on> — **default: <the default, already written into the scenarios>** · or: <the concrete alternative considered>. Overrule by a one-word comment; signing accepts the default.
+- <A call the orchestrator wants eyes on> — **default: <the default, already written into the scenarios>** · or: <the concrete alternative considered>. Overrule by a one-word comment; signing accepts the default.
 
 ## Direction
 <Domain language only. The CONCEPTS.md delta — each new or sharpened term in one sentence. The guiding bet: where the change lives, what owns what. The hard-to-reverse calls only. Committed voice; every line affirmable without reading code.>

@@ -1,12 +1,12 @@
 ---
 name: codebase-design
-description: Bottega's house design discipline — deep modules behind small interfaces, seams cut where things vary, names from CONCEPTS.md. Loaded by the maestro designing a spine and every reviewer judging conformance.
+description: House design rules — deep modules behind small interfaces, seams cut where things vary, names from CONCEPTS.md. Loaded by the orchestrator designing a change and every reviewer judging conformance.
 disable-model-invocation: true
 ---
 
 # Codebase design
 
-*The house style, on both sides of the dispatch seam: the maestro designs by it, the dossier carries it, the reviewer judges against it.*
+The house rules, used on both sides of the dispatch: the orchestrator designs by them, the brief carries them, the reviewer judges against them.
 
 ## Vocabulary
 
@@ -33,7 +33,7 @@ Use these terms exactly — never "component", "service", "API", or "boundary".
 
 ## Smells
 
-Named so they get swept for, not merely known — latent knowledge fires when a diff happens to surface it; a named list is owed a verdict every pass. Each is a judgment call, never a hard violation; the dossier's contract overrides; skip anything tooling already enforces. Smells the principles above already trigger — a delegating wrapper (deletion test), speculative abstraction (hypothetical seam), an off-glossary name (synonym rule) — are judged under those names, never twice.
+Named so they get swept for, not merely known — a named list gets a verdict every pass; unnamed knowledge fires only when a diff happens to surface it. Each is a judgment call, never a hard violation; the brief's contract overrides; skip anything tooling already enforces. Smells the principles above already trigger — a delegating wrapper (deletion test), speculative abstraction (hypothetical seam), an off-glossary name (synonym rule) — are judged under those names, never twice.
 
 - **Duplicated code** — the same logic shape in more than one place. → extract the shared shape, call it from both.
 - **Re-derived oracle** — a test or second consumer recomputes a value the code already owns; the two drift on ordering or rounding differences invisible on paper, and the check fires false verdicts. → export the owner's computed value, have the check consume that.
@@ -42,10 +42,10 @@ Named so they get swept for, not merely known — latent knowledge fires when a 
 - **Repeated switches** — the same `switch`/`if`-cascade on the same type recurring. → polymorphism, or one map both sites share.
 - **Feature envy** — a method reaching into another module's data more than its own. → move it onto the data it envies.
 - **Message chains** — `a.b().c().d()` navigation the caller shouldn't depend on. → hide the walk behind one method on the first module.
-- **Shotgun surgery / divergent change** — one logical change forcing scattered edits, or one module edited for unrelated reasons: the seam is misplaced. Seams are the maestro's — report it as evidence for a re-cut, never as the builder's defect.
+- **Shotgun surgery / divergent change** — one logical change forcing scattered edits, or one module edited for unrelated reasons: the seam is misplaced. Seams are the orchestrator's — report it as evidence for a re-cut, never as the builder's defect.
 - **Extraction for testability** — pure fragments split out so units are easy to test while the bugs live in how they're called; the composition itself has no test. → deepen instead: assert the behavior through the module's interface.
 
 ## Domain model
 
-- Interface names come from the domain's language — the same words the signed scenarios use. A synonym invented in code ("purchase" where the commission says "order") is a conformance finding.
-- The glossary lives in `CONCEPTS.md` at the host repo root: one entry per domain term, definitions only, no implementation details. It is born at the commission — the spec's Direction drafts the vocabulary delta and it lands in `CONCEPTS.md` at sign (`skills/spec`), so the user co-signs the words the code will use — and updated the moment a term crystallizes or sharpens during the run; reviewers judge names against it.
+- Interface names come from the domain's language — the same words the signed scenarios use. A synonym invented in code ("purchase" where the spec says "order") is a conformance finding.
+- The glossary lives in `CONCEPTS.md` at the host repo root: one entry per domain term, definitions only, no implementation details. It starts with the spec — the spec's Direction drafts the vocabulary delta and it lands in `CONCEPTS.md` at sign (`skills/spec`), so the user co-signs the words the code will use — and is updated the moment a term crystallizes or sharpens during the run; reviewers judge names against it.

@@ -5,17 +5,24 @@
     "name": "Vadim Comanescu"
   },
   "metadata": {
-    "description": "The bottega workshop — autonomous long-running agent runs with signed acceptance, distributed as a single installable plugin."
+    "description": "Autonomous issue-to-PR agent runs with signed acceptance, distributed as a single installable plugin."
   },
   "plugins": [
     {
       "name": "bottega",
       "source": "./",
-      "description": "One entry point, /bottega:run: the maestro discovers the intent, decides the execution path, builds with a cross-family-reviewed fleet, and delivers an evidenced PR. Signed Gherkin contracts only when the work earns them; handed an issue unattended, it auto-signs and the PR is the only human touchpoint.",
+      "description": "One entry point, /bottega:run: the orchestrator reads the codebase, states a plan, builds with worker agents, has every diff reviewed by the opposite model family, and delivers an evidence-backed PR. Signed Gherkin specs only when the work warrants them; handed an issue unattended, it auto-signs and the PR is the only human touchpoint.",
       "author": {
         "name": "Vadim Comanescu"
       },
-      "keywords": ["autonomous", "agents", "acceptance", "gherkin", "mutation-testing", "orchestration"]
+      "keywords": [
+        "autonomous",
+        "agents",
+        "acceptance",
+        "gherkin",
+        "mutation-testing",
+        "orchestration"
+      ]
     }
   ]
 }
