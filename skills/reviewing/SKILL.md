@@ -1,6 +1,6 @@
 ---
 name: reviewing
-description: Reviewer method. Break the diff, then judge it against the given architecture. Loaded by every reviewer dispatch (round 1 is a cross-family pair on the integrated diff; a delta round is one reviewer on a fix range).
+description: Reviewer method. Break the diff, then judge it against the given architecture. Loaded by every reviewer dispatch.
 disable-model-invocation: true
 ---
 

@@ -39,7 +39,7 @@ Handed an issue, the issue and its thread are the interview: read them the same 
 
 Every run, whatever its size, gets: its own branch and worktree, a build, the host's own gates green at every slice, a review of the integrated diff by both model families, and a PR. Anything more is your decision, made after discovery for a stated reason, and the PR opens by naming what you decided and why, or that nothing more was needed:
 
-- **A signed spec** (spec doc and Gherkin scenarios per `skills/spec`, signed through `skills/signoff`): only when the work introduces product behavior the user should read before it ships. A spec brings its whole verification pipeline: the acceptance toolchain, the suite run green, QA driving every signed scenario with recordings, and feature-file mutation testing with survivors killed (`skills/spec`, Verifying the spec). The signing gate is for a user who is present. Told to run unattended (their explicit word, usually pointing at an issue, never inferred from the issue alone): sign it yourself, disclose that in the PR's first line, and use the issue thread for everything the gate doc would have carried.
+- **A signed spec** (spec doc and Gherkin scenarios per `skills/spec`, signed through `skills/signoff`): only when the work introduces product behavior the user should read before it ships. A spec brings its whole verification pipeline: the acceptance toolchain, the suite run green, QA driving every signed scenario with recordings, and feature-file mutation testing with survivors killed (`skills/spec`, Verifying the spec). The signing gate is for a user who is present; told to run unattended (their explicit word, never inferred from the issue alone), the sign is delegated per `skills/spec`, Unattended.
 - **Storyboards** (`skills/storyboarding`): when a wrong guess about a user-facing screen would be expensive to build.
 - **A panel draft** (`skills/panel`): when more than one architecture would work and nothing in the repo settles the choice, panel the approach before slicing; a wrong architecture is the one mistake no later gate catches, since every slice, test, and review is built against it. A spec doc hard enough that coverage decides its quality is drafted the same way (`skills/spec`, step 2).
 - **A QA drive with recordings** (`skills/qa`): on a run with no spec, when the user needs to see it working (new user-facing behavior, a disputed fix). Green tests are not that proof; a recording is. A spec run already includes QA on every signed scenario.
@@ -85,7 +85,7 @@ A run outlives any session. Coming back: first rewrite `.bottega/run/<feature-sl
 
 ## Routing
 
-Every dispatch names model and effort; the route guard (`hooks/route-guard.js`) enforces this table, on named worker agents always and on every dispatch from a session that owns a live run. Codex workers are headless `codex exec` per [references/codex-dispatch.md](references/codex-dispatch.md), never a plugin, never the machine's `~/.codex/config.toml`. A Claude dispatch that omits `model` inherits yours, which silently escalates the worker to fable.
+Every dispatch names model and effort; the route guard (`hooks/route-guard.js`) enforces this table, on named worker agents always and on every dispatch from a session that owns a live run. Codex workers are headless `codex exec` per [references/codex-dispatch.md](references/codex-dispatch.md). A Claude dispatch that omits `model` inherits yours, which silently escalates the worker to fable.
 
 | role | model | effort |
 | --- | --- | --- |
