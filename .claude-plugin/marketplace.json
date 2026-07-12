@@ -5,23 +5,22 @@
     "name": "Vadim Comanescu"
   },
   "metadata": {
-    "description": "Autonomous issue-to-PR agent runs with signed acceptance, distributed as a single installable plugin."
+    "description": "Autonomous issue-to-PR agent runs, distributed as a single installable plugin."
   },
   "plugins": [
     {
       "name": "bottega",
       "source": "./",
-      "description": "One entry point, /bottega:run: the orchestrator reads the codebase, states a plan, builds with worker agents, has every diff reviewed by the opposite model family, and delivers an evidence-backed PR. Signed Gherkin specs only when the work warrants them; handed an issue unattended, it auto-signs and the PR is the only human touchpoint.",
+      "description": "One entry point, /bottega:run: the orchestrator reads the codebase, agrees a spec with the user in the conversation, puts costly decisions to a panel, builds with worker agents, has the integrated diff reviewed by both model families, and delivers a PR with QA evidence. The user appears twice: the spec OK and the merge.",
       "author": {
         "name": "Vadim Comanescu"
       },
       "keywords": [
         "autonomous",
         "agents",
-        "acceptance",
-        "gherkin",
-        "mutation-testing",
-        "orchestration"
+        "orchestration",
+        "code-review",
+        "qa"
       ]
     }
   ]

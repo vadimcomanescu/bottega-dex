@@ -1,24 +1,23 @@
 # bottega
 
-Autonomous issue-to-PR runs for Claude Code, built for Fable to orchestrate: one command takes a task or issue to a delivered PR, unassisted. Read `README.md` for the model; this file is the working agreement for agents inside this repo.
+Autonomous issue-to-PR runs for Claude Code, built for Fable to orchestrate: one command takes a task or issue to a delivered PR. Read `README.md` for the model; this file is the working agreement for agents inside this repo.
 
 ## Map
 
 | Path | What it is |
 | --- | --- |
 | `.claude-plugin/` | Plugin + marketplace manifests, one-command install (`/plugin marketplace add vadimcomanescu/bottega`) |
-| `skills/run/SKILL.md` | The single entry (`/bottega:run`) and the orchestrator's whole method: discovery, the plan, harness-native orchestration, the routing table, the review loop, delivery, resume. `references/` carry the codex dispatch format and the parallel-slice integration protocol |
-| `skills/spec` | The spec instrument: spec doc (`docs/specs/<YYYY-MM-DD>-<feature-slug>.md`), scenarios authored directly in `features/`, the acceptance toolchain installed at run start, the gate handoff, the unattended sign. Part of the plan only when the work introduces product behavior worth signing, never automatic. Template in `references/` |
-| `skills/signoff` | The gate: one collaborative spec doc, comment loop, `SIGNED` cascade. The standing header in `references/`, the local canvas in `assets/` |
-| `skills/panel` | Drafting tool for hard one-shot artifacts: independent frontier panelists, blinded; a compare-only judge; the orchestrator synthesizes. Panelists are dispatched by its bundled workflow script |
-| `skills/implementing`, `skills/reviewing`, `skills/qa`, `skills/documenting`, `skills/storyboarding` | Self-contained worker method, loaded by dispatched workers by path. Nothing is loaded from any host pack |
+| `skills/run/SKILL.md` | The single entry (`/bottega:run`) and the orchestrator's whole method: isolate, discover, spec, plan, build, review, QA, deliver, plus the routing table. `references/codex-dispatch.md` carries the codex mechanics |
+| `skills/implementing` | Builder method, loaded by every builder dispatch |
+| `skills/reviewing` | Reviewer method, loaded by every reviewer dispatch. Owns the report contract: `references/report.schema.json` and the Claude reviewer workflow `assets/review-dispatch.js` |
+| `skills/panel` | Feedback on a costly plan decision: independent frontier panelists, blinded; a compare-only judge; the orchestrator synthesizes. Panelists are dispatched by its bundled workflow script |
 | `skills/codebase-design` | House design rules: vocabulary, deep-module principles, `CONCEPTS.md` domain glossary. The orchestrator designs by them, briefs carry them, reviewers judge against them |
-| `agents/` | Worker identity: builder, reviewer, qa, documenter, storyboarder, mechanic, panelist, panel-judge. Agent files point at their skill, never copy it, and never pin model or effort; routing lives in the orchestrator's table, enforced by the route guard |
-| `hooks/` | Route guard (PreToolUse): named worker agents always, and any dispatch from a session that owns a live run (`.bottega/wt/<feature-slug>/` + `.bottega/run/<feature-slug>/owner`); rejected when it omits `model`, names fable (a cold read passes by naming itself), or misroutes a named worker. Workflow calls from a run-owning session are checked statically: every `agent()` in the script must name a model, fable only in the panel's own script, an unreadable script is denied. Entry guard (UserPromptSubmit) points run-intent prose at `/bottega:run` |
-| `docs/specs/` | Closed records of delivered runs |
+| `agents/` | Worker identity: builder, reviewer, panelist, panel-judge. Agent files point at their skill, never copy it, and never pin model or effort; routing lives in the orchestrator's table, enforced by the route guard |
+| `hooks/` | Route guard (PreToolUse): named worker agents always; any dispatch or workflow from a session that owns a live run (`.bottega/run/<slug>/owner`) must name a model, never fable (the panel's own script is the one sanctioned fable workflow; an unreadable script is denied). Entry guard (UserPromptSubmit) points run-intent prose at `/bottega:run` |
+| `docs/specs/` | Closed records of delivered runs, kept as history |
 | `tests/` | Unit tests for the hooks and the review report contract |
 
-In host repos, a run's working state lives under `.bottega/`, gitignored; the committed artifacts are the PR, the run's dead-ends lines in `docs/specs/dead-ends.md`, and, on spec runs, the spec doc, `features/*.feature`, and the step handlers in the host's test tree. Evidence the user sees lives in the delivery PR. The one exception is the never-merged evidence branch (`bottega/evidence-<feature-slug>`), deleted after merge.
+In host repos, a run leaves nothing behind but the PR. Working state is the worktree plus one owner file under `.bottega/` (gitignored), both removed at delivery. QA recordings publish from the never-merged branch `bottega/evidence-<slug>`, deleted after merge; the evidence's job ends when the user merges.
 
 ## Rules
 
@@ -26,8 +25,7 @@ In host repos, a run's working state lives under `.bottega/`, gitignored; the co
 - No em dashes, anywhere. Use periods, commas, colons, or parentheses.
 - Banned tic-words, no exceptions: "bearing" (e.g. "judgment-bearing"), "ledger". Say the plain thing: "makes judgment calls", "the log".
 - Orchestration is the harness: tracked dispatches, tracked background Bash, workflows. Never a polling loop, a hand-rolled scheduler, or a liveness apparatus in prose. An instruction line that restates or replaces a harness capability is a defect.
-- The plan is the orchestrator's decision, stated to the user before building: every run gets isolation, a build, host gates green at every slice, a both-family review of the integrated diff, and a PR; anything more exists for a stated reason, named in the PR. The integrated review is the one thing never dropped.
-- Approval on a spec run lands the spec doc's status flip and `features/` in one sign commit. After the sign, `features/` is frozen: builders never edit it and reviewers block any change to it.
+- Every run gets: isolation in its own worktree and branch, a build, host gates green at every integrate, one cross-family review of the integrated diff, a QA drive with recorded evidence, and a PR. The integrated review is the one thing never dropped.
 - Verification gate: `npm test` (hook unit tests). Never pipe test output inside a `&&` chain; redirect to a file and check the exit code.
 - Editing the skills (`skills/*`, `agents/*`), two tests per line: could the worker derive it from the repo or from competence, and would plain Fable already do it better with no instruction? Either way, cut it. The workers are frontier models; a rule that only prevents a mistake a competent engineer would not make is noise. Constrain only where a real failure was observed or the cost of the mistake is high. Then read every worker rule as the weakest-equipped worker that will receive it: a codex worker has no slash commands, no subagents, no plugin root.
 - Spend the constraint budget on workers, not the orchestrator. Worker instructions are hard rules; orchestrator instructions are gates, decisions, and the house design rules. Inside the gates its judgment is unconstrained.
