@@ -30,24 +30,21 @@ afterEach(() => {
   while (cleanups.length > 0) rmSync(cleanups.pop()!, { recursive: true, force: true });
 });
 
-// Runs are keyed by feature slug and coexist in one repo. A run is live when
-// its worktree entry .bottega/wt/<slug>/ is non-empty (the one signal Close
-// reaps), and it fences only the session recorded in .bottega/run/<slug>/owner.
+// Runs are keyed by feature slug and coexist in one repo. A run is live while
+// its owner file .bottega/run/<slug>/owner exists (written at Isolate,
+// deleted at delivery), and it fences only the session recorded there.
 const OWNER = "owner-session";
 
-function repoWithRun(live: boolean, owner?: string, slug = "saved-searches"): string {
+function repoWithRun(owner?: string, slug = "saved-searches"): string {
   const dir = mkdtempSync(join(tmpdir(), "bottega-guard-"));
   cleanups.push(dir);
-  addRun(dir, slug, live, owner);
+  if (owner) addRun(dir, slug, owner);
   return dir;
 }
 
-function addRun(dir: string, slug: string, live: boolean, owner?: string): void {
-  if (live) mkdirSync(join(dir, ".bottega", "wt", slug, "run"), { recursive: true });
-  if (owner) {
-    mkdirSync(join(dir, ".bottega", "run", slug), { recursive: true });
-    writeFileSync(join(dir, ".bottega", "run", slug, "owner"), owner + "\n");
-  }
+function addRun(dir: string, slug: string, owner: string): void {
+  mkdirSync(join(dir, ".bottega", "run", slug), { recursive: true });
+  writeFileSync(join(dir, ".bottega", "run", slug, "owner"), owner + "\n");
 }
 
 function git(dir: string, ...args: string[]): void {
@@ -71,62 +68,50 @@ function runBranchDir(): string {
 describe("route-guard: bottega worker agents (always checked)", () => {
   it("denies an unrouted worker dispatch", () => {
     const out = run(ROUTE_GUARD, {
-      cwd: repoWithRun(false),
+      cwd: repoWithRun(),
       tool_input: { subagent_type: "bottega:builder", prompt: "build slice A" },
     });
     expect(denialOf(out)).toMatch(/names no model/);
   });
 
-  it("denies a fable-routed worker dispatch even when the text names the cold read", () => {
+  it("denies a fable-routed worker dispatch", () => {
     const out = run(ROUTE_GUARD, {
-      cwd: repoWithRun(true),
+      cwd: repoWithRun(OWNER),
       tool_input: {
         subagent_type: "bottega:reviewer",
         model: "fable",
-        prompt: "cold read of the run",
+        prompt: "review the integrated diff",
       },
     });
-    expect(denialOf(out)).toMatch(/never runs on a worker agent/);
+    expect(denialOf(out)).toMatch(/routes a worker agent to fable/);
   });
 
   it("allows a routed worker dispatch on the table's model", () => {
     const out = run(ROUTE_GUARD, {
-      cwd: repoWithRun(true),
-      tool_input: { subagent_type: "bottega:qa", model: "opus", prompt: "drive scenarios" },
+      cwd: repoWithRun(OWNER),
+      tool_input: { subagent_type: "bottega:reviewer", model: "opus", prompt: "review" },
     });
     expect(out).toBe("");
   });
 
-  it("denies a misrouted worker dispatch: qa runs on opus, never sonnet", () => {
+  it("denies a misrouted worker dispatch: the builder runs on opus, never sonnet", () => {
     const out = run(ROUTE_GUARD, {
-      cwd: repoWithRun(true),
-      tool_input: { subagent_type: "bottega:qa", model: "sonnet", prompt: "drive scenarios" },
+      cwd: repoWithRun(OWNER),
+      tool_input: { subagent_type: "bottega:builder", model: "sonnet", prompt: "build" },
     });
-    expect(denialOf(out)).toMatch(/mechanic: sonnet/);
+    expect(denialOf(out)).toMatch(/builder and reviewer: opus/);
   });
 
-  it("checks the mechanic and storyboarder too", () => {
-    const cwd = repoWithRun(false);
-    const unrouted = run(ROUTE_GUARD, {
-      cwd,
-      tool_input: { subagent_type: "bottega:mechanic", prompt: "run the gate suite" },
-    });
-    expect(denialOf(unrouted)).toMatch(/names no model/);
-    const misrouted = run(ROUTE_GUARD, {
-      cwd,
-      tool_input: { subagent_type: "bottega:storyboarder", model: "sonnet", prompt: "render shots" },
-    });
-    expect(denialOf(misrouted)).toMatch(/storyboarder/);
-    const routed = run(ROUTE_GUARD, {
-      cwd,
-      tool_input: { subagent_type: "bottega:mechanic", model: "sonnet", prompt: "run the gate suite" },
-    });
-    expect(routed).toBe("");
+  it("stays silent on retired worker names: those are a host repo's own agents now", () => {
+    const cwd = repoWithRun();
+    for (const subagent_type of ["bottega:qa", "bottega:mechanic", "bottega:documenter"]) {
+      expect(run(ROUTE_GUARD, { cwd, tool_input: { subagent_type, prompt: "x" } })).toBe("");
+    }
   });
 
   it("stays silent on a bare role name: that is a host repo's own agent, never bottega's", () => {
     const out = run(ROUTE_GUARD, {
-      cwd: repoWithRun(false),
+      cwd: repoWithRun(),
       tool_input: { subagent_type: "reviewer", prompt: "review" },
     });
     expect(out).toBe("");
@@ -135,7 +120,7 @@ describe("route-guard: bottega worker agents (always checked)", () => {
 
 describe("route-guard: all other dispatches, gated on a live run", () => {
   it("stays silent outside a run, whatever the dispatch", () => {
-    const cwd = repoWithRun(false);
+    const cwd = repoWithRun();
     for (const tool_input of [
       { subagent_type: "general-purpose", model: "fable", prompt: "anything" },
       { subagent_type: "general-purpose", prompt: "unrouted" },
@@ -144,19 +129,19 @@ describe("route-guard: all other dispatches, gated on a live run", () => {
     }
   });
 
-  it("denies the owning session's unrouted general-purpose dispatch while a worktree entry exists", () => {
+  it("denies the owning session's unrouted general-purpose dispatch while the owner file exists", () => {
     const out = run(ROUTE_GUARD, {
-      cwd: repoWithRun(true, OWNER),
+      cwd: repoWithRun(OWNER),
       session_id: OWNER,
-      tool_input: { subagent_type: "general-purpose", prompt: "clerk mechanics" },
+      tool_input: { subagent_type: "general-purpose", prompt: "worktree mechanics" },
     });
     expect(denialOf(out)).toMatch(/live bottega run/);
   });
 
   it("stays silent on a leftover bottega/* branch: a delivered run's local ref must never arm the guard", () => {
     // A PR merge deletes only the remote ref; the local bottega/<slug> branch
-    // survives delivery on the user's machine. Only the run worktree (which
-    // Close reaps) may arm scope 2.
+    // survives delivery on the user's machine. Only the owner file (which
+    // delivery deletes) may arm scope 2.
     const cwd = runBranchDir();
     for (const tool_input of [
       { subagent_type: "general-purpose", prompt: "unrouted, unrelated work" },
@@ -166,43 +151,15 @@ describe("route-guard: all other dispatches, gated on a live run", () => {
     }
   });
 
-  it("denies a fable-routed general-purpose dispatch during a run", () => {
-    const out = run(ROUTE_GUARD, {
-      cwd: repoWithRun(true, OWNER),
-      session_id: OWNER,
-      tool_input: { subagent_type: "Explore", model: "claude-fable-5", prompt: "map territory" },
-    });
-    expect(denialOf(out)).toMatch(/routes fable/);
-  });
-
-  it("allows the cold read to route fable during a run", () => {
-    const out = run(ROUTE_GUARD, {
-      cwd: repoWithRun(true, OWNER),
-      session_id: OWNER,
-      tool_input: {
+  it("denies any fable-routed dispatch during a run: fable is the orchestrator, never a dispatch", () => {
+    const cwd = repoWithRun(OWNER);
+    for (const tool_input of [
+      { subagent_type: "Explore", model: "claude-fable-5", prompt: "map territory" },
+      {
         subagent_type: "general-purpose",
         model: "fable",
         description: "Cold read (fable, fresh)",
-        prompt: "You are the independent cold reader …",
-      },
-    });
-    expect(out).toBe("");
-  });
-
-  it("denies fable when 'cold read' is only mentioned, not the description's opening", () => {
-    const cwd = repoWithRun(true, OWNER);
-    for (const tool_input of [
-      {
-        subagent_type: "general-purpose",
-        model: "fable",
-        description: "Fix cycle for cold-read findings",
-        prompt: "fix the cold-read findings",
-      },
-      {
-        subagent_type: "general-purpose",
-        model: "fable",
-        description: "Review of the fix",
-        prompt: "cold read style verification",
+        prompt: "independent read of the diff",
       },
     ]) {
       expect(denialOf(run(ROUTE_GUARD, { cwd, session_id: OWNER, tool_input }))).toMatch(
@@ -232,9 +189,9 @@ const scope = await agent(\`Pin the diff (git diff master...HEAD) and list files
 const found = await parallel(ANGLES.map(a => () => agent(a.prompt, { label: a.key, schema: FINDINGS })))
 `;
 
-  function workflowEvent(tool_input: object, session_id = OWNER, live = true) {
+  function workflowEvent(tool_input: object, session_id = OWNER, owner: string | null = OWNER) {
     return {
-      cwd: repoWithRun(live, OWNER),
+      cwd: repoWithRun(owner ?? undefined),
       session_id,
       tool_name: "Workflow",
       tool_input,
@@ -287,12 +244,7 @@ const r = await agent('panel-style judging', { model: 'fable' })
   it("stays silent for bystander sessions and outside a run", () => {
     expect(run(ROUTE_GUARD, workflowEvent({ script: CODE_REVIEW_SHAPE }, "bystander-session"))).toBe("");
     expect(
-      run(ROUTE_GUARD, {
-        cwd: repoWithRun(false, OWNER),
-        session_id: OWNER,
-        tool_name: "Workflow",
-        tool_input: { script: CODE_REVIEW_SHAPE },
-      }),
+      run(ROUTE_GUARD, workflowEvent({ script: CODE_REVIEW_SHAPE }, OWNER, null)),
     ).toBe("");
   });
 });
@@ -300,7 +252,7 @@ const r = await agent('panel-style judging', { model: 'fable' })
 describe("route-guard: stale contract state never arms the guard", () => {
   // The old activation keyed off locks, gate records, and spec-doc status
   // strings; state nothing retires, so one delivered run fenced every
-  // later session in the repo. Only live-run state may arm scope 2.
+  // later session in the repo. Only the owner file may arm scope 2.
   function staleDir(): string {
     const dir = mkdtempSync(join(tmpdir(), "bottega-guard-stale-"));
     cleanups.push(dir);
@@ -333,40 +285,14 @@ describe("route-guard: stale contract state never arms the guard", () => {
   });
 });
 
-describe("route-guard: a patch job arms the same run fence", () => {
-  it("fences unrouted and fable dispatches while a patch worktree exists", () => {
-    const dir = mkdtempSync(join(tmpdir(), "bottega-guard-patch-"));
-    cleanups.push(dir);
-    addRun(dir, "patch-fix-pagination", true, OWNER);
-    const unrouted = run(ROUTE_GUARD, {
-      cwd: dir,
-      session_id: OWNER,
-      tool_input: { subagent_type: "general-purpose", prompt: "sweep the diff" },
-    });
-    expect(denialOf(unrouted)).toMatch(/names no model/);
-    const fabled = run(ROUTE_GUARD, {
-      cwd: dir,
-      session_id: OWNER,
-      tool_input: { subagent_type: "general-purpose", model: "fable", prompt: "review" },
-    });
-    expect(denialOf(fabled)).toMatch(/routes fable/);
-    const routed = run(ROUTE_GUARD, {
-      cwd: dir,
-      session_id: OWNER,
-      tool_input: { subagent_type: "bottega:reviewer", model: "opus", prompt: "review the diff" },
-    });
-    expect(routed).toBe("");
-  });
-});
-
 describe("route-guard: the run fence binds to each run's owning session", () => {
-  // .bottega/wt/ is repo-global; the per-run owner file is what keeps a live
-  // run from fencing every concurrent session in the same repo.
+  // The per-run owner file is what keeps a live run from fencing every
+  // concurrent session in the same repo.
   it("stays silent on a bystander session's dispatch while another session's run is live", () => {
     // The observed failure: a codex-plugin dispatch in a session not running
     // bottega, denied because a run was live elsewhere. The codex agent's
     // work rides the codex CLI's own model; `model` here routes nothing.
-    const cwd = repoWithRun(true, OWNER);
+    const cwd = repoWithRun(OWNER);
     for (const tool_input of [
       { subagent_type: "codex", description: "Codex review slice A", prompt: "review slice A" },
       { subagent_type: "general-purpose", prompt: "unrouted, unrelated work" },
@@ -377,8 +303,8 @@ describe("route-guard: the run fence binds to each run's owning session", () => 
   });
 
   it("fences two concurrent runs' sessions independently", () => {
-    const dir = repoWithRun(true, "owner-a", "feature-a");
-    addRun(dir, "feature-b", true, "owner-b");
+    const dir = repoWithRun("owner-a", "feature-a");
+    addRun(dir, "feature-b", "owner-b");
     for (const session_id of ["owner-a", "owner-b"]) {
       const out = run(ROUTE_GUARD, {
         cwd: dir,
@@ -395,18 +321,12 @@ describe("route-guard: the run fence binds to each run's owning session", () => 
     expect(bystander).toBe("");
   });
 
-  it("stays silent when no owner is recorded, even from a live-run repo", () => {
+  it("stays silent when no owner is recorded, even with other run debris around", () => {
+    const dir = mkdtempSync(join(tmpdir(), "bottega-guard-noowner-"));
+    cleanups.push(dir);
+    mkdirSync(join(dir, ".bottega", "run", "saved-searches"), { recursive: true });
     const out = run(ROUTE_GUARD, {
-      cwd: repoWithRun(true),
-      session_id: OWNER,
-      tool_input: { subagent_type: "general-purpose", prompt: "unrouted" },
-    });
-    expect(out).toBe("");
-  });
-
-  it("stays silent on owner-file debris whose worktree Close already reaped", () => {
-    const out = run(ROUTE_GUARD, {
-      cwd: repoWithRun(false, OWNER),
+      cwd: dir,
       session_id: OWNER,
       tool_input: { subagent_type: "general-purpose", prompt: "unrouted" },
     });
@@ -415,7 +335,7 @@ describe("route-guard: the run fence binds to each run's owning session", () => 
 
   it("stays silent when the event carries no session_id", () => {
     const out = run(ROUTE_GUARD, {
-      cwd: repoWithRun(true, OWNER),
+      cwd: repoWithRun(OWNER),
       tool_input: { subagent_type: "general-purpose", prompt: "unrouted" },
     });
     expect(out).toBe("");
@@ -423,7 +343,7 @@ describe("route-guard: the run fence binds to each run's owning session", () => 
 
   it("still checks named worker agents from any session (scope 1 is unconditional)", () => {
     const out = run(ROUTE_GUARD, {
-      cwd: repoWithRun(true, OWNER),
+      cwd: repoWithRun(OWNER),
       session_id: "bystander-session",
       tool_input: { subagent_type: "bottega:builder", prompt: "build" },
     });
@@ -434,15 +354,15 @@ describe("route-guard: the run fence binds to each run's owning session", () => 
 describe("entry-guard", () => {
   it("reminds on run-intent prose in a repo with bottega state, naming the one entry command", () => {
     const out = run(ENTRY_GUARD, {
-      cwd: repoWithRun(true),
-      prompt: "run bottega, the spec is signed",
+      cwd: repoWithRun(OWNER),
+      prompt: "run bottega on the saved searches feature",
     });
     const parsed = JSON.parse(out);
     expect(parsed.hookSpecificOutput.additionalContext).toMatch(/\/bottega:run/);
   });
 
   it("stays silent on slash commands, repos without bottega state, and unrelated prompts", () => {
-    const withRun = repoWithRun(true);
+    const withRun = repoWithRun(OWNER);
     const bare = mkdtempSync(join(tmpdir(), "bottega-guard-bare-"));
     cleanups.push(bare);
     expect(run(ENTRY_GUARD, { cwd: withRun, prompt: "/bottega:run it" })).toBe("");

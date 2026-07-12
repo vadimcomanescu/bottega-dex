@@ -10,16 +10,15 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
-// Path mentions are not run intent: the lookbehind keeps ".bottega/…" and
-// "hooks/route-guard.js"-style path talk silent, the lookahead keeps
-// commission[-.]lock-style filename talk silent. Corpus-tested against
-// this session's real prompts; residual false fires cost one paragraph.
-const INTENT = /(?<![./])\bbottega\b|\bcommission\b(?![-.]lock)/i;
+// Path mentions are not run intent: the lookbehind keeps ".bottega/…"-style
+// path talk silent. Corpus-tested against real prompts; residual false fires
+// cost one paragraph.
+const INTENT = /(?<![./])\bbottega\b/i;
 
 const REMINDER =
   "This repo has bottega run state and the prompt reads like run intent. If " +
-  "this is bottega work, invoke /bottega:run before acting: triage, " +
-  "discovery, and the plan all live inside it. Acting without it improvises " +
+  "this is bottega work, invoke /bottega:run before acting: discovery, the " +
+  "spec, and the plan all live inside it. Acting without it improvises " +
   "discovery on the expensive orchestrator model and re-derives what the " +
   "skill already carries.";
 
@@ -50,9 +49,7 @@ const cwd =
   event && typeof event.cwd === "string" && event.cwd.length > 0
     ? event.cwd
     : process.cwd();
-const hasBottegaState =
-  existsSync(join(cwd, ".bottega")) || existsSync(join(cwd, "features"));
-if (!hasBottegaState) process.exit(0);
+if (!existsSync(join(cwd, ".bottega"))) process.exit(0);
 
 process.stdout.write(
   JSON.stringify({
