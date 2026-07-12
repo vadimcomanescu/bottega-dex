@@ -7,7 +7,7 @@ user-invocable: false
 
 # Panel
 
-Run it after the spec is agreed, on a costly decision the plan turns on: where the change lives, data shape, public contracts, dependency bets. Independent frontier panelists answer the same question blind; a judge compares; you synthesize. Independently trained models fail in different places, so the answers disagree exactly where the problem is underdetermined or one answer is wrong, and the judge never merges, so the disagreement survives to be read. Panelists landing where you didn't is the signal your bet is suspect; panelists landing on your answer without ever seeing it is confirmation instead of an echo.
+Run it after the spec is agreed, on a decision `skills/run` sends here: one expensive to reverse after merge. Independent frontier panelists answer the same question blind; a judge compares; you synthesize. Independently trained models fail in different places, so the answers disagree exactly where the problem is underdetermined or one answer is wrong, and the judge never merges, so the disagreement survives to be read. Panelists landing where you didn't is the signal your bet is suspect; panelists landing on your answer without ever seeing it is confirmation instead of an echo.
 
 Run it as the bundled workflow. The judge's comparison comes back schema-valid or not at all, and blinding is enforced by code, not discipline:
 
