@@ -76,7 +76,10 @@ function liveOwners(cwd) {
   return owners;
 }
 
-const WORKER_AGENT = /(^|:)bottega-(builder|reviewer|qa|documenter|storyboarder|mechanic)$/;
+// Plugin agents register as <plugin>:<agent>, so every real dispatch names
+// bottega:<role>; a bare role name resolves to nothing in the harness and, if
+// it did, could be a host repo's own agent, which this guard never routes.
+const WORKER_AGENT = /^bottega:(builder|reviewer|qa|documenter|storyboarder|mechanic)$/;
 const FABLE = /fable/i;
 // The Claude column of the routing table (skills/run/SKILL.md). Codex
 // workers run through `codex exec`, never the Agent tool, so every Claude
@@ -257,7 +260,7 @@ const routed = typeof model === "string" && model.length > 0;
 // Scope 1: named bottega worker agents, unconditional.
 const workerMatch = typeof agentType === "string" ? agentType.match(WORKER_AGENT) : null;
 if (workerMatch) {
-  const role = workerMatch[2];
+  const role = workerMatch[1];
   if (!routed) deny(DENY_UNROUTED);
   if (FABLE.test(model)) deny(DENY_FABLE);
   if (!WORKER_MODEL[role].test(model)) deny(denyMisrouted(role, model));

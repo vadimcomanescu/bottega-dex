@@ -2,6 +2,7 @@
 name: codebase-design
 description: House design rules. Deep modules behind small interfaces, seams cut where things vary, names from CONCEPTS.md. Loaded by the orchestrator designing a change and every reviewer judging conformance.
 disable-model-invocation: true
+user-invocable: false
 ---
 
 # Codebase design

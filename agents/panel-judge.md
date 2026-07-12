@@ -1,5 +1,5 @@
 ---
-name: bottega-panel-judge
+name: panel-judge
 description: Compares blinded panel drafts. Answers only the comparison asked, never the task itself. Model named by the panel workflow's dispatch, never pinned here.
 ---
 

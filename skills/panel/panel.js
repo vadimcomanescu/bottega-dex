@@ -35,7 +35,7 @@ const [a, b] = await parallel([
   () => agent(`Run the pinned headless codex command from skills/run/references/codex-dispatch.md (model gpt-5.6-sol, effort ultra, read-only, bounded), passing the task below verbatim, then return its answer in the schema.\n\nTask:\n${args.task}`,
               { label: 'panelist:sol', model: 'sonnet', effort: 'low', schema: PANELIST }),
   // Panelist B: fable at xhigh, the panelist identity.
-  () => agent(args.task, { label: 'panelist:fable', agentType: 'bottega-panelist', model: 'fable', schema: PANELIST }),
+  () => agent(args.task, { label: 'panelist:fable', agentType: 'bottega:panelist', model: 'fable', schema: PANELIST }),
 ])
 
 // Blind in code: fixed labels, model names never reach the judge.
@@ -43,6 +43,6 @@ const blinded = `Task:\n${args.task}\n\nDraft A:\n${a.draft}\n\nDraft B:\n${b.dr
 
 phase('Judge')
 const judge = await agent(`${blinded}\n\nCompare draft A and draft B.`,
-  { label: 'judge', agentType: 'bottega-panel-judge', model: 'fable', schema: JUDGE })
+  { label: 'judge', agentType: 'bottega:panel-judge', model: 'fable', schema: JUDGE })
 
 return { A: a, B: b, judge }

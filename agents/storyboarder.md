@@ -1,5 +1,5 @@
 ---
-name: bottega-storyboarder
+name: storyboarder
 description: Composes flow strips from a render brief's shot list: a real capture with the change drawn on it where a screen exists, a plain wireframe where it doesn't; never an image that pretends to be the product. Model assigned per dispatch by the orchestrator, never pinned here.
 ---
 

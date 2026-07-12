@@ -72,7 +72,7 @@ describe("route-guard: bottega worker agents (always checked)", () => {
   it("denies an unrouted worker dispatch", () => {
     const out = run(ROUTE_GUARD, {
       cwd: repoWithRun(false),
-      tool_input: { subagent_type: "bottega:bottega-builder", prompt: "build slice A" },
+      tool_input: { subagent_type: "bottega:builder", prompt: "build slice A" },
     });
     expect(denialOf(out)).toMatch(/names no model/);
   });
@@ -81,7 +81,7 @@ describe("route-guard: bottega worker agents (always checked)", () => {
     const out = run(ROUTE_GUARD, {
       cwd: repoWithRun(true),
       tool_input: {
-        subagent_type: "bottega:bottega-reviewer",
+        subagent_type: "bottega:reviewer",
         model: "fable",
         prompt: "cold read of the run",
       },
@@ -92,7 +92,7 @@ describe("route-guard: bottega worker agents (always checked)", () => {
   it("allows a routed worker dispatch on the table's model", () => {
     const out = run(ROUTE_GUARD, {
       cwd: repoWithRun(true),
-      tool_input: { subagent_type: "bottega-qa", model: "opus", prompt: "drive scenarios" },
+      tool_input: { subagent_type: "bottega:qa", model: "opus", prompt: "drive scenarios" },
     });
     expect(out).toBe("");
   });
@@ -100,7 +100,7 @@ describe("route-guard: bottega worker agents (always checked)", () => {
   it("denies a misrouted worker dispatch: qa runs on opus, never sonnet", () => {
     const out = run(ROUTE_GUARD, {
       cwd: repoWithRun(true),
-      tool_input: { subagent_type: "bottega-qa", model: "sonnet", prompt: "drive scenarios" },
+      tool_input: { subagent_type: "bottega:qa", model: "sonnet", prompt: "drive scenarios" },
     });
     expect(denialOf(out)).toMatch(/mechanic: sonnet/);
   });
@@ -109,19 +109,27 @@ describe("route-guard: bottega worker agents (always checked)", () => {
     const cwd = repoWithRun(false);
     const unrouted = run(ROUTE_GUARD, {
       cwd,
-      tool_input: { subagent_type: "bottega:bottega-mechanic", prompt: "run the gate suite" },
+      tool_input: { subagent_type: "bottega:mechanic", prompt: "run the gate suite" },
     });
     expect(denialOf(unrouted)).toMatch(/names no model/);
     const misrouted = run(ROUTE_GUARD, {
       cwd,
-      tool_input: { subagent_type: "bottega-storyboarder", model: "sonnet", prompt: "render shots" },
+      tool_input: { subagent_type: "bottega:storyboarder", model: "sonnet", prompt: "render shots" },
     });
     expect(denialOf(misrouted)).toMatch(/storyboarder/);
     const routed = run(ROUTE_GUARD, {
       cwd,
-      tool_input: { subagent_type: "bottega-mechanic", model: "sonnet", prompt: "run the gate suite" },
+      tool_input: { subagent_type: "bottega:mechanic", model: "sonnet", prompt: "run the gate suite" },
     });
     expect(routed).toBe("");
+  });
+
+  it("stays silent on a bare role name: that is a host repo's own agent, never bottega's", () => {
+    const out = run(ROUTE_GUARD, {
+      cwd: repoWithRun(false),
+      tool_input: { subagent_type: "reviewer", prompt: "review" },
+    });
+    expect(out).toBe("");
   });
 });
 
@@ -319,7 +327,7 @@ describe("route-guard: stale contract state never arms the guard", () => {
   it("still checks worker agents there (scope 1 is unconditional)", () => {
     const out = run(ROUTE_GUARD, {
       cwd: staleDir(),
-      tool_input: { subagent_type: "bottega-builder", prompt: "build" },
+      tool_input: { subagent_type: "bottega:builder", prompt: "build" },
     });
     expect(denialOf(out)).toMatch(/names no model/);
   });
@@ -345,7 +353,7 @@ describe("route-guard: a patch job arms the same run fence", () => {
     const routed = run(ROUTE_GUARD, {
       cwd: dir,
       session_id: OWNER,
-      tool_input: { subagent_type: "bottega-reviewer", model: "opus", prompt: "review the diff" },
+      tool_input: { subagent_type: "bottega:reviewer", model: "opus", prompt: "review the diff" },
     });
     expect(routed).toBe("");
   });
@@ -417,7 +425,7 @@ describe("route-guard: the run fence binds to each run's owning session", () => 
     const out = run(ROUTE_GUARD, {
       cwd: repoWithRun(true, OWNER),
       session_id: "bystander-session",
-      tool_input: { subagent_type: "bottega:bottega-builder", prompt: "build" },
+      tool_input: { subagent_type: "bottega:builder", prompt: "build" },
     });
     expect(denialOf(out)).toMatch(/names no model/);
   });

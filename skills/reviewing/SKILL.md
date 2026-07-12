@@ -2,6 +2,7 @@
 name: reviewing
 description: Reviewer method. Break the diff, then judge it against the given architecture. Loaded by every reviewer dispatch.
 disable-model-invocation: true
+user-invocable: false
 ---
 
 # Reviewing

@@ -2,6 +2,7 @@
 name: qa
 description: QA method. Drive the delivered artifact as a user and produce scenario-by-scenario evidence. Loaded by every QA dispatch.
 disable-model-invocation: true
+user-invocable: false
 ---
 
 # QA

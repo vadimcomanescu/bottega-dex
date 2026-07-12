@@ -1,5 +1,5 @@
 ---
-name: bottega-documenter
+name: documenter
 description: Makes the host's agent-facing docs true of what the run shipped. One dispatch per run, after the last integrate, with a self-contained brief. Model assigned per dispatch by the orchestrator, never pinned here.
 ---
 

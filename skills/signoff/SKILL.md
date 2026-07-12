@@ -2,6 +2,7 @@
 name: signoff
 description: The user gate. A collaborative spec document read, commented, revised in place, and signed. Reached by pointer from skills/spec.
 disable-model-invocation: true
+user-invocable: false
 ---
 
 # Sign-off

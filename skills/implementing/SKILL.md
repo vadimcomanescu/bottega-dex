@@ -2,6 +2,7 @@
 name: implementing
 description: Builder method. One slice, test-first, inside a given architecture. Loaded by every builder dispatch.
 disable-model-invocation: true
+user-invocable: false
 ---
 
 # Implementing

@@ -211,8 +211,8 @@ const SCHEMA = {
 
 phase('Review')
 const report = await agent(args.brief, {
-  agentType: 'bottega-reviewer',
-  model: 'opus-4.8',
+  agentType: 'bottega:reviewer',
+  model: 'opus',
   effort: args.effort === 'high' ? 'high' : 'xhigh',
   schema: SCHEMA,
   label: 'reviewer:claude',

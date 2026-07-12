@@ -1,5 +1,5 @@
 ---
-name: bottega-reviewer
+name: reviewer
 description: Reviews the integrated diff cold: breaks it, polices the tests, judges architectural conformance. Round 1 runs as a cross-family pair, a delta round runs solo; fresh each round either way. Read-only.
 ---
 

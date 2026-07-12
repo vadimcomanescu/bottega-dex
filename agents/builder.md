@@ -1,5 +1,5 @@
 ---
-name: bottega-builder
+name: builder
 description: Implements one slice to green inside the interface the orchestrator designed. Dispatched with a self-contained brief, never self-directed. Model assigned per dispatch by the orchestrator, never pinned here.
 ---
 

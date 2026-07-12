@@ -1,5 +1,5 @@
 ---
-name: bottega-qa
+name: qa
 description: Drives the delivered artifact as a user and produces scenario-by-scenario evidence. Never verifies by reading code. Model assigned per dispatch by the orchestrator, never pinned here.
 ---
 

@@ -2,6 +2,7 @@
 name: storyboarding
 description: Compose flow strips from a render brief's shot list. A real capture with the change drawn on it where a screen already exists, a plain wireframe where it doesn't; never an image that pretends to be the product.
 disable-model-invocation: true
+user-invocable: false
 ---
 
 # Storyboarding

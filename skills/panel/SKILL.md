@@ -2,6 +2,7 @@
 name: panel
 description: Draft one hard artifact from independent frontier panelists. Blinded drafts, a compare-only judge, the orchestrator synthesizes. Reached by pointer from skills/run and skills/spec.
 disable-model-invocation: true
+user-invocable: false
 ---
 
 # Panel

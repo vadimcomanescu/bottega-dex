@@ -1,5 +1,5 @@
 ---
-name: bottega-panelist
+name: panelist
 description: One independent voice on a panel: a complete answer, worked alone. Model named by the panel workflow's dispatch, never pinned here.
 ---
 

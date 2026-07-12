@@ -53,7 +53,7 @@ Agent definitions in `agents/` say who a worker is; skills in `skills/` say how 
 | reviewer | tries to break the slice, polices the tests, judges the design | the opposite family from the builder (sol or opus-4.8) | [`skills/reviewing/SKILL.md`](skills/reviewing/SKILL.md) |
 | qa | drives the built artifact as a user, records the evidence | opus-4.8 | [`skills/qa/SKILL.md`](skills/qa/SKILL.md) |
 | documenter | updates the host's agent-facing docs to match what shipped | opus-4.8 | [`skills/documenting/SKILL.md`](skills/documenting/SKILL.md) |
-| mechanic | executes fully specified command lists, no judgment calls | sonnet-5 | [`agents/bottega-mechanic.md`](agents/bottega-mechanic.md) |
+| mechanic | executes fully specified command lists, no judgment calls | sonnet-5 | [`agents/mechanic.md`](agents/mechanic.md) |
 
 One design vocabulary spans all of them: [`skills/codebase-design`](skills/codebase-design/SKILL.md) (deep modules behind small interfaces, plus a `CONCEPTS.md` domain glossary in the host repo). The orchestrator designs by it, builders receive it in their briefs, reviewers judge against it.
 

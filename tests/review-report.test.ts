@@ -139,8 +139,11 @@ describe("review-dispatch workflow", () => {
   });
 
   it("pins the reviewer agent, its model, and the schema in the one agent() call", () => {
-    expect(script).toMatch(/agentType:\s*'bottega-reviewer'/);
-    expect(script).toMatch(/model:\s*'opus-4\.8'/);
+    // The only forms the harness resolves (issue #20): a plugin agent
+    // registers as <plugin>:<agent>, and a model is a plain alias; a
+    // versioned id like 'opus-4.8' is rejected at dispatch.
+    expect(script).toMatch(/agentType:\s*'bottega:reviewer'/);
+    expect(script).toMatch(/model:\s*'opus'/);
     expect(script).toMatch(/schema:\s*SCHEMA/);
   });
 
@@ -175,7 +178,7 @@ describe("review-dispatch workflow", () => {
   });
 
   it("is denied by the route guard the moment its model pin is stripped", () => {
-    const stripped = script.replace(/model:\s*'opus-4\.8',\n\s*/, "");
+    const stripped = script.replace(/model:\s*'opus',\n\s*/, "");
     const out = guard(runOwnedEvent({ script: stripped }));
     const parsed = JSON.parse(out);
     expect(parsed.hookSpecificOutput.permissionDecision).toBe("deny");

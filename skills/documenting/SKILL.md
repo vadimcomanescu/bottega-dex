@@ -2,6 +2,7 @@
 name: documenting
 description: Doc-sync method. One dispatch that makes the host's agent-facing docs true of what the run shipped. Loaded by every documenter dispatch.
 disable-model-invocation: true
+user-invocable: false
 ---
 
 # Documenting

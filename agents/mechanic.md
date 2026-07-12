@@ -1,5 +1,5 @@
 ---
-name: bottega-mechanic
+name: mechanic
 description: Executes a fully specified mechanical brief (bootstrap, worktree and branch operations, gate runs, bookkeeping commits, evidence assembly) and reports with exit codes and repository state. Never authors product code; never repairs. Model assigned per dispatch by the orchestrator, never pinned here.
 ---
 

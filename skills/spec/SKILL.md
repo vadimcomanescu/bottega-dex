@@ -2,6 +2,7 @@
 name: spec
 description: Write and sign the spec. Spec doc, Gherkin scenarios, storyboards, gate. Reached by pointer from skills/run when the orchestrator's plan includes a signed spec.
 disable-model-invocation: true
+user-invocable: false
 ---
 
 # Spec
