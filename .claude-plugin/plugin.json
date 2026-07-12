@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "bottega",
   "displayName": "Bottega",
-  "version": "0.44.2",
+  "version": "0.44.3",
   "description": "Autonomous issue-to-PR runs for Claude Code. One command, /bottega:run: discovery, a plan sized to the work, both-family review of the integrated diff always, delivery as an evidence-backed PR. Signed Gherkin specs only when the work warrants them; unattended runs auto-sign from an issue.",
   "author": {
     "name": "Vadim Comanescu"

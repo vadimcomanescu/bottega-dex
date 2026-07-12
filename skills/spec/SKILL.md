@@ -29,7 +29,7 @@ After the sign and before the first builder brief, never earlier: read [referenc
 
 ## Verifying the spec
 
-The pipeline a signed spec brings with it, run whole at the end of the build. Nothing on it is optional once the spec was decided:
+The pipeline a signed spec brings with it, run whole on the head review left clean (`skills/run`, Review), before the PR. Nothing on it is optional once the spec was decided:
 
 1. The acceptance suite runs green against the integrated artifact.
 2. QA drives every signed scenario with recordings (`skills/qa`).
