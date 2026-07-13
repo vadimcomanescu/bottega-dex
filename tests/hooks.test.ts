@@ -36,6 +36,18 @@ describe("model guard", () => {
     expect(out.hookSpecificOutput.additionalContext).toMatch(/Ultra/);
     expect(out.systemMessage).toBeUndefined();
   });
+
+  it("accepts the documented gpt-5.6 alias as Sol", () => {
+    const result = hook("model-guard.js", {
+      hook_event_name: "SessionStart",
+      model: "gpt-5.6",
+      cwd: "/tmp/repo",
+      source: "startup",
+    });
+    const out = JSON.parse(result.stdout);
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/Ultra/);
+    expect(out.systemMessage).toBeUndefined();
+  });
 });
 
 describe("entry guard", () => {

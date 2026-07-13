@@ -1,4 +1,10 @@
-import { accessSync, constants } from "node:fs";
+import {
+  accessSync,
+  constants,
+  existsSync,
+  realpathSync,
+} from "node:fs";
+import { spawnSync } from "node:child_process";
 import { delimiter, isAbsolute, join } from "node:path";
 import { parseArgs } from "node:util";
 
@@ -44,4 +50,36 @@ export function binaryOnPath(name) {
     }
   }
   return null;
+}
+
+export function assertIsolatedGitWorktree(
+  prefix,
+  cwd,
+  { allowMissing = false } = {},
+) {
+  if (!existsSync(cwd)) {
+    if (allowMissing) return;
+    fail(prefix, `worker directory does not exist: ${cwd}`);
+  }
+
+  const git = binaryOnPath("git");
+  if (!git) fail(prefix, "git was not found in an absolute PATH entry", 127);
+
+  const resolveGitPath = (flag) => {
+    const result = spawnSync(
+      git,
+      ["rev-parse", "--path-format=absolute", flag],
+      { cwd, encoding: "utf8" },
+    );
+    if (result.status !== 0) {
+      fail(prefix, `worker directory is not a Git worktree: ${cwd}`);
+    }
+    return realpathSync(result.stdout.trim());
+  };
+
+  const gitDir = resolveGitPath("--git-dir");
+  const commonDir = resolveGitPath("--git-common-dir");
+  if (gitDir === commonDir) {
+    fail(prefix, `high-permission worker cannot run in the primary checkout: ${cwd}`);
+  }
 }

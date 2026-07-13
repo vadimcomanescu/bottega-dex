@@ -73,6 +73,7 @@ describe("codex-exec", () => {
     expect(raw.argv[raw.argv.indexOf("--output-schema") + 1]).toBe(
       "/abs/report.schema.json",
     );
+    expect(raw.route.timeoutMs).toBe(1_200_000);
   });
 
   it("re-enters the route sandbox when resuming", () => {

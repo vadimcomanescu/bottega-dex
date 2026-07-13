@@ -20,9 +20,7 @@ const ROUTES = {
   docs: { adapter: "claude-exec", adapterRole: "docs" },
   "codex-panelist": { adapter: "codex-exec", adapterRole: "panelist" },
   "claude-panelist": { adapter: "claude-exec", adapterRole: "panelist" },
-  "codex-judge": { adapter: "codex-exec", adapterRole: "judge" },
   "claude-judge": { adapter: "claude-exec", adapterRole: "judge" },
-  consult: { adapter: "codex-exec", adapterRole: "consult" },
 };
 
 function fail(message) {

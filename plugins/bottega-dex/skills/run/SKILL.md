@@ -21,7 +21,7 @@ Resolve this skill's plugin root once and pass absolute paths in every brief. Wo
 | work | route | effective model and effort |
 | --- | --- | --- |
 | orchestrator | current thread | gpt-5.6-sol, Ultra |
-| mechanical setup, merges, gate reruns, bulk reads | mechanic | gpt-5.6-luna, high |
+| gate reruns and bulk reads inside the run worktree | mechanic | gpt-5.6-luna, high |
 | builder | builder | gpt-5.6-sol, high |
 | user-facing builder | user-facing-builder | Claude Opus, xhigh |
 | review round 1 | codex-reviewer and claude-reviewer, parallel | gpt-5.6-sol high and Claude Opus xhigh |
@@ -33,7 +33,7 @@ The route is the policy. Raise no model or effort ad hoc. Sol at max or Ultra ou
 
 ## Flow
 
-1. **Isolate.** Use Codex's native worktree support. Only when unavailable, create a normal git worktree under a gitignored directory. Branch `bottega/<slug>`. The user's checkout stays untouched and the pull request is the only path to trunk. Record the base SHA, branch, worktree, current session id when available, and discovered host commands under `.bottega/run/<slug>/`. Check `codex --version` and `claude --version`, then run one minimal structured-output preflight through each adapter before the first worker dispatch.
+1. **Isolate.** Create the worktree from the orchestrator thread using Codex's native worktree support. Only when unavailable, create a normal git worktree under a gitignored directory. Branch `bottega/<slug>`. The user's checkout stays untouched and the pull request is the only path to trunk. Record the base SHA, branch, worktree, current session id when available, and discovered host commands under `.bottega/run/<slug>/`. Check `codex --version` and `claude --version`, then run one minimal structured-output preflight through each adapter before the first worker dispatch.
 
 2. **Discover.** Read the code, history, domain glossary, and product documents. Rank the missing decisions by risk. Close each with repository precedent first, then primary vendor documentation or established practice. Carry searches that returned no precedent. If intent is unclear, interview the user until you can predict their answers.
 

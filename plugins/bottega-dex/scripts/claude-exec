@@ -5,7 +5,12 @@ import {
   readFileSync,
   writeFileSync,
 } from "node:fs";
-import { binaryOnPath, fail, parseWorkerArgs } from "./exec-common.js";
+import {
+  assertIsolatedGitWorktree,
+  binaryOnPath,
+  fail,
+  parseWorkerArgs,
+} from "./exec-common.js";
 
 const ROUTES = {
   "user-facing-builder": {
@@ -15,6 +20,8 @@ const ROUTES = {
     tools: "default",
     persistent: true,
     resumable: true,
+    requiresIsolatedWorktree: true,
+    timeoutMs: 1_800_000,
   },
   reviewer: {
     model: "opus",
@@ -23,6 +30,8 @@ const ROUTES = {
     tools: "Bash,Read,Glob,Grep",
     persistent: false,
     resumable: false,
+    requiresIsolatedWorktree: true,
+    timeoutMs: 1_200_000,
   },
   qa: {
     model: "opus",
@@ -32,6 +41,8 @@ const ROUTES = {
     persistent: false,
     resumable: false,
     chrome: true,
+    requiresIsolatedWorktree: true,
+    timeoutMs: 1_200_000,
   },
   docs: {
     model: "opus",
@@ -40,6 +51,8 @@ const ROUTES = {
     tools: "default",
     persistent: false,
     resumable: false,
+    requiresIsolatedWorktree: true,
+    timeoutMs: 1_200_000,
   },
   panelist: {
     model: "opus",
@@ -48,6 +61,8 @@ const ROUTES = {
     tools: "Bash,Read,Glob,Grep",
     persistent: false,
     resumable: false,
+    requiresIsolatedWorktree: false,
+    timeoutMs: 900_000,
   },
   judge: {
     model: "opus",
@@ -56,6 +71,8 @@ const ROUTES = {
     tools: "",
     persistent: false,
     resumable: false,
+    requiresIsolatedWorktree: false,
+    timeoutMs: 900_000,
   },
 };
 
@@ -67,9 +84,14 @@ if (!route) fail(PREFIX, `unknown role '${values.role}'`);
 if (values.resume && !route.resumable) {
   fail(PREFIX, `role '${values.role}' cannot be resumed because it must arrive cold`);
 }
+if (route.requiresIsolatedWorktree) {
+  assertIsolatedGitWorktree(PREFIX, values.cwd, {
+    allowMissing: values["dry-run"],
+  });
+}
 
 let schema = null;
-if (values.schema && !values["dry-run"]) {
+if (values.schema) {
   try {
     schema = readFileSync(values.schema, "utf8");
   } catch (error) {
@@ -120,10 +142,18 @@ const result = spawnSync(command, argv, {
   input: readFileSync(values.brief),
   encoding: "utf8",
   maxBuffer: 64 * 1024 * 1024,
+  timeout: route.timeoutMs,
+  killSignal: "SIGTERM",
 });
 writeFileSync(values.events, result.stdout ?? "");
 if (result.stderr) process.stderr.write(result.stderr);
 if (result.error) {
+  if (result.error.code === "ETIMEDOUT") {
+    process.stderr.write(
+      `claude-exec: ${values.role} exceeded its ${route.timeoutMs}ms timeout\n`,
+    );
+    process.exit(124);
+  }
   process.stderr.write(`claude-exec: ${result.error.message}\n`);
   process.exit(1);
 }

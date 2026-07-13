@@ -10,6 +10,7 @@ const SCRIPT = join(
   "scripts",
   "worker-exec",
 );
+const ROOT = join(import.meta.dirname, "..");
 
 const BASE = [
   "--cwd", "/tmp/worktree",
@@ -50,5 +51,15 @@ describe("worker-exec", () => {
     ], { encoding: "utf8" });
     expect(result.status).toBe(2);
     expect(result.stderr).toMatch(/model|Unknown option/i);
+  });
+
+  it("rejects a high-permission worker in the primary checkout", () => {
+    const result = spawnSync("node", [
+      SCRIPT,
+      "--role", "qa",
+      ...BASE.map((value) => (value === "/tmp/worktree" ? ROOT : value)),
+    ], { encoding: "utf8" });
+    expect(result.status).toBe(2);
+    expect(result.stderr).toMatch(/primary checkout/);
   });
 });

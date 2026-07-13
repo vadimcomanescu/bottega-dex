@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -10,6 +11,7 @@ const SCRIPT = join(
   "scripts",
   "claude-exec",
 );
+const SCHEMA = join(import.meta.dirname, "fixtures", "smoke.schema.json");
 
 const BASE = [
   "--role", "reviewer",
@@ -38,11 +40,14 @@ describe("claude-exec", () => {
   });
 
   it("passes JSON Schema content to Claude, not a filesystem-only pointer", () => {
-    const result = run([...BASE, "--schema", "/tmp/report.schema.json"]);
+    const result = run([...BASE, "--schema", SCHEMA]);
     expect(result.status).toBe(0);
     const raw = JSON.parse(result.stdout);
-    expect(raw.schemaFile).toBe("/tmp/report.schema.json");
-    expect(raw.argv).toContain("--json-schema");
+    expect(raw.schemaFile).toBe(SCHEMA);
+    const schemaIndex = raw.argv.indexOf("--json-schema");
+    expect(schemaIndex).toBeGreaterThan(-1);
+    expect(raw.argv[schemaIndex + 1]).toBe(readFileSync(SCHEMA, "utf8"));
+    expect(raw.route.timeoutMs).toBe(1_200_000);
   });
 
   it("keeps builder sessions resumable and pins Opus xhigh", () => {
