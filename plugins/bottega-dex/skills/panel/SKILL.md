@@ -11,7 +11,7 @@ Write one self-contained question containing the agreed specification, constrain
 
 Start exactly two blind drafts in parallel:
 
-- One native Codex subagent requested at GPT-5.6 Sol high. Give it this skill, the question, and `references/panelist.schema.json` by absolute path. Require one matching JSON object.
+- One native Codex subagent requested at GPT-5.6 Sol high. Give it only the question and `references/panelist.schema.json` by absolute path. Require one matching JSON object.
 - One external Claude panelist through `scripts/claude-exec --role panelist` with the identical question and schema.
 
 Neither receives the other's output. After both finish, label the returned drafts A and B. Create a comparison brief containing only the original question plus Draft A and Draft B. Do not include provider, model, or role identities. Send that brief through `scripts/claude-exec --role judge` with `references/judge.schema.json`.

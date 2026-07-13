@@ -30,6 +30,8 @@ describe("native Codex orchestration", () => {
     expect(run).toContain("claude-exec");
     expect(panel).toMatch(/native Codex subagent/i);
     expect(panel).toContain("claude-exec");
+    expect(panel).toMatch(/Give it only the question/i);
+    expect(panel).not.toMatch(/Give it this skill/i);
     expect(panel).toContain("identical question");
     expect(panel).toMatch(/compare.*only/i);
     expect(panel).toMatch(/Do not include provider, model, or role identities/i);
