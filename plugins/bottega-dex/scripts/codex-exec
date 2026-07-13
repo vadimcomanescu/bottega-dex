@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "node:child_process";
 import { openSync } from "node:fs";
 import {
   assertIsolatedGitWorktree,
   binaryOnPath,
   fail,
   parseWorkerArgs,
+  spawnBounded,
 } from "./exec-common.js";
 
 const ROUTES = {
@@ -93,12 +93,10 @@ if (!command) {
   process.exit(127);
 }
 
-const result = spawnSync(command, argv, {
+const result = spawnBounded(command, argv, {
   cwd: values.cwd,
   stdio: [openSync(values.brief, "r"), openSync(values.events, "w"), "inherit"],
-  timeout: route.timeoutMs,
-  killSignal: "SIGTERM",
-});
+}, route.timeoutMs);
 if (result.error) {
   if (result.error.code === "ETIMEDOUT") {
     process.stderr.write(

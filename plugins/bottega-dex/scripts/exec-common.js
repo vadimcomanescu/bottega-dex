@@ -52,6 +52,14 @@ export function binaryOnPath(name) {
   return null;
 }
 
+export function spawnBounded(command, argv, options, timeoutMs) {
+  return spawnSync(command, argv, {
+    ...options,
+    timeout: timeoutMs,
+    killSignal: "SIGKILL",
+  });
+}
+
 export function assertIsolatedGitWorktree(
   prefix,
   cwd,

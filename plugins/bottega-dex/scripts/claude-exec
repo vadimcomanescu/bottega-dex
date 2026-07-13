@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "node:child_process";
 import {
   readFileSync,
   writeFileSync,
@@ -10,6 +9,7 @@ import {
   binaryOnPath,
   fail,
   parseWorkerArgs,
+  spawnBounded,
 } from "./exec-common.js";
 
 const ROUTES = {
@@ -137,14 +137,12 @@ if (!command) {
   process.exit(127);
 }
 
-const result = spawnSync(command, argv, {
+const result = spawnBounded(command, argv, {
   cwd: values.cwd,
   input: readFileSync(values.brief),
   encoding: "utf8",
   maxBuffer: 64 * 1024 * 1024,
-  timeout: route.timeoutMs,
-  killSignal: "SIGTERM",
-});
+}, route.timeoutMs);
 writeFileSync(values.events, result.stdout ?? "");
 if (result.stderr) process.stderr.write(result.stderr);
 if (result.error) {
