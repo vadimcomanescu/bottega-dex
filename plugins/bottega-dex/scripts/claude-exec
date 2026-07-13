@@ -8,49 +8,16 @@ import {
   assertIsolatedGitWorktree,
   binaryOnPath,
   fail,
-  parseWorkerArgs,
+  parseClaudeArgs,
   spawnBounded,
 } from "./exec-common.js";
 
 const ROUTES = {
-  "user-facing-builder": {
-    model: "opus",
-    effort: "xhigh",
-    permission: "bypassPermissions",
-    tools: "default",
-    persistent: true,
-    resumable: true,
-    requiresIsolatedWorktree: true,
-    timeoutMs: 1_800_000,
-  },
   reviewer: {
     model: "opus",
     effort: "xhigh",
     permission: "dontAsk",
     tools: "Bash,Read,Glob,Grep",
-    persistent: false,
-    resumable: false,
-    requiresIsolatedWorktree: true,
-    timeoutMs: 1_200_000,
-  },
-  qa: {
-    model: "opus",
-    effort: "high",
-    permission: "bypassPermissions",
-    tools: "default",
-    persistent: false,
-    resumable: false,
-    chrome: true,
-    requiresIsolatedWorktree: true,
-    timeoutMs: 1_200_000,
-  },
-  docs: {
-    model: "opus",
-    effort: "high",
-    permission: "bypassPermissions",
-    tools: "default",
-    persistent: false,
-    resumable: false,
     requiresIsolatedWorktree: true,
     timeoutMs: 1_200_000,
   },
@@ -59,8 +26,6 @@ const ROUTES = {
     effort: "xhigh",
     permission: "dontAsk",
     tools: "Bash,Read,Glob,Grep",
-    persistent: false,
-    resumable: false,
     requiresIsolatedWorktree: false,
     timeoutMs: 900_000,
   },
@@ -69,21 +34,16 @@ const ROUTES = {
     effort: "high",
     permission: "dontAsk",
     tools: "",
-    persistent: false,
-    resumable: false,
     requiresIsolatedWorktree: false,
     timeoutMs: 900_000,
   },
 };
 
 const PREFIX = "claude-exec";
-const values = parseWorkerArgs(PREFIX);
+const values = parseClaudeArgs(PREFIX);
 
 const route = ROUTES[values.role];
 if (!route) fail(PREFIX, `unknown role '${values.role}'`);
-if (values.resume && !route.resumable) {
-  fail(PREFIX, `role '${values.role}' cannot be resumed because it must arrive cold`);
-}
 if (route.requiresIsolatedWorktree) {
   assertIsolatedGitWorktree(PREFIX, values.cwd, {
     allowMissing: values["dry-run"],
@@ -108,14 +68,9 @@ const argv = [
   "--tools", route.tools,
   "--output-format", "json",
 ];
-if (route.permission === "bypassPermissions") {
-  argv.push("--dangerously-skip-permissions");
-}
-if (!route.persistent) argv.push("--no-session-persistence");
-if (route.chrome) argv.push("--chrome");
-if (values.resume) argv.push("--resume", values.resume);
+argv.push("--no-session-persistence");
 if (values.schema) {
-  argv.push("--json-schema", schema ?? `<schema:${values.schema}>`);
+  argv.push("--json-schema", schema);
 }
 
 if (values["dry-run"]) {

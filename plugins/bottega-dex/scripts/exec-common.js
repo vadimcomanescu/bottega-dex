@@ -13,7 +13,7 @@ export function fail(prefix, message, code = 2) {
   process.exit(code);
 }
 
-export function parseWorkerArgs(prefix) {
+export function parseClaudeArgs(prefix) {
   let values;
   try {
     ({ values } = parseArgs({
@@ -24,7 +24,6 @@ export function parseWorkerArgs(prefix) {
         out: { type: "string" },
         events: { type: "string" },
         schema: { type: "string" },
-        resume: { type: "string" },
         "dry-run": { type: "boolean", default: false },
       },
     }));

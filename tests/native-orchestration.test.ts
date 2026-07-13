@@ -1,0 +1,39 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+
+const ROOT = join(import.meta.dirname, "..");
+const PLUGIN = join(ROOT, "plugins", "bottega-dex");
+const PRODUCT_FILES = [
+  join(ROOT, "README.md"),
+  join(ROOT, "AGENTS.md"),
+  join(PLUGIN, "skills", "run", "SKILL.md"),
+  join(PLUGIN, "skills", "run", "references", "dispatch.md"),
+  join(PLUGIN, "skills", "panel", "SKILL.md"),
+];
+
+describe("native Codex orchestration", () => {
+  it("contains no nested Codex process launch contract", () => {
+    const text = PRODUCT_FILES.map((path) => readFileSync(path, "utf8")).join("\n");
+    expect(text).not.toMatch(/\bcodex exec\b|codex-exec|worker-exec|panel-run/i);
+    expect(existsSync(join(PLUGIN, "scripts", "codex-exec"))).toBe(false);
+    expect(existsSync(join(PLUGIN, "scripts", "worker-exec"))).toBe(false);
+    expect(existsSync(join(PLUGIN, "scripts", "panel-run"))).toBe(false);
+  });
+
+  it("uses native subagents for Codex work and Claude only for cross-family calls", () => {
+    const run = readFileSync(join(PLUGIN, "skills", "run", "SKILL.md"), "utf8");
+    const panel = readFileSync(join(PLUGIN, "skills", "panel", "SKILL.md"), "utf8");
+    expect(run).toMatch(/native Codex subagent/i);
+    expect(run).toContain("gpt-5.6-luna");
+    expect(run).toContain("gpt-5.6-sol");
+    expect(run).toContain("claude-exec");
+    expect(panel).toMatch(/native Codex subagent/i);
+    expect(panel).toContain("claude-exec");
+    expect(panel).toMatch(/Give it only the question/i);
+    expect(panel).not.toMatch(/Give it this skill/i);
+    expect(panel).toContain("identical question");
+    expect(panel).toMatch(/compare.*only/i);
+    expect(panel).toMatch(/Do not include provider, model, or role identities/i);
+  });
+});
