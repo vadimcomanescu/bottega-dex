@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "consensus",
+    "contradictions",
+    "partial_coverage",
+    "unique_insights",
+    "blind_spots"
+  ],
+  "properties": {
+    "consensus": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "contradictions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "partial_coverage": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "unique_insights": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "blind_spots": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

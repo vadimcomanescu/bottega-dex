@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ok", "provider"],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "provider": { "type": "string", "enum": ["codex", "claude"] }
+  }
+}

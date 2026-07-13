@@ -1,0 +1,33 @@
+{
+  "name": "bottega-dex",
+  "version": "0.1.0",
+  "description": "Autonomous issue-to-PR runs for Codex, with fixed model routing and cross-family review.",
+  "author": {
+    "name": "Vadim Comanescu",
+    "url": "https://github.com/vadimcomanescu"
+  },
+  "homepage": "https://github.com/vadimcomanescu/bottega-dex#readme",
+  "repository": "https://github.com/vadimcomanescu/bottega-dex",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "autonomous",
+    "agents",
+    "orchestration",
+    "code-review",
+    "qa"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Bottega Dex",
+    "shortDescription": "Take an issue to a reviewed, evidence-backed PR.",
+    "longDescription": "Runs discovery, specification, planning, fixed-route implementation, cross-family review, real product QA, and pull request delivery from one Codex task.",
+    "developerName": "Vadim Comanescu",
+    "category": "Coding",
+    "capabilities": ["Agents", "Write", "Code review"],
+    "defaultPrompt": [
+      "$bottega-dex:run Ship this issue to a pull request.",
+      "$bottega-dex:run Fix this bug and prove it is gone."
+    ]
+  }
+}

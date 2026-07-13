@@ -1,0 +1,88 @@
+#!/usr/bin/env node
+
+import { spawnSync } from "node:child_process";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { parseArgs } from "node:util";
+
+const HERE = fileURLToPath(new URL(".", import.meta.url));
+
+const ROUTES = {
+  builder: { adapter: "codex-exec", adapterRole: "builder" },
+  "user-facing-builder": {
+    adapter: "claude-exec",
+    adapterRole: "user-facing-builder",
+  },
+  mechanic: { adapter: "codex-exec", adapterRole: "mechanic" },
+  "codex-reviewer": { adapter: "codex-exec", adapterRole: "reviewer" },
+  "claude-reviewer": { adapter: "claude-exec", adapterRole: "reviewer" },
+  qa: { adapter: "claude-exec", adapterRole: "qa" },
+  docs: { adapter: "claude-exec", adapterRole: "docs" },
+  "codex-panelist": { adapter: "codex-exec", adapterRole: "panelist" },
+  "claude-panelist": { adapter: "claude-exec", adapterRole: "panelist" },
+  "codex-judge": { adapter: "codex-exec", adapterRole: "judge" },
+  "claude-judge": { adapter: "claude-exec", adapterRole: "judge" },
+  consult: { adapter: "codex-exec", adapterRole: "consult" },
+};
+
+function fail(message) {
+  process.stderr.write(`worker-exec: ${message}\n`);
+  process.exit(2);
+}
+
+let values;
+try {
+  ({ values } = parseArgs({
+    options: {
+      role: { type: "string" },
+      cwd: { type: "string" },
+      brief: { type: "string" },
+      out: { type: "string" },
+      events: { type: "string" },
+      schema: { type: "string" },
+      resume: { type: "string" },
+      "dry-run": { type: "boolean", default: false },
+    },
+  }));
+} catch (error) {
+  fail(error.message);
+}
+
+for (const name of ["role", "cwd", "brief", "out", "events"]) {
+  if (!values[name]) fail(`--${name} is required`);
+}
+
+const route = ROUTES[values.role];
+if (!route) fail(`unknown role '${values.role}'`);
+
+const adapter = join(HERE, route.adapter);
+const argv = [
+  adapter,
+  "--role", route.adapterRole,
+  "--cwd", values.cwd,
+  "--brief", values.brief,
+  "--out", values.out,
+  "--events", values.events,
+];
+if (values.schema) argv.push("--schema", values.schema);
+if (values.resume) argv.push("--resume", values.resume);
+if (values["dry-run"]) argv.push("--dry-run");
+
+if (values["dry-run"]) {
+  const result = spawnSync(process.execPath, argv, { encoding: "utf8" });
+  if (result.stderr) process.stderr.write(result.stderr);
+  if (result.status !== 0) process.exit(result.status ?? 1);
+  process.stdout.write(JSON.stringify({
+    role: values.role,
+    adapter: route.adapter,
+    dispatch: JSON.parse(result.stdout),
+  }) + "\n");
+  process.exit(0);
+}
+
+const result = spawnSync(process.execPath, argv, { stdio: "inherit" });
+if (result.error) {
+  process.stderr.write(`worker-exec: ${result.error.message}\n`);
+  process.exit(1);
+}
+process.exit(result.status ?? 1);

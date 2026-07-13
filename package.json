@@ -1,14 +1,14 @@
 {
-  "name": "bottega",
+  "name": "bottega-dex",
   "version": "0.1.0",
-  "description": "An autonomous long-running agent system built for Fable to orchestrate.",
+  "description": "Autonomous issue-to-PR runs built for GPT-5.6 Sol Ultra to orchestrate in Codex.",
   "type": "module",
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "engines": {
-    "node": ">=22.18"
+    "node": ">=24"
   },
   "license": "MIT",
   "devDependencies": {

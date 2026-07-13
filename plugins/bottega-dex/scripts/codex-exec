@@ -1,0 +1,98 @@
+#!/usr/bin/env node
+
+import { spawnSync } from "node:child_process";
+import { openSync } from "node:fs";
+import { binaryOnPath, fail, parseWorkerArgs } from "./exec-common.js";
+
+const ROUTES = {
+  builder: {
+    model: "gpt-5.6-sol",
+    effort: "high",
+    sandbox: "danger-full-access",
+    resumable: true,
+  },
+  reviewer: {
+    model: "gpt-5.6-sol",
+    effort: "high",
+    sandbox: "danger-full-access",
+    resumable: false,
+  },
+  mechanic: {
+    model: "gpt-5.6-luna",
+    effort: "high",
+    sandbox: "danger-full-access",
+    resumable: false,
+  },
+  panelist: {
+    model: "gpt-5.6-sol",
+    effort: "high",
+    sandbox: "read-only",
+    resumable: false,
+  },
+  judge: {
+    model: "gpt-5.6-sol",
+    effort: "high",
+    sandbox: "read-only",
+    resumable: false,
+  },
+  consult: {
+    model: "gpt-5.6-luna",
+    effort: "high",
+    sandbox: "read-only",
+    resumable: false,
+  },
+};
+
+const PREFIX = "codex-exec";
+const values = parseWorkerArgs(PREFIX);
+
+const route = ROUTES[values.role];
+if (!route) fail(PREFIX, `unknown role '${values.role}'`);
+if (values.resume && !route.resumable) {
+  fail(PREFIX, `role '${values.role}' cannot be resumed`);
+}
+
+const argv = ["exec"];
+if (values.resume) argv.push("resume", values.resume);
+argv.push(
+  "--ignore-user-config",
+  "--strict-config",
+  "-m", route.model,
+  "-c", `model_reasoning_effort=${route.effort}`,
+);
+if (values.resume) {
+  argv.push("-c", `sandbox_mode=${route.sandbox}`);
+} else {
+  argv.push("-s", route.sandbox, "-C", values.cwd);
+}
+argv.push("--json", "-o", values.out);
+if (values.schema) argv.push("--output-schema", values.schema);
+if (values.resume) argv.push("-");
+
+if (values["dry-run"]) {
+  process.stdout.write(`${JSON.stringify({
+    command: "codex",
+    argv,
+    stdin: values.brief,
+    stdout: values.events,
+    cwd: values.cwd,
+    route,
+  })}\n`);
+  process.exit(0);
+}
+
+const command = binaryOnPath("codex");
+if (!command) {
+  process.stderr.write("codex-exec: codex was not found in an absolute PATH entry\n");
+  process.exit(127);
+}
+
+const result = spawnSync(command, argv, {
+  cwd: values.cwd,
+  stdio: [openSync(values.brief, "r"), openSync(values.events, "w"), "inherit"],
+});
+if (result.error) {
+  process.stderr.write(`codex-exec: ${result.error.message}\n`);
+  process.exit(1);
+}
+process.exit(result.status ?? 1);

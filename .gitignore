@@ -1,4 +1,4 @@
 node_modules/
+build/
 .bottega/
-build-artifacts/
-*.tsbuildinfo
+*.log

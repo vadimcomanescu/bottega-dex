@@ -1,86 +1,113 @@
-# bottega
+# bottega-dex
 
-Autonomous issue-to-PR runs for Claude Code. One command takes a task, bug, or GitHub issue to a reviewed, evidence-backed pull request.
+Autonomous issue-to-PR runs for Codex. One skill takes a task, bug, or GitHub issue to a reviewed, evidence-backed pull request.
 
+Bottega Dex is the Codex-native sibling of [bottega](https://github.com/vadimcomanescu/bottega). Bottega remains the Claude Code product. This repository preserves its process while making Codex the orchestrator.
+
+## Install
+
+Requirements:
+
+- Codex CLI 0.144.0 or newer, logged in.
+- Claude Code 2.1.207 or newer, logged in. Claude is used only for the independent model-family paths.
+- Node.js 24 or newer for plugin scripts.
+
+```bash
+codex plugin marketplace add vadimcomanescu/bottega-dex
+codex plugin add bottega-dex@bottega-dex
 ```
-/plugin marketplace add vadimcomanescu/bottega
-/plugin install bottega@bottega
 
-/bottega:run <task, or issue URL>
+Start the orchestrator on GPT-5.6 Sol with Ultra reasoning:
+
+```bash
+codex -m gpt-5.6-sol -c 'model_reasoning_effort="ultra"'
 ```
 
-## What it does
+In the Codex app, select GPT-5.6 Sol and Ultra before starting the task. Then invoke:
 
-`/bottega:run` turns the current Claude Code session into an orchestrator that:
+```text
+$bottega-dex:run <task, bug, or issue URL>
+```
 
-1. Isolates the run in its own worktree and branch, and discovers the host's test, lint, typecheck, build, and run commands.
-2. Reads the codebase, surfaces the unknowns the request never mentions, researches how others solve the same problem, and grills the user when the intent is unclear.
-3. Presents a brief user-facing spec in the conversation: what changes, acceptance criteria, definition of done, wireframe mockups when UI is touched. The user's OK is the go signal; a request that waives sign-off in its own words skips the wait, and the PR presents the spec and every decision where the OK would have gone.
-4. Plans the work as vertical slices, and puts each costly decision (where the change lives, data shape, public contracts, dependency bets) to a panel of independent frontier models before building.
-5. Dispatches builders in parallel where slices allow it, with the host's gates green after every slice and the full suite at every integrate.
-6. Has the integrated diff reviewed once by two cold reviewers in parallel, one per model family, with schema-enforced reports; fixes get a single fresh reviewer each, and the rounds are hard-bounded.
-7. Drives the product as a user and records it: a feature shown working, a bug shown gone, walkthrough gifs and screenshots inline in the PR with the full recordings one click away.
-8. Syncs the host's docs to the diff and opens the PR carrying the spec, every decision made on the user's behalf, the review verdicts, and the QA evidence.
+Installed plugin hooks require a one-time trust review. Open `/hooks` when Codex asks, inspect the two shipped hooks, and trust them. Start a new thread after installing or upgrading so Codex loads the current skill and hooks.
 
-The user appears exactly twice: agreeing to the spec, and merging the PR.
+## The flow
 
-## Requirements
+`$bottega-dex:run` turns the current Codex thread into an orchestrator that:
 
-- Claude Code running on the strongest available Claude model. The orchestrator role needs it, and the skill says so instead of proceeding silently on a lower tier.
-- The [codex CLI](https://github.com/openai/codex), logged in. Cross-model review is never dropped (see below), so bottega checks for it before any run and fails loudly if it's missing.
+1. Isolates the run in its own worktree and discovers the host's test, lint, typecheck, build, and run commands.
+2. Reads the codebase, surfaces unstated risks, researches precedent, and interviews the user when intent is unclear.
+3. Presents a concise user-facing specification. The user's approval starts the build unless the original request explicitly waived that gate.
+4. Plans vertical slices and sends expensive-to-reverse decisions to a blinded cross-family panel.
+5. Builds in isolated slices with fixed routes and host gates green after every integration.
+6. Reviews the frozen integrated diff once with two cold reviewers in parallel, one Codex and one Claude, using the same schema-enforced report contract.
+7. Drives the real product as a user and publishes recordings, screenshots, and verdicts in the pull request.
+8. Synchronizes existing documentation and opens the pull request with the specification, decisions, review record, and QA evidence.
 
-Nothing else is assumed about the host repo. A run leaves nothing behind but the PR: working state is the worktree plus one gitignored owner file, both removed at delivery.
+The user appears twice: approving the specification and merging the pull request. An explicit autonomous request removes the first gate. The merge remains the only path to trunk.
+
+## Routing
+
+Callers choose a role, not a model. `worker-exec` owns provider, model, effort, permissions, and tool policy.
+
+| Role | Route |
+| --- | --- |
+| orchestrator | GPT-5.6 Sol, Ultra, current Codex thread |
+| mechanical work | GPT-5.6 Luna, high |
+| builder | GPT-5.6 Sol, high |
+| user-facing builder | Claude Opus, xhigh |
+| integrated review | GPT-5.6 Sol high plus Claude Opus xhigh |
+| fix review | fresh GPT-5.6 Sol, high |
+| QA and large docs sweep | Claude Opus, high |
+
+The adapters use the official non-interactive clients:
+
+- `codex exec` with fixed config, event capture, structured output, and explicit resume handling.
+- `claude -p --safe-mode` with fixed tools and permissions, JSON Schema output, and envelope normalization.
+
+CLIProxyAPI is intentionally not part of the design. It is useful when an application needs a provider-compatible HTTP service or account routing. Bottega Dex needs complete coding-agent tool loops from the two installed CLIs, so a proxy would add a service, authentication state, and protocol translation without adding capability.
 
 ## Design decisions
 
-**No engine.** This repo is markdown prompts, two small hooks, and one codex dispatch script. There is no scheduler, queue, or state machine; orchestration uses what Claude Code already provides (tracked subagent dispatches, tracked background shells, workflows). Why: any orchestration machinery written here would duplicate the harness and drift from it, and prompts that lean on the harness get its reliability for free.
+**Codex is the orchestrator.** The interactive thread stays on GPT-5.6 Sol at Ultra because it owns specification, architecture, routing, arbitration, and delivery. The plugin does not start a hidden orchestrator process because that would break the conversational approval gate and split run state.
 
-**Both-family review, always.** The integrated diff is reviewed cold by two reviewers in parallel, one per model family (codex and Claude), neither seeing the other's findings; each fix is rechecked by a single fresh reviewer. Why: same-family review inherits the generator's blind spots and produces confident false verification, and an opposite-family read covers every line whoever built it. This is the one step never dropped, whatever the size of the change, because it is what lets a user merge without reading the diff. Every reviewer returns one schema-enforced JSON report (`skills/reviewing/references/report.schema.json`) pinned to the exact SHAs it reviewed, so "review passed" is a state derivable from the reports, not a narrative. The rounds are bounded by design: the same finding open after two fix attempts stops the fixing, round 3 stops the review, and nothing ever dispatches round 4 automatically.
+**Two provider adapters, one worker interface.** Codex and Claude have different structured-output and resume behavior. `worker-exec` gives the run one role-based interface while `codex-exec` and `claude-exec` hide those provider differences.
 
-**Model routing is enforced, not suggested.** Worker roles map to fixed models (the routing table in `skills/run/SKILL.md`), and a PreToolUse hook (`hooks/route-guard.js`) rejects any dispatch or workflow that omits a model or routes a worker to the top-tier model. Why: a dispatch that omits a model silently inherits the orchestrator's model, the most expensive one, and in a measured run 103 of 132 dispatches did exactly that before this hook existed.
+**Cross-family review is never dropped.** Round 1 always sends the same frozen integrated diff to one Codex reviewer and one Claude reviewer. Neither sees the other's output. Every report echoes the base, head, and tree SHAs and matches one JSON Schema. Fixes receive a fresh delta review.
 
-**The spec is a conversation, not a pipeline.** The spec is presented in the session and approved with a reply: acceptance criteria, definition of done, honest wireframes. Why: earlier versions carried a signed Gherkin pipeline (generated acceptance suites, hosted sign-off documents, feature-file mutation testing); in the field it burned hours building and reviewing its own test harness while catching zero product defects the review had not already caught. The proof the user actually consumes is the review plus the QA recording.
+**The harness remains the orchestration layer.** The plugin provides skills, fixed adapters, and two hooks. It has no queue, daemon, scheduler, or state machine. Work is visible as Codex tool calls, worktrees, commits, reports, and the pull request.
 
-**QA is a witness.** QA drives the real artifact after review leaves the head clean, records the session that produced the verdict, and never fixes what it finds. Why: a claim is believable when the process that produced it could not have benefited from it being false; a QA that fixes grades its own work. Evidence is read on github.com, never in local folders: walkthrough gifs and screenshots embed inline in the PR body from a never-merged evidence branch (GitHub plays gifs from raw links but never video files, so full recordings are linked beside them), and the branch dies after merge: the evidence's job ends when the user merges.
+**QA is evidence, not implementation.** QA drives the reviewed head and never fixes it. A failure returns to the builder and review loop, then QA drives the new head again. Evidence is published with commit-pinned links from a never-merged branch and removed after merge.
 
-**The PR is the only path to trunk.** Every run builds on its own branch in its own worktree; the user's checkout is never touched, and the merge click is the only human action that lands code. Why: an autonomous system should be unable to change what you run, only to propose it.
+## Repository layout
 
-## Roles
-
-Agent definitions in `agents/` say who a worker is; skills in `skills/` say how it works. Agent files never pin a model: the routing table (with reasoning effort per role) lives in [`skills/run/SKILL.md`](skills/run/SKILL.md) and is enforced by the hook.
-
-| Role | Job | Model | Method |
-| --- | --- | --- | --- |
-| orchestrator | design, routing, arbitration, every judgment call | fable-5 | [`skills/run/SKILL.md`](skills/run/SKILL.md) |
-| builder | implements one slice, test-first, inside a given interface | gpt-5.6-sol (high), or opus-4.8 (xhigh) for a user-facing slice | [`skills/implementing/SKILL.md`](skills/implementing/SKILL.md) |
-| reviewer | tries to break the integrated diff, polices the tests, judges the design | gpt-5.6-sol (high) + opus-4.8 (xhigh) in round 1; gpt-5.6-sol (high) on fixes | [`skills/reviewing/SKILL.md`](skills/reviewing/SKILL.md) |
-| qa | drives the built artifact as a user, records the evidence | opus-4.8 (high) | the QA rules in [`skills/run/SKILL.md`](skills/run/SKILL.md) |
-| panelist / judge | blind recommendations on a costly decision / compare-only judgment | dispatched by the panel workflow | [`skills/panel/SKILL.md`](skills/panel/SKILL.md) |
-| mechanical work | worktree setup, merges, gate re-runs, bulk reads; no judgment | sonnet-5 (low) | the closed command list in its dispatch |
-
-One design vocabulary spans all of them: [`skills/codebase-design`](skills/codebase-design/SKILL.md) (deep modules behind small interfaces, plus a `CONCEPTS.md` domain glossary in the host repo). The orchestrator designs by it, builders receive it in their briefs, reviewers judge against it.
-
-## Repo layout
-
-```
-skills/         run (the whole method), implementing, reviewing, panel, codebase-design
-agents/         agent definitions: identity and a pointer to the skill, nothing else
-scripts/        codex-exec, the one place a codex invocation is assembled
-hooks/          route guard (model routing) and entry guard (points prose at /bottega:run)
-tests/          unit tests for the hooks, the codex script, and the review report contract
-docs/specs/     closed records of delivered runs
+```text
+.agents/plugins/marketplace.json       public Codex marketplace
+plugins/bottega-dex/.codex-plugin/     plugin manifest
+plugins/bottega-dex/skills/            run, builder, review, panel, design
+plugins/bottega-dex/scripts/           role router and provider adapters
+plugins/bottega-dex/hooks/             model and entry guards
+tests/                                 package and behavior contracts
 ```
 
-## Development
+## Develop
 
 ```bash
-npm install
-npm test        # hook unit tests
+npm ci
+npm test
+npm run typecheck
+python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/bottega-dex
 ```
+
+## Sources
+
+- [OpenAI Codex plugin structure](https://developers.openai.com/codex/plugins/build)
+- [OpenAI Codex subagents and model configuration](https://developers.openai.com/codex/subagents)
+- [Anthropic Claude Code CLI reference](https://code.claude.com/docs/en/cli-usage)
 
 ## Credits
 
-The discovery method (interviewing for unknowns) follows Thariq Shihipar's unknowns framework. The design vocabulary is John Ousterhout's deep modules. The build-then-review split follows Addy Osmani's long-running-agent notes. The review report contract (schema enforced at dispatch, a frozen review target, "clean" as a state derivable from the reports) adapts the architecture of [openclaw/agent-skills autoreview](https://github.com/openclaw/agent-skills/tree/main/skills/autoreview). The panel (blinded frontier drafts, a judge held to structured comparison) follows OpenRouter's [Fusion](https://openrouter.ai/blog/announcements/fusion-beats-frontier/), which measured fused frontier models beating any single one; bottega deviates in one place: the judge never writes the answer, synthesis stays with the orchestrator, which holds the run context the judge never sees.
+The process and its history come from [bottega](https://github.com/vadimcomanescu/bottega). The discovery method follows Thariq Shihipar's unknowns framework. The design vocabulary follows John Ousterhout's deep modules. The build and review split follows Addy Osmani's long-running-agent notes. The blinded panel follows OpenRouter Fusion's independent-draft pattern, while final synthesis stays with the orchestrator.
 
 ## License
 

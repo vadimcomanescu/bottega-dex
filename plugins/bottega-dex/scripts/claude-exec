@@ -1,0 +1,149 @@
+#!/usr/bin/env node
+
+import { spawnSync } from "node:child_process";
+import {
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
+import { binaryOnPath, fail, parseWorkerArgs } from "./exec-common.js";
+
+const ROUTES = {
+  "user-facing-builder": {
+    model: "opus",
+    effort: "xhigh",
+    permission: "bypassPermissions",
+    tools: "default",
+    persistent: true,
+    resumable: true,
+  },
+  reviewer: {
+    model: "opus",
+    effort: "xhigh",
+    permission: "dontAsk",
+    tools: "Bash,Read,Glob,Grep",
+    persistent: false,
+    resumable: false,
+  },
+  qa: {
+    model: "opus",
+    effort: "high",
+    permission: "bypassPermissions",
+    tools: "default",
+    persistent: false,
+    resumable: false,
+    chrome: true,
+  },
+  docs: {
+    model: "opus",
+    effort: "high",
+    permission: "bypassPermissions",
+    tools: "default",
+    persistent: false,
+    resumable: false,
+  },
+  panelist: {
+    model: "opus",
+    effort: "xhigh",
+    permission: "dontAsk",
+    tools: "Bash,Read,Glob,Grep",
+    persistent: false,
+    resumable: false,
+  },
+  judge: {
+    model: "opus",
+    effort: "high",
+    permission: "dontAsk",
+    tools: "",
+    persistent: false,
+    resumable: false,
+  },
+};
+
+const PREFIX = "claude-exec";
+const values = parseWorkerArgs(PREFIX);
+
+const route = ROUTES[values.role];
+if (!route) fail(PREFIX, `unknown role '${values.role}'`);
+if (values.resume && !route.resumable) {
+  fail(PREFIX, `role '${values.role}' cannot be resumed because it must arrive cold`);
+}
+
+let schema = null;
+if (values.schema && !values["dry-run"]) {
+  try {
+    schema = readFileSync(values.schema, "utf8");
+  } catch (error) {
+    fail(PREFIX, `cannot read schema: ${error.message}`);
+  }
+}
+
+const argv = [
+  "-p",
+  "--safe-mode",
+  "--model", route.model,
+  "--effort", route.effort,
+  "--permission-mode", route.permission,
+  "--tools", route.tools,
+  "--output-format", "json",
+];
+if (route.permission === "bypassPermissions") {
+  argv.push("--dangerously-skip-permissions");
+}
+if (!route.persistent) argv.push("--no-session-persistence");
+if (route.chrome) argv.push("--chrome");
+if (values.resume) argv.push("--resume", values.resume);
+if (values.schema) {
+  argv.push("--json-schema", schema ?? `<schema:${values.schema}>`);
+}
+
+if (values["dry-run"]) {
+  process.stdout.write(`${JSON.stringify({
+    command: "claude",
+    argv,
+    stdin: values.brief,
+    stdout: values.events,
+    cwd: values.cwd,
+    schemaFile: values.schema ?? null,
+    route,
+  })}\n`);
+  process.exit(0);
+}
+
+const command = binaryOnPath("claude");
+if (!command) {
+  process.stderr.write("claude-exec: claude was not found in an absolute PATH entry\n");
+  process.exit(127);
+}
+
+const result = spawnSync(command, argv, {
+  cwd: values.cwd,
+  input: readFileSync(values.brief),
+  encoding: "utf8",
+  maxBuffer: 64 * 1024 * 1024,
+});
+writeFileSync(values.events, result.stdout ?? "");
+if (result.stderr) process.stderr.write(result.stderr);
+if (result.error) {
+  process.stderr.write(`claude-exec: ${result.error.message}\n`);
+  process.exit(1);
+}
+if (result.status !== 0) process.exit(result.status ?? 1);
+
+let envelope;
+try {
+  envelope = JSON.parse(result.stdout);
+} catch {
+  process.stderr.write("claude-exec: Claude did not return a JSON result envelope\n");
+  process.exit(1);
+}
+
+const answer = values.schema ? envelope.structured_output : envelope.result;
+if (answer === undefined || answer === null) {
+  process.stderr.write("claude-exec: Claude result envelope contained no answer\n");
+  process.exit(1);
+}
+writeFileSync(
+  values.out,
+  typeof answer === "string" ? answer : `${JSON.stringify(answer, null, 2)}\n`,
+);
+process.exit(0);
