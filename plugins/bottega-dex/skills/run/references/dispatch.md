@@ -1,32 +1,44 @@
 # Worker dispatch
 
-Every worker starts through the plugin's provider-neutral adapter:
+## Native Codex workers
+
+Start Codex work with the harness's native subagent control. Keep the returned agent handle for follow-up, interruption, and completion. The harness owns thread tracking and waiting. Never replace a native agent with a nested Codex process.
+
+Every native brief states:
+
+- Requested route and effort, such as `gpt-5.6-luna` at high or `gpt-5.6-sol` at high.
+- The linked worktree as the working directory.
+- The relevant plugin skill and schema as absolute paths.
+- The task contract, owned paths, host gates, and expected final report.
+
+Use a matching custom agent when the current environment exposes one. Otherwise steer the route in the prompt and record the model reported by the native agent. If a required Sol reviewer reports a lower route, do not silently accept it. Retry through an available native custom agent or ask the user how to proceed.
+
+Use the native follow-up control when a worker asks a question. Native agents return summaries to the orchestrator and never coordinate with one another. Builders work in the run worktree. Reviewers work in disposable linked worktrees at the frozen head.
+
+## External Claude workers
+
+Claude is external only where the process deliberately requires a second model family. Launch it through:
 
 ```text
-<plugin-root>/scripts/worker-exec \
-  --role <route> \
+<plugin-root>/scripts/claude-exec \
+  --role <reviewer|panelist|judge> \
   --cwd <worktree> \
   --brief <brief.md> \
   --out <final-message.json> \
   --events <provider-events.json> \
-  [--schema <schema.json>] \
-  [--resume <provider-session-id>]
+  [--schema <schema.json>]
 ```
 
-Pass every path as an absolute path. The adapter owns provider selection, model, effort, permissions, tool policy, structured-output flags, resume rules, and a fixed wall-clock timeout. Callers never provide those values. A timed-out worker exits 124. A new need changes the route table and its tests, not one invocation.
+Pass every path as an absolute path. `claude-exec` owns model, effort, permissions, tools, structured output, and a fixed wall-clock timeout. It uses `claude -p --safe-mode`, retains the user's Claude authentication, and starts a cold non-persistent session. A timed-out worker exits 124.
 
-`codex-exec` ignores user configuration but keeps authentication. On resume, it restores sandbox policy through config and uses the worker process directory because `codex exec resume` does not accept the fresh-run sandbox and directory flags.
-
-`claude-exec` uses `claude -p --safe-mode`, not `--bare`. Safe mode prevents host Claude customizations from changing a worker while retaining the user's Claude authentication. Structured output is extracted from Claude's JSON result envelope so both providers leave the final answer at the same `--out` interface.
-
-Every high-permission route runs only in an isolated or disposable linked worktree. The adapter rejects the primary checkout before launch. High-permission routes are allowed in linked worktrees because host suites, local servers, shared git metadata, and integration tests need it.
+Launch Claude as a tracked background shell command when it runs beside a native Codex subagent. Wait through the harness rather than polling. The Claude reviewer runs only in a disposable linked worktree, and the adapter rejects the primary checkout before launch.
 
 Every brief carries:
 
 - The relevant worker skill by absolute path.
 - The slice or review contract and exact owned paths.
-- Host gate commands with timeouts.
+- Host gate commands.
 - The three safety and test lines from the run skill.
 - A final JSON contract with status, touched files, tests changed, commands and results, evidence paths, undetermined decisions, and anomalies.
 
-Reviewer briefs use the shipped review schema instead of a prose report contract. Accept a report only when its round, family, model, base SHA, head SHA, and tree SHA match the dispatch.
+Reviewer briefs use the shipped review schema instead of a prose report contract. Instruct the native reviewer to return only one matching JSON object. Claude receives the same schema through its structured-output flag. Accept a report only when its round, family, model, base SHA, head SHA, and tree SHA match the dispatch.

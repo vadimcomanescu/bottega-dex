@@ -9,13 +9,13 @@ Use a panel for a decision that is expensive to reverse after merge: public cont
 
 Write one self-contained question containing the agreed specification, constraints, and repository pointers. Do not include the orchestrator's preferred answer.
 
-Launch the bundled fixed workflow through `scripts/panel-run`. It starts exactly two blind drafts in parallel through `scripts/worker-exec`:
+Start exactly two blind drafts in parallel:
 
-- `--role codex-panelist` with `references/panelist.schema.json`
-- `--role claude-panelist` with `references/panelist.schema.json`
+- One native Codex subagent requested at GPT-5.6 Sol high. Give it this skill, the question, and `references/panelist.schema.json` by absolute path. Require one matching JSON object.
+- One external Claude panelist through `scripts/claude-exec --role panelist` with the identical question and schema.
 
-Each receives the identical question and neither receives the other's output. The runner labels the returned drafts A and B, creates a comparison brief containing only the original question plus Draft A and Draft B, and sends it through `--role claude-judge` with `references/judge.schema.json`. Provider, model, and role identities never enter the judge brief.
+Neither receives the other's output. After both finish, label the returned drafts A and B. Create a comparison brief containing only the original question plus Draft A and Draft B. Do not include provider, model, or role identities. Send that brief through `scripts/claude-exec --role judge` with `references/judge.schema.json`.
 
 The judge compares only. It does not merge, vote, grade, or answer the original question. The GPT-5.6 Sol Ultra orchestrator reads both drafts and the comparison, resolves contradictions by evidence, and synthesizes the decision. Record where the panel changed the plan for the pull request.
 
-The runner is one fixed, terminating workflow. It has no polling, retries, persistence, or open-ended fan-out. A failed call returns failure to the orchestrator for diagnosis.
+Use native agent controls and tracked background shell execution. Do not poll, retry automatically, persist a worker, or expand the panel. A failed call returns failure to the orchestrator for diagnosis.

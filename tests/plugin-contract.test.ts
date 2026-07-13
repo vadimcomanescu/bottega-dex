@@ -26,19 +26,20 @@ describe("Codex plugin package", () => {
   it("has an installable manifest with real publisher metadata", () => {
     const manifest = json(join(PLUGIN, ".codex-plugin", "plugin.json"));
     expect(manifest.name).toBe("bottega-dex");
-    expect(manifest.version).toMatch(/^0\.1\.0(?:\+codex\.[0-9-]+)?$/);
+    expect(manifest.version).toMatch(/^0\.1\.1(?:\+codex\.[0-9-]+)?$/);
     expect(manifest.author.name).toBe("Vadim Comanescu");
     expect(manifest.repository).toBe("https://github.com/vadimcomanescu/bottega-dex");
     expect(manifest.skills).toBe("./skills/");
     expect(manifest.interface.defaultPrompt).toBeInstanceOf(Array);
   });
 
-  it("defines the Sol Ultra orchestrator and the fixed worker routes", () => {
+  it("defines the Sol Ultra orchestrator and native worker routes", () => {
     const runSkill = readFileSync(join(PLUGIN, "skills", "run", "SKILL.md"), "utf8");
     expect(runSkill).toContain("GPT-5.6 Sol at Ultra");
     expect(runSkill).toContain("gpt-5.6-luna");
     expect(runSkill).toContain("gpt-5.6-sol");
     expect(runSkill).toContain("claude-exec");
+    expect(runSkill).toContain("native Codex subagent");
     expect(runSkill).toContain("cross-family review");
   });
 

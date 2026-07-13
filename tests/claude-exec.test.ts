@@ -50,22 +50,35 @@ describe("claude-exec", () => {
     expect(raw.route.timeoutMs).toBe(1_200_000);
   });
 
-  it("keeps builder sessions resumable and pins Opus xhigh", () => {
+  it.each([
+    ["panelist", "xhigh", "Bash,Read,Glob,Grep"],
+    ["judge", "high", ""],
+  ])("keeps the external %s route cold and fixed", (role, effort, tools) => {
     const result = run([
-      ...BASE.map((value) => (value === "reviewer" ? "user-facing-builder" : value)),
-      "--resume", "session-123",
+      ...BASE.map((value) => (value === "reviewer" ? role : value)),
     ]);
     expect(result.status).toBe(0);
     const raw = JSON.parse(result.stdout);
-    expect(raw.argv).toContain("--resume");
-    expect(raw.argv).toContain("session-123");
-    expect(raw.argv).not.toContain("--no-session-persistence");
-    expect(raw.argv).toContain("bypassPermissions");
+    expect(raw.argv).toContain("--no-session-persistence");
+    expect(raw.route.model).toBe("opus");
+    expect(raw.route.effort).toBe(effort);
+    expect(raw.route.tools).toBe(tools);
   });
 
-  it("rejects resume for roles that must arrive cold", () => {
+  it.each(["user-facing-builder", "qa", "docs"])(
+    "rejects legacy non-cross-family role %s",
+    (role) => {
+      const result = run([
+        ...BASE.map((value) => (value === "reviewer" ? role : value)),
+      ]);
+      expect(result.status).toBe(2);
+      expect(result.stderr).toMatch(/unknown role/);
+    },
+  );
+
+  it("does not expose session resume options", () => {
     const result = run([...BASE, "--resume", "session-123"]);
     expect(result.status).toBe(2);
-    expect(result.stderr).toMatch(/cannot be resumed/);
+    expect(result.stderr).toMatch(/resume|unknown option/i);
   });
 });
