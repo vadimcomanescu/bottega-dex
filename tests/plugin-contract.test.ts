@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -26,7 +26,7 @@ describe("Codex plugin package", () => {
   it("has an installable manifest with real publisher metadata", () => {
     const manifest = json(join(PLUGIN, ".codex-plugin", "plugin.json"));
     expect(manifest.name).toBe("bottega-dex");
-    expect(manifest.version).toMatch(/^0\.1\.1(?:\+codex\.[0-9-]+)?$/);
+    expect(manifest.version).toMatch(/^0\.2\.0(?:\+codex\.[0-9-]+)?$/);
     expect(manifest.author.name).toBe("Vadim Comanescu");
     expect(manifest.repository).toBe("https://github.com/vadimcomanescu/bottega-dex");
     expect(manifest.skills).toBe("./skills/");
@@ -48,5 +48,34 @@ describe("Codex plugin package", () => {
     const serialized = JSON.stringify(hooks);
     expect(serialized).toContain("${PLUGIN_ROOT}");
     expect(serialized).not.toContain("CLAUDE_PLUGIN_ROOT");
+  });
+
+  it("ships optional project custom-agent templates without registering them as plugin components", () => {
+    const manifest = json(join(PLUGIN, ".codex-plugin", "plugin.json"));
+    expect(manifest.agents).toBeUndefined();
+    expect(existsSync(join(PLUGIN, "skills", "setup", "SKILL.md"))).toBe(true);
+
+    const expected = {
+      mechanic: "gpt-5.6-terra",
+      builder: "gpt-5.6",
+      reviewer: "gpt-5.6",
+      qa: "gpt-5.6",
+      panelist: "gpt-5.6",
+    };
+    for (const [role, model] of Object.entries(expected)) {
+      const text = readFileSync(
+        join(PLUGIN, "assets", "custom-agents", `bottega-dex-${role}.toml`),
+        "utf8",
+      );
+      expect(text).toContain(`name = "bottega_dex_${role}"`);
+      expect(text).toContain(`model = "${model}"`);
+      expect(text).toContain('model_reasoning_effort = "high"');
+      expect(text).toMatch(/developer_instructions = """/);
+    }
+
+    const setup = readFileSync(join(PLUGIN, "skills", "setup", "SKILL.md"), "utf8");
+    expect(setup).toMatch(/effective model catalog/i);
+    expect(setup).toMatch(/strict-config.*does not prove model availability/i);
+    expect(setup).toMatch(/Do not launch `codex exec`/i);
   });
 });

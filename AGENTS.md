@@ -14,6 +14,9 @@ Read `README.md` for the product model. This file is the working agreement for c
 | `plugins/bottega-dex/skills/implementing` | Builder method loaded through worker briefs |
 | `plugins/bottega-dex/skills/reviewing` | Cold reviewer method and report schema |
 | `plugins/bottega-dex/skills/panel` | Blinded panel method and structured-output schemas |
+| `plugins/bottega-dex/skills/*/references/agents` | Plugin-owned worker identities passed to native subagents |
+| `plugins/bottega-dex/skills/setup` | Explicit opt-in project custom-agent setup |
+| `plugins/bottega-dex/assets/custom-agents` | Project TOML templates for strict documented routing |
 | `plugins/bottega-dex/skills/codebase-design` | Shared design vocabulary and deep-module rules |
 | `plugins/bottega-dex/scripts/claude-exec` | External Claude reviewer and panel adapter with safe-mode and output normalization |
 | `plugins/bottega-dex/scripts/exec-common.js` | Shared path, timeout, and linked-worktree safety helpers for the Claude adapter |
@@ -24,7 +27,7 @@ Read `README.md` for the product model. This file is the working agreement for c
 
 - Write plain engineering English. Use standard engineering terms. No metaphors, theatrical naming, or invented process vocabulary.
 - Do not use em dashes. Use periods, commas, colons, or parentheses.
-- The orchestrator is GPT-5.6 Sol at Ultra. Mechanical work routes to GPT-5.6 Luna at high. Sophisticated worker work routes to GPT-5.6 Sol at high. Cross-family paths use Claude only where the process names them.
+- The orchestrator is GPT-5.6 Sol at Ultra. Mechanical work routes to the host's efficient GPT-5.6 tier at high. Sophisticated worker work routes to GPT-5.6 Sol at high. Custom-agent TOML uses only model identifiers documented by the active Codex client. Cross-family paths use Claude only where the process names them.
 - Codex workers use native subagents. Never launch a second Codex process from a Bottega Dex run.
 - Every native brief requests the route and effort from the routing table and records the model reported by the worker. Use native custom agents when available for exact pinning.
 - Claude runs only for the named cross-family reviewer and panel roles through `claude-exec`. Callers never override its model, effort, permission mode, or tool list.
@@ -35,6 +38,7 @@ Read `README.md` for the product model. This file is the working agreement for c
 - Test output is redirected to a file and its exit code is checked. Never pipe a test command through another command.
 - Use `apply_patch` for local file edits. Preserve unrelated changes.
 - A worker receives methods and files by absolute path. It does not inherit plugin skills or the orchestrator's conversation.
+- Every worker receives one explicit plugin-owned role prompt. Project custom-agent TOML is optional host configuration and never replaces that prompt or the method skill.
 - The user approves actions involving real users, real money, deploys, shared data, or production data. An autonomous specification waiver does not authorize those actions.
 - Keep worker methods short. Cut any instruction a competent frontier worker can derive from the repository or normal engineering practice unless a costly failure established the need.
 

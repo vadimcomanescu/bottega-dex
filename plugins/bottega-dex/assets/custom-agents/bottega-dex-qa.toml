@@ -1,0 +1,8 @@
+name = "bottega_dex_qa"
+description = "Bottega Dex user-flow QA worker that records evidence and never fixes."
+model = "gpt-5.6"
+model_reasoning_effort = "high"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Read the absolute Bottega Dex QA role prompt supplied in the task before acting. Stop if it is missing. Do not delegate or fix product code. Drive the reviewed artifact and return evidence for every verdict.
+"""

@@ -17,10 +17,10 @@ codex plugin marketplace add vadimcomanescu/bottega-dex
 codex plugin add bottega-dex@bottega-dex
 ```
 
-Start the orchestrator on GPT-5.6 Sol with Ultra reasoning:
+Start the orchestrator on GPT-5.6 with Ultra reasoning. In clients that display routing tiers, use Sol:
 
 ```bash
-codex -m gpt-5.6-sol -c 'model_reasoning_effort="ultra"'
+codex -m gpt-5.6 -c 'model_reasoning_effort="ultra"'
 ```
 
 In the Codex app, select GPT-5.6 Sol and Ultra before starting the task. Then invoke:
@@ -30,6 +30,8 @@ $bottega-dex:run <task, bug, or issue URL>
 ```
 
 Installed plugin hooks require a one-time trust review. Open `/hooks` when Codex asks, inspect the two shipped hooks, and trust them. Start a new thread after installing or upgrading so Codex loads the current skill and hooks.
+
+The plugin works with generic native subagents. For optional project-scoped custom agents that pin documented models, effort, and sandbox settings, invoke `$bottega-dex:setup` and approve the exact host files it proposes. Plugin installation never writes host custom-agent configuration by itself.
 
 ## The flow
 
@@ -59,7 +61,7 @@ Codex work stays inside the native subagent harness. Each brief requests a route
 | fix review | fresh GPT-5.6 Sol, high |
 | QA | GPT-5.6 Sol, high |
 
-Codex builders, mechanics, reviewers, QA workers, and panelists are native subagents. This keeps their threads, progress, follow-ups, cancellation, and results visible to the Codex orchestrator. A project can pin routes with native custom-agent configuration. Without it, the brief steers the requested route and the returned model is recorded.
+Codex builders, mechanics, reviewers, QA workers, and panelists are native subagents. Every worker receives an explicit plugin-owned role prompt plus its method and task contract. This keeps identity portable while preserving visible threads, progress, follow-ups, cancellation, and results. A project can pin documented routes with `$bottega-dex:setup`. Without it, the brief steers the requested route and the returned model is recorded.
 
 The one external adapter uses `claude -p --safe-mode` with fixed roles, tools, permissions, JSON Schema output, and envelope normalization.
 
@@ -85,6 +87,8 @@ CLIProxyAPI is intentionally not part of the design. It is useful when an applic
 .agents/plugins/marketplace.json       public Codex marketplace
 plugins/bottega-dex/.codex-plugin/     plugin manifest
 plugins/bottega-dex/skills/            run, builder, review, panel, design
+plugins/bottega-dex/skills/*/references/agents/  portable worker role prompts
+plugins/bottega-dex/assets/custom-agents/         optional project TOML templates
 plugins/bottega-dex/scripts/           external Claude adapter and shared safety helpers
 plugins/bottega-dex/hooks/             model and entry guards
 tests/                                 package and behavior contracts
@@ -101,8 +105,8 @@ python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugin
 
 ## Sources
 
-- [OpenAI Codex plugin structure](https://developers.openai.com/codex/plugins/build)
-- [OpenAI Codex subagents and model configuration](https://developers.openai.com/codex/subagents)
+- [OpenAI Codex plugin structure](https://learn.chatgpt.com/docs/build-plugins#plugin-structure)
+- [OpenAI Codex subagents and model configuration](https://learn.chatgpt.com/docs/agent-configuration/subagents)
 - [Anthropic Claude Code CLI reference](https://code.claude.com/docs/en/cli-usage)
 
 ## Credits

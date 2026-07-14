@@ -1,7 +1,7 @@
 {
   "name": "bottega-dex",
-  "version": "0.1.1",
-  "description": "Autonomous issue-to-PR runs with native Codex subagents and cross-family review.",
+  "version": "0.2.0",
+  "description": "Autonomous issue-to-PR runs with explicit native Codex worker roles and cross-family review.",
   "author": {
     "name": "Vadim Comanescu",
     "url": "https://github.com/vadimcomanescu"
