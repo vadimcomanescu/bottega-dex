@@ -37,9 +37,9 @@ Codex itself owns spawning, follow-up routing, waiting, and closing native agent
 
 An inventory of OpenAI's public plugin repository at commit [`11c74d6`](https://github.com/openai/plugins/tree/11c74d6ba24d3a6d48f54a194cd00ef3beea18f9) found 182 plugin manifests and no `.codex/agents/*.toml` files under `plugins/`. Some plugins contain Markdown files under `agents/`, but these are role prompt assets, not registered Codex custom agents.
 
-The closest precedents for Bottega Dex are conductor skills with worker prompt assets:
+The closest precedents for Bottega Dex are orchestration skills with worker prompt assets:
 
-- [Wix conductor skill](https://github.com/openai/plugins/blob/11c74d6ba24d3a6d48f54a194cd00ef3beea18f9/plugins/wix/skills/wix-headless/SKILL.md#L52-L98)
+- [Wix orchestration skill](https://github.com/openai/plugins/blob/11c74d6ba24d3a6d48f54a194cd00ef3beea18f9/plugins/wix/skills/wix-headless/SKILL.md#L52-L98)
 - [Wix build dispatch](https://github.com/openai/plugins/blob/11c74d6ba24d3a6d48f54a194cd00ef3beea18f9/plugins/wix/skills/wix-headless/references/BUILD.md#L20-L30)
 - [Superpowers subagent-driven development skill](https://github.com/openai/plugins/blob/11c74d6ba24d3a6d48f54a194cd00ef3beea18f9/plugins/superpowers/skills/subagent-driven-development/SKILL.md#L6-L102)
 - [Superpowers implementer prompt](https://github.com/openai/plugins/blob/11c74d6ba24d3a6d48f54a194cd00ef3beea18f9/plugins/superpowers/skills/subagent-driven-development/implementer-prompt.md)
@@ -82,7 +82,7 @@ plugins/bottega-dex/
 
 Role prompts should define identity, scope, stop conditions, and return contract. The full method remains in the relevant skill. Role prompts live with the skill that dispatches them. The orchestrator should pass absolute role and method paths so each worker loads its own instructions after spawning.
 
-The optional setup skill should be opt-in, namespaced, idempotent, and non-destructive. It should show every host file it intends to write, refuse silent overwrites, preserve existing `.codex/config.toml`, keep `agents.max_depth = 1`, and validate model identifiers against the active client.
+The optional setup skill should be opt-in, namespaced, idempotent, and non-destructive. It should show every host file it intends to write, refuse silent overwrites, preserve existing `.codex/config.toml`, and keep `agents.max_depth = 1`. It should compare model identifiers with the active client's effective model catalog when the host exposes one. If no catalog surface is available, it should disclose that availability is unverified and require explicit approval. Strict config validation proves configuration shape, not model availability.
 
 ## Model naming
 

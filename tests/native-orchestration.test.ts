@@ -43,12 +43,18 @@ describe("native Codex orchestration", () => {
     for (const role of RUN_ROLES) {
       const path = join(PLUGIN, "skills", "run", "references", "agents", `${role}.md`);
       expect(existsSync(path), path).toBe(true);
-      expect(readFileSync(path, "utf8")).toMatch(/do not delegate/i);
+      const prompt = readFileSync(path, "utf8");
+      expect(prompt).toMatch(/do not delegate/i);
+      expect(prompt).toMatch(/stop/i);
+      expect(prompt).toMatch(/return/i);
     }
     for (const role of PANEL_ROLES) {
       const path = join(PLUGIN, "skills", "panel", "references", "agents", `${role}.md`);
       expect(existsSync(path), path).toBe(true);
-      expect(readFileSync(path, "utf8")).toMatch(/do not delegate/i);
+      const prompt = readFileSync(path, "utf8");
+      expect(prompt).toMatch(/do not delegate/i);
+      expect(prompt).toMatch(/stop/i);
+      expect(prompt).toMatch(/return/i);
     }
   });
 

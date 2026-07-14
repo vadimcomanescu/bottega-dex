@@ -72,5 +72,10 @@ describe("Codex plugin package", () => {
       expect(text).toContain('model_reasoning_effort = "high"');
       expect(text).toMatch(/developer_instructions = """/);
     }
+
+    const setup = readFileSync(join(PLUGIN, "skills", "setup", "SKILL.md"), "utf8");
+    expect(setup).toMatch(/effective model catalog/i);
+    expect(setup).toMatch(/strict-config.*does not prove model availability/i);
+    expect(setup).toMatch(/Do not launch `codex exec`/i);
   });
 });
