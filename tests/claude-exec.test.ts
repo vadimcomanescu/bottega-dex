@@ -20,6 +20,8 @@ const SCRIPT = join(
   "claude-exec",
 );
 const SCHEMA = join(import.meta.dirname, "fixtures", "smoke.schema.json");
+const HEAD_SHA = "a".repeat(40);
+const TREE_SHA = "b".repeat(40);
 
 const BASE = [
   "--role", "reviewer",
@@ -27,6 +29,8 @@ const BASE = [
   "--brief", "/tmp/brief.md",
   "--out", "/tmp/out.json",
   "--events", "/tmp/events.json",
+  "--head", HEAD_SHA,
+  "--tree", TREE_SHA,
   "--schema", SCHEMA,
 ];
 
@@ -47,6 +51,7 @@ describe("claude-exec", () => {
     expect(raw.argv).toContain("dontAsk");
     expect(raw.argv).toContain("Bash,Read,Glob,Grep");
     expect(raw.argv).toContain("--no-session-persistence");
+    expect(raw.frozenTarget).toEqual({ headSha: HEAD_SHA, treeSha: TREE_SHA });
   });
 
   it("passes JSON Schema content to Claude, not a filesystem-only pointer", () => {
@@ -65,6 +70,16 @@ describe("claude-exec", () => {
     const result = run(withoutSchema);
     expect(result.status).toBe(2);
     expect(result.stderr).toMatch(/--schema is required/i);
+  });
+
+  it("requires the frozen head and tree for reviewer calls", () => {
+    const withoutTarget = BASE.filter((value, index) => (
+      !["--head", "--tree"].includes(value)
+      && !["--head", "--tree"].includes(BASE[index - 1] ?? "")
+    ));
+    const result = run(withoutTarget);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toMatch(/--head is required/i);
   });
 
   it.each([
@@ -139,7 +154,27 @@ if (process.argv.includes("--version")) {
 
       const brief = join(root, "brief.md");
       const events = join(root, "events.json");
+      const headSha = git(review, "rev-parse", "HEAD").stdout.trim();
+      const treeSha = git(review, "rev-parse", "HEAD^{tree}").stdout.trim();
       writeFileSync(brief, "Return the schema.\n");
+
+      const wrongTarget = spawnSync(process.execPath, [
+        SCRIPT,
+        "--role", "reviewer",
+        "--cwd", review,
+        "--brief", brief,
+        "--out", join(root, "wrong-target.json"),
+        "--events", join(root, "wrong-target-events.json"),
+        "--head", "0".repeat(40),
+        "--tree", treeSha,
+        "--schema", SCHEMA,
+      ], {
+        encoding: "utf8",
+        env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+      });
+      expect(wrongTarget.status).not.toBe(0);
+      expect(wrongTarget.stderr).toMatch(/does not match.*frozen target/i);
+
       const result = spawnSync(process.execPath, [
         SCRIPT,
         "--role", "reviewer",
@@ -147,6 +182,8 @@ if (process.argv.includes("--version")) {
         "--brief", brief,
         "--out", join(review, "tracked.txt"),
         "--events", events,
+        "--head", headSha,
+        "--tree", treeSha,
         "--schema", SCHEMA,
       ], {
         encoding: "utf8",
@@ -155,6 +192,10 @@ if (process.argv.includes("--version")) {
 
       expect(result.status).not.toBe(0);
       expect(result.stderr).toMatch(/frozen target|modified tracked files/i);
+      expect(JSON.parse(readFileSync(events, "utf8")).frozen_target).toEqual({
+        headSha,
+        treeSha,
+      });
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

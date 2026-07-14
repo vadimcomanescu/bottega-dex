@@ -48,6 +48,14 @@ const values = parseClaudeArgs(PREFIX);
 
 const route = ROUTES[values.role];
 if (!route) fail(PREFIX, `unknown role '${values.role}'`);
+const requestedFrozenTarget = route.requiresIsolatedWorktree
+  ? { headSha: values.head, treeSha: values.tree }
+  : null;
+if (route.requiresIsolatedWorktree) {
+  for (const name of ["head", "tree"]) {
+    if (!values[name]) fail(PREFIX, `--${name} is required for reviewer calls`);
+  }
+}
 let frozenTarget = null;
 if (route.requiresIsolatedWorktree) {
   assertIsolatedGitWorktree(PREFIX, values.cwd, {
@@ -56,6 +64,15 @@ if (route.requiresIsolatedWorktree) {
   if (!values["dry-run"]) {
     assertTrackedWorktreeClean(PREFIX, values.cwd);
     frozenTarget = readTrackedWorktreeIdentity(PREFIX, values.cwd);
+    if (
+      frozenTarget.headSha !== requestedFrozenTarget.headSha
+      || frozenTarget.treeSha !== requestedFrozenTarget.treeSha
+    ) {
+      fail(
+        PREFIX,
+        `review checkout does not match the frozen target: expected ${requestedFrozenTarget.headSha}/${requestedFrozenTarget.treeSha}, got ${frozenTarget.headSha}/${frozenTarget.treeSha}`,
+      );
+    }
   }
 }
 
@@ -87,6 +104,7 @@ if (values["dry-run"]) {
     cwd: values.cwd,
     schemaFile: values.schema ?? null,
     route,
+    frozenTarget: requestedFrozenTarget,
   })}\n`);
   process.exit(0);
 }
@@ -159,6 +177,7 @@ writeFileSync(values.events, `${JSON.stringify({
   cli_version: cliVersion,
   requested_role: values.role,
   requested_route: route,
+  frozen_target: frozenTarget,
   process: { status: result.status, signal: result.signal },
   envelope,
 }, null, 2)}\n`);

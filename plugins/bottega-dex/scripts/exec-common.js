@@ -23,6 +23,8 @@ export function parseClaudeArgs(prefix) {
         brief: { type: "string" },
         out: { type: "string" },
         events: { type: "string" },
+        head: { type: "string" },
+        tree: { type: "string" },
         schema: { type: "string" },
         "dry-run": { type: "boolean", default: false },
       },

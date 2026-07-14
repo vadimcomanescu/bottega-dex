@@ -9,7 +9,7 @@ Take one request to a pull request. The current Codex task is the orchestrator a
 
 Use native subagents. Never launch another Codex process. Resolve this skill's directory once and pass absolute paths to worker prompts and schemas. A worker receives only its prompt, task brief, repository context, owned paths, verifier, and expected result.
 
-Start every reviewer and panelist without inherited conversation history when the native control exposes that choice. Builders receive only the turns needed for their brief. Request the route in each brief. If the native control does not expose model selection or metadata, record `host-routed` and do not claim an exact model.
+Start every reviewer and panelist without inherited conversation history when supported. Builders receive only the turns needed for their brief. Request the route in each brief. If the native control does not expose model selection or metadata, record `host-routed` and do not claim an exact model.
 
 ## Routing
 
@@ -22,11 +22,13 @@ Start every reviewer and panelist without inherited conversation history when th
 
 Keep routine reads, commands, formatting, and small deterministic edits in this task. Delegate only a substantial bounded lane or an independent judgment. Run independent reads in parallel when useful. Use one builder at a time by default. Parallel builders require disjoint ownership and isolated worktrees. Keep at most four workers live.
 
-Every external call uses this shape with absolute paths:
+Use absolute paths:
 
 ```text
-<plugin-root>/scripts/claude-exec --role <reviewer|panelist|judge> --cwd <worktree> --brief <brief.md> --out <report.json> --events <envelope.json> --schema <schema.json>
+<plugin-root>/scripts/claude-exec --role <role> --cwd <worktree> --brief <brief.md> --out <report.json> --events <envelope.json> [--head <sha> --tree <sha>] --schema <schema.json>
 ```
+
+The bracketed target pair is required for reviewer calls and omitted for panel calls.
 
 ## Flow
 
