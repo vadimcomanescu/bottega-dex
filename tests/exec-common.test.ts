@@ -60,6 +60,12 @@ describe("Claude provenance", () => {
     expect(usesRequestedClaudeModel({
       modelUsage: { "claude-haiku-4-5": { outputTokens: 3 } },
     }, "opus")).toBe(false);
+    expect(usesRequestedClaudeModel({
+      modelUsage: { "claude-opus-4-8": {} },
+    }, "opus")).toBe(false);
+    expect(usesRequestedClaudeModel({
+      modelUsage: { "claude-opus-4-8": { outputTokens: 0 } },
+    }, "opus")).toBe(false);
     expect(usesRequestedClaudeModel({}, "opus")).toBe(false);
   });
 });

@@ -41,7 +41,24 @@ export function usesRequestedClaudeModel(envelope, requestedModel) {
   const usage = envelope?.modelUsage ?? envelope?.model_usage;
   if (!usage || typeof usage !== "object") return false;
   const needle = requestedModel.toLowerCase();
-  return Object.keys(usage).some((model) => model.toLowerCase().includes(needle));
+  const counters = [
+    "inputTokens",
+    "outputTokens",
+    "cacheReadInputTokens",
+    "cacheCreationInputTokens",
+    "input_tokens",
+    "output_tokens",
+    "cache_read_input_tokens",
+    "cache_creation_input_tokens",
+    "costUSD",
+    "cost_usd",
+  ];
+  return Object.entries(usage).some(([model, values]) => (
+    model.toLowerCase().includes(needle)
+    && values
+    && typeof values === "object"
+    && counters.some((counter) => Number(values[counter]) > 0)
+  ));
 }
 
 export function binaryOnPath(name) {

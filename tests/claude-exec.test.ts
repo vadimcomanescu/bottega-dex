@@ -130,7 +130,7 @@ if (process.argv.includes("--version")) {
   process.stdout.write(JSON.stringify({
     subtype: "success",
     is_error: false,
-    modelUsage: { "claude-opus-4-8": {} },
+    modelUsage: { "claude-opus-4-8": { outputTokens: 1 } },
     structured_output: { status: "ok" },
   }));
 }
