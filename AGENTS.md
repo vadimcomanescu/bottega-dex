@@ -22,7 +22,7 @@ Bottega Dex is the Codex-native sibling of Bottega. It takes one task or issue t
 - Use GPT-5.6 Sol at Ultra for orchestration, Luna or the documented efficient route at high for substantial mechanical work, and Sol at high for sophisticated workers.
 - The complete integrated diff always receives one cold Codex review and one cold Claude review against the same frozen target and common schema. Neither reviewer sees the other report. This gate is never replaced by slice review.
 - `claude-exec` is the only external model boundary. It owns model, effort, permissions, tools, structured output, and timeout.
-- Use one task worktree. Default to one builder at a time. Parallel writes require disjoint ownership and isolated worktrees.
+- Use one task worktree and one builder at a time. Keep implementation writes sequential in that worktree.
 - Keep focused checks green while building and run the host's decisive full gate before delivery.
 - QA drives the reviewed artifact and never fixes it. Evidence must match the changed surface.
 - The user approves deploys, money movement, destructive actions, and changes to shared or production data.

@@ -123,11 +123,11 @@ The target repository should own its architecture, commands, tests, lint rules, 
 | Blind panel with two drafts and a judge | [`panel`](https://github.com/vadimcomanescu/bottega-dex/blob/13734ba300c2b3979ad569aaf174a238d6ee9738/plugins/bottega-dex/skills/panel/SKILL.md) | Retain with a narrow trigger | Repository precedent settles normal design. Use the panel only for public contracts, persisted data, dependencies, or module boundaries that are expensive to reverse. |
 | JSON schemas for review and panel output | [`review schema`](https://github.com/vadimcomanescu/bottega-dex/blob/13734ba300c2b3979ad569aaf174a238d6ee9738/plugins/bottega-dex/skills/reviewing/references/report.schema.json) | Retain and colocate | Comparable cross-family output, target identity validation, blinded comparison, and fail-closed parsing are machine-consumption requirements. |
 | Mechanic and QA identities | [`run` routing table](https://github.com/vadimcomanescu/bottega-dex/blob/13734ba300c2b3979ad569aaf174a238d6ee9738/plugins/bottega-dex/skills/run/SKILL.md#L18-L30) | Keep as short prompt assets | They do not install host agents. They make bounded delegation and the non-fixing QA boundary explicit without expanding the public skill surface. |
-| Worker per slice, parallel worktrees, full suite after every integration | [`run` line 42](https://github.com/vadimcomanescu/bottega-dex/blob/13734ba300c2b3979ad569aaf174a238d6ee9738/plugins/bottega-dex/skills/run/SKILL.md#L42) | Simplify | Use one task worktree. Run focused checks while building and the decisive host gate on the integrated head. Parallelize only truly independent work. |
+| Worker per slice, parallel worktrees, full suite after every integration | [`run` line 42](https://github.com/vadimcomanescu/bottega-dex/blob/13734ba300c2b3979ad569aaf174a238d6ee9738/plugins/bottega-dex/skills/run/SKILL.md#L42) | Simplify | Use one task worktree and one builder at a time. Run focused checks while building and the decisive host gate on the integrated head. Parallelize independent read-only work, not implementation. |
 | Fixed three-round review protocol | [`run` line 48](https://github.com/vadimcomanescu/bottega-dex/blob/13734ba300c2b3979ad569aaf174a238d6ee9738/plugins/bottega-dex/skills/run/SKILL.md#L48) | Simplify | Fix confirmed findings, rerun the full blind pair on the new complete head, and escalate when the design is wrong or progress stalls. |
 | Mandatory screenshots, GIFs, recordings, and evidence branch | [`run` line 50](https://github.com/vadimcomanescu/bottega-dex/blob/13734ba300c2b3979ad569aaf174a238d6ee9738/plugins/bottega-dex/skills/run/SKILL.md#L50) | Replace | Drive user-visible behavior when relevant. Attach the smallest useful evidence through the host's existing artifact path. Do not create a branch for evidence by default. |
 | `.bottega/run` state and session record | [`run` line 34](https://github.com/vadimcomanescu/bottega-dex/blob/13734ba300c2b3979ad569aaf174a238d6ee9738/plugins/bottega-dex/skills/run/SKILL.md#L34) | Remove | The task, worktree, branch, commits, test output, and pull request already provide recoverable state. |
-| Mandatory spec sign-off for every run | [`run` lines 12 and 38](https://github.com/vadimcomanescu/bottega-dex/blob/13734ba300c2b3979ad569aaf174a238d6ee9738/plugins/bottega-dex/skills/run/SKILL.md#L12-L38) | Replace | Infer routine details from the request and repository. Ask only when ambiguity changes scope, user-visible behavior, or an expensive decision. Keep explicit approval for deploys, money, destructive actions, and shared data. |
+| Specification approval | [`run` lines 12 and 38](https://github.com/vadimcomanescu/bottega-dex/blob/13734ba300c2b3979ad569aaf174a238d6ee9738/plugins/bottega-dex/skills/run/SKILL.md#L12-L38) | Retain with an autonomous waiver | State the contract and material defaults, then wait for approval unless the user explicitly requested autonomous execution. This is Bottega scope control, not host ceremony. Protected high-impact actions always retain their separate approval gates. |
 | Entry reminder hook | [`hooks.json`](https://github.com/vadimcomanescu/bottega-dex/blob/13734ba300c2b3979ad569aaf174a238d6ee9738/plugins/bottega-dex/hooks/hooks.json) | Remove | Explicit `$bottega-dex:run` invocation and a precise skill description are enough. A hook on every prompt is broader than the workflow needs. |
 
 ## Recommendation
@@ -156,7 +156,7 @@ The target repository should own its architecture, commands, tests, lint rules, 
 
 ### Delivery flow
 
-1. **Scope.** Read the request, repository instructions, relevant code, and history. State acceptance criteria briefly. Ask only for a material missing choice.
+1. **Scope.** Read the request, repository instructions, relevant code, and history. State acceptance criteria briefly and wait for approval unless the user explicitly requested autonomous execution. Ask only for a material missing choice.
 2. **Isolate.** For edits, work on one task branch and worktree. Do not create per-slice worktrees.
 3. **Build.** Keep reads, commands, small deterministic edits, and integration in the orchestrator. Delegate only substantial, bounded implementation with explicit ownership and a verifier.
 4. **Verify while building.** Run focused tests and static checks related to the changed surface.
@@ -168,7 +168,7 @@ The target repository should own its architecture, commands, tests, lint rules, 
 ### Gates worth retaining
 
 - One isolated task branch or worktree when modifying a repository.
-- Clear acceptance criteria before implementation, without a universal approval pause.
+- Specification approval before implementation unless the user explicitly requested autonomous execution.
 - Focused verification during implementation and the host repository's decisive gate before delivery.
 - One cold Codex review and one cold Claude review of the same frozen integrated diff.
 - Comparable structured reports, exact target identity checks, and reviewer-family provenance checks.

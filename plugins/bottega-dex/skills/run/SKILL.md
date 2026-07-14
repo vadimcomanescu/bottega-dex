@@ -20,7 +20,7 @@ Start every reviewer and panelist without inherited conversation history when su
 | Building, review, and QA | GPT-5.6 Sol high |
 | Independent second-family review and panel roles | Claude Opus through `scripts/claude-exec` |
 
-Keep routine reads, commands, formatting, and small deterministic edits in this task. Delegate only a substantial bounded lane or an independent judgment. Run independent reads in parallel when useful. Use one builder at a time by default. Parallel builders require disjoint ownership and isolated worktrees. Keep at most four workers live.
+Keep routine reads, commands, formatting, and small deterministic edits in this task. Delegate only a substantial bounded lane or an independent judgment. Run independent reads in parallel when useful. Use one builder at a time and keep implementation writes sequential in the task worktree. Keep at most four workers live.
 
 Use absolute paths:
 

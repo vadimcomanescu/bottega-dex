@@ -4,6 +4,7 @@ import {
   readFileSync,
   writeFileSync,
 } from "node:fs";
+import { resolve } from "node:path";
 import {
   assertIsolatedGitWorktree,
   assertTrackedWorktreeClean,
@@ -45,6 +46,9 @@ const ROUTES = {
 
 const PREFIX = "claude-exec";
 const values = parseClaudeArgs(PREFIX);
+if (resolve(values.out) === resolve(values.events)) {
+  fail(PREFIX, "--out and --events must be distinct paths");
+}
 
 const route = ROUTES[values.role];
 if (!route) fail(PREFIX, `unknown role '${values.role}'`);

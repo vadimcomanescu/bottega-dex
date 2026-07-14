@@ -82,6 +82,14 @@ describe("claude-exec", () => {
     expect(result.stderr).toMatch(/--head is required/i);
   });
 
+  it("requires distinct report and provenance paths", () => {
+    const collision = [...BASE];
+    collision[collision.indexOf("--events") + 1] = collision[collision.indexOf("--out") + 1]!;
+    const result = run(collision);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toMatch(/--out and --events.*distinct/i);
+  });
+
   it.each([
     ["panelist", "xhigh", "Bash,Read,Glob,Grep"],
     ["judge", "high", ""],

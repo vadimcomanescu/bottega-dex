@@ -81,6 +81,7 @@ describe("review target identity", () => {
       expect(git("init", "-q").status).toBe(0);
       expect(git("config", "user.name", "Bottega Dex Test").status).toBe(0);
       expect(git("config", "user.email", "test@example.com").status).toBe(0);
+      expect(git("config", "commit.gpgsign", "false").status).toBe(0);
       writeFileSync(join(cwd, "tracked.txt"), "before\n");
       expect(git("add", "tracked.txt").status).toBe(0);
       expect(git("commit", "-qm", "before").status).toBe(0);

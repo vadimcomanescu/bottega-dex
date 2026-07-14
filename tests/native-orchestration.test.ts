@@ -65,6 +65,7 @@ describe("minimal native Codex architecture", () => {
   it("parallelizes independent reads and cold review, not routine writes", () => {
     const run = readFileSync(join(RUN, "SKILL.md"), "utf8");
     expect(run).toMatch(/one builder at a time|sequential.*builder/i);
+    expect(run).not.toMatch(/parallel builders|parallel writes/i);
     expect(run).toMatch(/parallel.*independent.*read|independent.*read.*parallel/i);
     expect(run).toMatch(/complete integrated diff|whole integrated diff/i);
     expect(run).toMatch(/Codex.*Claude|Claude.*Codex/i);
