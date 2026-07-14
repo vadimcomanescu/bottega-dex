@@ -71,5 +71,12 @@ describe("minimal native Codex architecture", () => {
     expect(run).toMatch(/same frozen|identical frozen|same.*base.*head.*tree/i);
     expect(run).toMatch(/never skip|mandatory|always/i);
     expect(run).toMatch(/panel\.md/i);
+    expect(run).toMatch(/head change.*invalidates|fix.*invalidates.*review/i);
+    expect(run).toMatch(/candidate findings/i);
+    expect(run).toContain("references/agents/mechanic.md");
+    expect(run).toMatch(/--role.*--cwd.*--brief.*--out.*--events.*--schema/is);
+    expect(run).toMatch(/no inherited conversation|without inherited conversation/i);
+    expect(run).toMatch(/host-routed|do not claim.*model/i);
+    expect(run).toContain("--repo");
   });
 });

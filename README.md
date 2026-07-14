@@ -27,12 +27,12 @@ That is the complete setup. The plugin does not install project agent configurat
 
 ## The flow
 
-1. Read the repository, history, product context, and host commands. Isolate nontrivial changes on one task branch and worktree.
+1. Read the repository, history, product context, remotes, and host commands. Isolate edits on one task branch and worktree, and pin the delivery repository explicitly.
 2. State the behavior, acceptance criteria, and material defaults. Wait for approval unless the user requested autonomous execution.
 3. Plan vertical slices. Put costly-to-reverse decisions without repository precedent through a blinded Codex-and-Claude panel.
 4. Build with native Codex subagents only when a substantial bounded lane justifies a fresh context. Use one builder at a time by default.
 5. Run focused checks during implementation and the repository's decisive full gate on the integrated head.
-6. Review the complete frozen diff with two cold reviewers in parallel, one Codex and one Claude. They receive the same target, contract, prompt, and schema, and neither sees the other report.
+6. Review the complete frozen diff with two cold reviewers in parallel, one Codex and one Claude. They receive the same target, contract, prompt, and schema, and neither sees the other report. Any fix invalidates the pair, so the new head is frozen and reviewed by both again.
 7. Drive the reviewed artifact as a user. Capture evidence proportional to the surface: screenshots or recordings for visible behavior, runtime evidence for nonvisual behavior.
 8. Open the pull request with decisions, verification, both review records, QA evidence, and known limits.
 
@@ -83,7 +83,7 @@ npm run typecheck
 python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/bottega-dex
 ```
 
-The research behind the architecture is in [the simplification report](docs/research/2026-07-14-world-class-plugin-simplification.md).
+The research behind the architecture is in [the simplification report](docs/research/2026-07-14-plugin-simplification.md).
 
 ## Sources
 

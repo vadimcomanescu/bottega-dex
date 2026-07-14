@@ -9,6 +9,8 @@ Take one request to a pull request. The current Codex task is the orchestrator a
 
 Use native subagents. Never launch another Codex process. Resolve this skill's directory once and pass absolute paths to worker prompts and schemas. A worker receives only its prompt, task brief, repository context, owned paths, verifier, and expected result.
 
+Start every reviewer and panelist without inherited conversation history when the native control exposes that choice. Builders receive only the turns needed for their brief. Request the route in each brief. If the native control does not expose model selection or metadata, record `host-routed` and do not claim an exact model.
+
 ## Routing
 
 | Work | Route |
@@ -20,9 +22,15 @@ Use native subagents. Never launch another Codex process. Resolve this skill's d
 
 Keep routine reads, commands, formatting, and small deterministic edits in this task. Delegate only a substantial bounded lane or an independent judgment. Run independent reads in parallel when useful. Use one builder at a time by default. Parallel builders require disjoint ownership and isolated worktrees. Keep at most four workers live.
 
+Every external call uses this shape with absolute paths:
+
+```text
+<plugin-root>/scripts/claude-exec --role <reviewer|panelist|judge> --cwd <worktree> --brief <brief.md> --out <report.json> --events <envelope.json> --schema <schema.json>
+```
+
 ## Flow
 
-1. **Isolate and understand.** Read repository instructions, relevant code, history, product documents, and current git state. For nontrivial edits, use one task branch and worktree so the user's checkout stays untouched. Discover the repository's focused checks, decisive full gate, build, and run commands. Check `claude --version`, `claude auth status`, and the adapter before work that depends on the mandatory cross-family review.
+1. **Isolate and understand.** Read repository instructions, relevant code, history, product documents, remotes, and current git state. For edits, use one task branch and worktree so the user's checkout stays untouched. Record the delivery remote and GitHub `owner/repo` for the base branch. When remotes differ, never trust the CLI default repository. Pass `--repo <owner/repo>` to issue and pull request commands. Discover the repository's focused checks, decisive full gate, build, and run commands. For a substantial independent inventory, give a native worker `references/agents/mechanic.md`, an exact output, and a verifier. Check `claude --version`, `claude auth status`, and the adapter before work that depends on the mandatory cross-family review.
 
 2. **Specify.** State the intended behavior, acceptance criteria, definition of done, and material defaults in the conversation. Ask only about choices that change scope, user-visible behavior, or an expensive decision. Wait for approval unless the user explicitly requested autonomous execution. Approval is always required before deploys, money movement, destructive actions, or shared and production data changes.
 
@@ -30,7 +38,7 @@ Keep routine reads, commands, formatting, and small deterministic edits in this 
 
 4. **Build.** Give a native builder `references/agents/builder.md`, one bounded slice, owned paths, acceptance criteria, and exact checks. Answer missing decisions through follow-up on the same agent. Integrate only verified work. Run focused checks while building and the repository's decisive full gate on the integrated head. Do not weaken tests or hide failures.
 
-5. **Review.** Freeze the complete integrated diff by base, head, and tree SHA. Mandatory round one always starts two cold reviewers in parallel against the same frozen target: one native Codex reviewer and one Claude reviewer through `scripts/claude-exec`. Give both the same task contract, repository instructions, `references/agents/reviewer.md`, and `references/report.schema.json`. Neither sees builder reasoning or the other report. Accept a report only when its family, model, round, and target SHAs match the dispatch. Reproduce and arbitrate every finding with evidence. Send confirmed fixes to a builder, then use a fresh native reviewer on the changed range. Two failed fixes for the same finding stop the loop for redesign.
+5. **Review.** Freeze the complete integrated diff by base, head, and tree SHA after the decisive gate passes. Mandatory round one always starts two cold reviewers in parallel against separate disposable checkouts of the same frozen target: one native Codex reviewer and one Claude reviewer through `scripts/claude-exec`. Give both the same task contract, repository instructions, `references/agents/reviewer.md`, and `references/report.schema.json`. Neither sees builder reasoning, orchestrator narrative or preferred conclusions, candidate findings, or the other report. Accept a report only when its family, round, and target SHAs match the dispatch. For native review, use actual model metadata only when exposed. For Claude, retain the adapter envelope and confirm successful Opus usage. Reproduce and arbitrate every finding with evidence. Send confirmed fixes to a builder. Any head change invalidates both reviews: rerun the decisive gate, freeze the new complete diff, and run a fresh blind Codex-and-Claude pair. Two failed fixes for the same finding or a third unsuccessful pair stops the loop for redesign.
 
 6. **QA.** After review is clean, give `references/agents/qa.md` the reviewed head and acceptance scenarios. Drive the real artifact. For visible or interactive changes, capture the smallest useful screenshot or recording. For nonvisual changes, use targeted runtime or command evidence. QA reports and never fixes. A failure returns to build, review, and QA.
 

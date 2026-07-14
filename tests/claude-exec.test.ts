@@ -19,6 +19,7 @@ const BASE = [
   "--brief", "/tmp/brief.md",
   "--out", "/tmp/out.json",
   "--events", "/tmp/events.json",
+  "--schema", SCHEMA,
 ];
 
 function run(args: string[]) {
@@ -26,7 +27,7 @@ function run(args: string[]) {
 }
 
 describe("claude-exec", () => {
-  it("pins a fresh Opus xhigh reviewer with a read-only tool surface", () => {
+  it("pins a fresh Opus xhigh reviewer with a non-editing role and probe tools", () => {
     const result = run(BASE);
     expect(result.status).toBe(0);
     const raw = JSON.parse(result.stdout);
@@ -41,7 +42,7 @@ describe("claude-exec", () => {
   });
 
   it("passes JSON Schema content to Claude, not a filesystem-only pointer", () => {
-    const result = run([...BASE, "--schema", SCHEMA]);
+    const result = run(BASE);
     expect(result.status).toBe(0);
     const raw = JSON.parse(result.stdout);
     expect(raw.schemaFile).toBe(SCHEMA);
@@ -49,6 +50,13 @@ describe("claude-exec", () => {
     expect(schemaIndex).toBeGreaterThan(-1);
     expect(raw.argv[schemaIndex + 1]).toBe(readFileSync(SCHEMA, "utf8"));
     expect(raw.route.timeoutMs).toBe(1_200_000);
+  });
+
+  it("requires structured output for every external role", () => {
+    const withoutSchema = BASE.slice(0, -2);
+    const result = run(withoutSchema);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toMatch(/--schema is required/i);
   });
 
   it.each([
