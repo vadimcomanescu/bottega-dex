@@ -1,9 +1,8 @@
 {
   "type": "object",
   "additionalProperties": false,
-  "required": ["ok", "provider"],
+  "required": ["status"],
   "properties": {
-    "ok": { "type": "boolean" },
-    "provider": { "type": "string", "enum": ["codex", "claude"] }
+    "status": { "type": "string", "enum": ["ok"] }
   }
 }

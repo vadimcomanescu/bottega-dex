@@ -31,6 +31,7 @@ describe("claude-exec", () => {
     expect(result.status).toBe(0);
     const raw = JSON.parse(result.stdout);
     expect(raw.command).toBe("claude");
+    expect(raw.argv).toContain("-p");
     expect(raw.argv).toContain("--safe-mode");
     expect(raw.argv).toContain("opus");
     expect(raw.argv).toContain("xhigh");
@@ -66,7 +67,7 @@ describe("claude-exec", () => {
   });
 
   it.each(["user-facing-builder", "qa", "docs"])(
-    "rejects legacy non-cross-family role %s",
+    "rejects non-cross-family role %s",
     (role) => {
       const result = run([
         ...BASE.map((value) => (value === "reviewer" ? role : value)),

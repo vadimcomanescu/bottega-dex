@@ -1,16 +1,7 @@
 {
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "schema_version",
-    "round",
-    "reviewer",
-    "target",
-    "evidence_paths",
-    "rechecks",
-    "findings",
-    "blocked_checks"
-  ],
+  "required": ["schema_version", "round", "reviewer", "target", "evidence_paths", "rechecks", "findings", "blocked_checks"],
   "properties": {
     "schema_version": { "type": "integer", "enum": [1] },
     "round": { "type": "integer", "minimum": 1 },
@@ -56,16 +47,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "id",
-          "severity",
-          "scenario",
-          "input_state",
-          "expected",
-          "observed",
-          "evidence",
-          "code_location"
-        ],
+        "required": ["id", "severity", "scenario", "input_state", "expected", "observed", "evidence", "code_location"],
         "properties": {
           "id": { "type": "string", "minLength": 1 },
           "severity": { "type": "string", "enum": ["critical", "major", "minor"] },

@@ -1,60 +1,41 @@
 # bottega-dex
 
-Bottega Dex is the Codex-native sibling of Bottega. It takes one task or issue to a reviewed, evidence-backed pull request. Bottega remains the Claude Code repository. Never apply changes from this repository back to it unless a user explicitly requests a separate port.
-
-Read `README.md` for the product model. This file is the working agreement for contributors inside this repository.
+Bottega Dex is the Codex-native sibling of Bottega. It takes one task or issue to a reviewed, evidence-backed pull request. Never apply changes from this repository to `/Users/vadimcomanescu/Code/bottega` unless the user explicitly requests a separate port.
 
 ## Map
 
 | Path | Purpose |
 | --- | --- |
-| `.agents/plugins/marketplace.json` | Public Codex marketplace entry for `codex plugin marketplace add vadimcomanescu/bottega-dex` |
-| `plugins/bottega-dex/.codex-plugin/plugin.json` | Installable Codex plugin manifest |
-| `plugins/bottega-dex/skills/run/SKILL.md` | The complete isolate, discover, specify, plan, build, review, QA, and deliver method |
-| `plugins/bottega-dex/skills/implementing` | Builder method loaded through worker briefs |
-| `plugins/bottega-dex/skills/reviewing` | Cold reviewer method and report schema |
-| `plugins/bottega-dex/skills/panel` | Blinded panel method and structured-output schemas |
-| `plugins/bottega-dex/skills/*/references/agents` | Plugin-owned worker identities passed to native subagents |
-| `plugins/bottega-dex/skills/setup` | Explicit opt-in project custom-agent setup |
-| `plugins/bottega-dex/assets/custom-agents` | Project TOML templates for strict documented routing |
-| `plugins/bottega-dex/skills/codebase-design` | Shared design vocabulary and deep-module rules |
-| `plugins/bottega-dex/scripts/claude-exec` | External Claude reviewer and panel adapter with safe-mode and output normalization |
-| `plugins/bottega-dex/scripts/exec-common.js` | Shared path, timeout, and linked-worktree safety helpers for the Claude adapter |
-| `plugins/bottega-dex/hooks` | Session model reminder and natural-language entry guard |
-| `tests` | Dispatch, hook, schema, manifest, and content contracts |
+| `.agents/plugins/marketplace.json` | Public Codex marketplace entry |
+| `plugins/bottega-dex/.codex-plugin/plugin.json` | Installable plugin manifest |
+| `plugins/bottega-dex/skills/run/SKILL.md` | The single user-facing workflow |
+| `plugins/bottega-dex/skills/run/references/agents` | Worker prompts passed to native subagents and Claude |
+| `plugins/bottega-dex/skills/run/references` | Design rules, panel method, and structured report contracts |
+| `plugins/bottega-dex/scripts/claude-exec` | Bounded `claude -p` adapter for cross-family review and panel roles |
+| `tests` | Packaging, orchestration, adapter, and schema contracts |
 
 ## Rules
 
-- Write plain engineering English. Use standard engineering terms. No metaphors, theatrical naming, or invented process vocabulary.
-- Do not use em dashes. Use periods, commas, colons, or parentheses.
-- The orchestrator is GPT-5.6 Sol at Ultra. Mechanical work routes to the host's efficient GPT-5.6 tier at high. Sophisticated worker work routes to GPT-5.6 Sol at high. Custom-agent TOML uses only model identifiers documented by the active Codex client. Cross-family paths use Claude only where the process names them.
-- Codex workers use native subagents. Never launch a second Codex process from a Bottega Dex run.
-- Every native brief requests the route and effort from the routing table and records the model reported by the worker. Use native custom agents when available for exact pinning.
-- Claude runs only for the named cross-family reviewer and panel roles through `claude-exec`. Callers never override its model, effort, permission mode, or tool list.
-- Orchestration is Codex. Never add a polling loop, queue, daemon, resident server, or general scheduler.
-- Every run gets isolation, a specification, a build, host gates after integration, one cross-family review of the complete integrated diff, a real product QA drive, and a pull request.
-- Cross-family review is never replaced by per-slice review and never skipped for size.
-- Review and QA run against disposable or isolated worktrees. High-permission workers never run in the user's primary checkout.
-- Test output is redirected to a file and its exit code is checked. Never pipe a test command through another command.
-- Use `apply_patch` for local file edits. Preserve unrelated changes.
-- A worker receives methods and files by absolute path. It does not inherit plugin skills or the orchestrator's conversation.
-- Every worker receives one explicit plugin-owned role prompt. Project custom-agent TOML is optional host configuration and never replaces that prompt or the method skill.
-- The user approves actions involving real users, real money, deploys, shared data, or production data. An autonomous specification waiver does not authorize those actions.
-- Keep worker methods short. Cut any instruction a competent frontier worker can derive from the repository or normal engineering practice unless a costly failure established the need.
+- Write plain engineering English. Do not use em dashes, metaphors, theatrical names, or invented process vocabulary.
+- The active Codex task orchestrates. Codex workers use native subagents. Never start a second Codex process.
+- The plugin exposes one skill and requires no host-agent setup or hooks.
+- Use GPT-5.6 Sol at Ultra for orchestration, Luna or the documented efficient route at high for substantial mechanical work, and Sol at high for sophisticated workers.
+- The complete integrated diff always receives one cold Codex review and one cold Claude review against the same frozen target and common schema. Neither reviewer sees the other report. This gate is never replaced by slice review.
+- `claude-exec` is the only external model boundary. It owns model, effort, permissions, tools, structured output, and timeout.
+- Use one task worktree. Default to one builder at a time. Parallel writes require disjoint ownership and isolated worktrees.
+- Keep focused checks green while building and run the host's decisive full gate before delivery.
+- QA drives the reviewed artifact and never fixes it. Evidence must match the changed surface.
+- The user approves deploys, money movement, destructive actions, and changes to shared or production data.
+- Preserve unrelated changes. Use `apply_patch` for edits and stage explicit paths.
 
 ## Verification
 
-Run both gates after any change:
+Run:
 
 ```bash
 npm test
 npm run typecheck
-```
-
-For manifest, marketplace, skill, or hook changes, also run:
-
-```bash
 python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/bottega-dex
 ```
 
-For adapter changes, run their `--dry-run` contract tests and one minimal real structured-output smoke call per changed external provider before release.
+For adapter changes, also run the dry-run contract tests and one minimal real structured-output smoke call.

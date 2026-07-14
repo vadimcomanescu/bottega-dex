@@ -1,7 +1,7 @@
 {
   "name": "bottega-dex",
-  "version": "0.2.0",
-  "description": "Autonomous issue-to-PR runs with explicit native Codex worker roles and cross-family review.",
+  "version": "0.3.0",
+  "description": "One Codex-native issue-to-PR workflow with mandatory cross-family review.",
   "author": {
     "name": "Vadim Comanescu",
     "url": "https://github.com/vadimcomanescu"
@@ -21,7 +21,7 @@
   "interface": {
     "displayName": "Bottega Dex",
     "shortDescription": "Take an issue to a reviewed, evidence-backed PR.",
-    "longDescription": "Runs discovery, specification, planning, native subagent implementation, cross-family review, real product QA, and pull request delivery from one Codex task.",
+    "longDescription": "Runs discovery, specification, planning, native subagent implementation, mandatory Codex and Claude review, proportional product QA, and pull request delivery from one Codex task.",
     "developerName": "Vadim Comanescu",
     "category": "Coding",
     "capabilities": ["Agents", "Write", "Code review"],

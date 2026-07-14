@@ -1,97 +1,77 @@
 # bottega-dex
 
-Autonomous issue-to-PR runs for Codex. One skill takes a task, bug, or GitHub issue to a reviewed, evidence-backed pull request.
+One Codex skill takes a task, bug, or issue to a reviewed, evidence-backed pull request.
 
-Bottega Dex is the Codex-native sibling of [bottega](https://github.com/vadimcomanescu/bottega). Bottega remains the Claude Code product. This repository preserves its process while making Codex the orchestrator.
+Bottega Dex is the Codex-native sibling of [Bottega](https://github.com/vadimcomanescu/bottega). Bottega remains the Claude Code product and is not modified by this repository.
 
 ## Install
 
 Requirements:
 
-- Codex CLI 0.144.0 or newer, logged in.
-- Claude Code 2.1.207 or newer, logged in. Claude is used only for the independent model-family paths.
-- Node.js 24 or newer for plugin scripts.
+- A current Codex client with plugin and native subagent support.
+- Claude Code, logged in. Bottega Dex uses `claude -p` only for the independent model-family review and costly-decision panel.
+- Node.js 24 or newer for the bounded Claude adapter.
 
 ```bash
 codex plugin marketplace add vadimcomanescu/bottega-dex
 codex plugin add bottega-dex@bottega-dex
 ```
 
-Start the orchestrator on GPT-5.6 with Ultra reasoning. In clients that display routing tiers, use Sol:
-
-```bash
-codex -m gpt-5.6 -c 'model_reasoning_effort="ultra"'
-```
-
-In the Codex app, select GPT-5.6 Sol and Ultra before starting the task. Then invoke:
+Start the task on GPT-5.6 at Ultra. Use the Sol route label when your client exposes it, then invoke:
 
 ```text
 $bottega-dex:run <task, bug, or issue URL>
 ```
 
-Installed plugin hooks require a one-time trust review. Open `/hooks` when Codex asks, inspect the two shipped hooks, and trust them. Start a new thread after installing or upgrading so Codex loads the current skill and hooks.
-
-The plugin works with generic native subagents. For optional project-scoped custom agents that pin documented models, effort, and sandbox settings, invoke `$bottega-dex:setup` and approve the exact host files it proposes. Plugin installation never writes host custom-agent configuration by itself.
+That is the complete setup. The plugin does not install project agent configuration, add hooks, or start another Codex process.
 
 ## The flow
 
-`$bottega-dex:run` turns the current Codex thread into an orchestrator that:
+1. Read the repository, history, product context, and host commands. Isolate nontrivial changes on one task branch and worktree.
+2. State the behavior, acceptance criteria, and material defaults. Wait for approval unless the user requested autonomous execution.
+3. Plan vertical slices. Put costly-to-reverse decisions without repository precedent through a blinded Codex-and-Claude panel.
+4. Build with native Codex subagents only when a substantial bounded lane justifies a fresh context. Use one builder at a time by default.
+5. Run focused checks during implementation and the repository's decisive full gate on the integrated head.
+6. Review the complete frozen diff with two cold reviewers in parallel, one Codex and one Claude. They receive the same target, contract, prompt, and schema, and neither sees the other report.
+7. Drive the reviewed artifact as a user. Capture evidence proportional to the surface: screenshots or recordings for visible behavior, runtime evidence for nonvisual behavior.
+8. Open the pull request with decisions, verification, both review records, QA evidence, and known limits.
 
-1. Isolates the run in its own worktree and discovers the host's test, lint, typecheck, build, and run commands.
-2. Reads the codebase, surfaces unstated risks, researches precedent, and interviews the user when intent is unclear.
-3. Presents a concise user-facing specification. The user's approval starts the build unless the original request explicitly waived that gate.
-4. Plans vertical slices and sends expensive-to-reverse decisions to a blinded cross-family panel.
-5. Builds in isolated slices with requested native routes and host gates green after every integration.
-6. Reviews the frozen integrated diff once with two cold reviewers in parallel, one Codex and one Claude, using the same report schema.
-7. Drives the real product as a user and publishes recordings, screenshots, and verdicts in the pull request.
-8. Synchronizes existing documentation and opens the pull request with the specification, decisions, review record, and QA evidence.
+The user approves the specification and merges the pull request. Explicit autonomous instructions remove the first pause, never the merge gate or approvals for deploys, money, destructive actions, or shared and production data.
 
-The user appears twice: approving the specification and merging the pull request. An explicit autonomous request removes the first gate. The merge remains the only path to trunk.
+## Why the second model family stays
+
+Cross-family review is a product invariant, not a Codex packaging requirement. A model reviewing work produced inside its own family can share the same blind spots. Bottega Dex therefore freezes one base, head, and tree, then gives the identical review bundle to a fresh Codex reviewer and a cold Claude reviewer. Their reports are blind and schema-compatible. The orchestrator verifies findings and decides from evidence rather than voting.
+
+Claude is reached directly through one bounded adapter. A proxy service would add credentials, routing state, and another protocol boundary without improving this review.
 
 ## Routing
 
-Codex work stays inside the native subagent harness. Each brief requests a route and reasoning effort, and the orchestrator records the model the native thread reports. Claude is invoked only for the deliberate second-family review and panel paths.
-
-| Role | Route |
+| Work | Route |
 | --- | --- |
-| orchestrator | GPT-5.6 Sol, Ultra, current Codex thread |
-| mechanical work | GPT-5.6 Luna, high |
-| builder | GPT-5.6 Sol, high |
-| integrated review | GPT-5.6 Sol high plus Claude Opus xhigh |
-| fix review | fresh GPT-5.6 Sol, high |
-| QA | GPT-5.6 Sol, high |
+| Orchestrator | GPT-5.6 Sol, Ultra, current task |
+| Substantial mechanical or read-heavy lane | Luna high when exposed, otherwise GPT-5.6 Terra high |
+| Builder, Codex reviewer, QA | GPT-5.6 Sol, high |
+| Independent reviewer and panel roles | Claude Opus through `claude -p` |
 
-Codex builders, mechanics, reviewers, QA workers, and panelists are native subagents. Every worker receives an explicit plugin-owned role prompt plus its method and task contract. This keeps identity portable while preserving visible threads, progress, follow-ups, cancellation, and results. A project can pin documented routes with `$bottega-dex:setup`. Without it, the brief steers the requested route and the returned model is recorded.
+These are workflow requests, not files installed into the host repository. The active Codex client owns model availability, sandboxing, permissions, and native agent lifecycle.
 
-The one external adapter uses `claude -p --safe-mode` with fixed roles, tools, permissions, JSON Schema output, and envelope normalization.
+## Architecture
 
-CLIProxyAPI is intentionally not part of the design. It is useful when an application needs a provider-compatible HTTP service or account routing. Bottega Dex already has native Codex agent threads and needs Claude's complete coding-agent loop only for a few independent calls, so a proxy would add a service, authentication state, and protocol translation without adding capability.
-
-## Design decisions
-
-**Codex is the orchestrator.** The interactive thread stays on GPT-5.6 Sol at Ultra because it owns specification, architecture, routing, arbitration, and delivery. The plugin does not start a hidden orchestrator process because that would break the conversational approval gate and split run state.
-
-**Native Codex orchestration.** Codex work uses Codex subagent threads directly. The plugin does not start a second Codex process, duplicate authentication, or hide workers behind terminal subprocesses.
-
-**Claude is a deliberate boundary.** `claude-exec` exists only for the independent Claude reviewer and panel roles. It normalizes Claude's structured output without becoming a general orchestration layer.
-
-**Cross-family review is never dropped.** Round 1 always sends the same frozen integrated diff to one Codex reviewer and one Claude reviewer. Neither sees the other's output. Every report echoes the base, head, and tree SHAs and matches one JSON Schema. Fixes receive a fresh delta review.
-
-**The harness remains the orchestration layer.** The plugin provides skills, one external adapter, and two hooks. It has no queue, daemon, scheduler, or state machine. Work is visible as Codex agent threads, tool calls, worktrees, commits, reports, and the pull request.
-
-**QA is evidence, not implementation.** QA drives the reviewed head and never fixes it. A failure returns to the builder and review loop, then QA drives the new head again. Evidence is published with commit-pinned links from a never-merged branch and removed after merge.
-
-## Repository layout
+The plugin exposes one skill, `run`. Its worker prompts, design rules, panel method, and schemas are references loaded only when needed. Native Codex threads handle Codex work. `scripts/claude-exec` is the only external boundary and accepts only reviewer, panelist, and compare-only judge roles.
 
 ```text
-.agents/plugins/marketplace.json       public Codex marketplace
-plugins/bottega-dex/.codex-plugin/     plugin manifest
-plugins/bottega-dex/skills/            run, builder, review, panel, design
-plugins/bottega-dex/skills/*/references/agents/  portable worker role prompts
-plugins/bottega-dex/assets/custom-agents/         optional project TOML templates
-plugins/bottega-dex/scripts/           external Claude adapter and shared safety helpers
-plugins/bottega-dex/hooks/             model and entry guards
-tests/                                 package and behavior contracts
+plugins/bottega-dex/
+  .codex-plugin/plugin.json
+  skills/run/
+    SKILL.md
+    references/
+      agents/
+      codebase-design.md
+      panel.md
+      *.schema.json
+  scripts/
+    claude-exec
+    exec-common.js
 ```
 
 ## Develop
@@ -103,15 +83,15 @@ npm run typecheck
 python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/bottega-dex
 ```
 
+The research behind the architecture is in [the simplification report](docs/research/2026-07-14-world-class-plugin-simplification.md).
+
 ## Sources
 
-- [OpenAI Codex plugin structure](https://learn.chatgpt.com/docs/build-plugins#plugin-structure)
-- [OpenAI Codex subagents and model configuration](https://learn.chatgpt.com/docs/agent-configuration/subagents)
-- [Anthropic Claude Code CLI reference](https://code.claude.com/docs/en/cli-usage)
-
-## Credits
-
-The process and its history come from [bottega](https://github.com/vadimcomanescu/bottega). The discovery method follows Thariq Shihipar's unknowns framework. The design vocabulary follows John Ousterhout's deep modules. The build and review split follows Addy Osmani's long-running-agent notes. The blinded panel follows OpenRouter Fusion's independent-draft pattern, while final synthesis stays with the orchestrator.
+- [OpenAI prompting guidance](https://learn.chatgpt.com/docs/prompting)
+- [OpenAI skill guidance](https://learn.chatgpt.com/docs/build-skills)
+- [OpenAI plugin structure](https://learn.chatgpt.com/docs/build-plugins)
+- [OpenAI native subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)
+- [Anthropic Claude Code CLI](https://code.claude.com/docs/en/cli-usage)
 
 ## License
 

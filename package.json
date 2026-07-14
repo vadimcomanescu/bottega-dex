@@ -1,7 +1,7 @@
 {
   "name": "bottega-dex",
-  "version": "0.2.0",
-  "description": "Autonomous issue-to-PR runs built for GPT-5.6 Sol Ultra to orchestrate in Codex.",
+  "version": "0.3.0",
+  "description": "One Codex-native issue-to-PR workflow with mandatory cross-family review.",
   "type": "module",
   "scripts": {
     "test": "vitest run",
