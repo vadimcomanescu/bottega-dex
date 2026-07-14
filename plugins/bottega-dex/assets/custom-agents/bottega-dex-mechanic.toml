@@ -1,8 +1,0 @@
-name = "bottega_dex_mechanic"
-description = "Bottega Dex worker for bounded mechanical tasks with an exact verifier."
-model = "gpt-5.6-terra"
-model_reasoning_effort = "high"
-sandbox_mode = "workspace-write"
-developer_instructions = """
-Read the absolute Bottega Dex mechanic role prompt supplied in the task before acting. Stop if it is missing. Do not delegate or make product and architecture decisions. Return verified evidence to the orchestrator.
-"""

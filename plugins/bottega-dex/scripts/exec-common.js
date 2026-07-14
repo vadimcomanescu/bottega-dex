@@ -23,6 +23,8 @@ export function parseClaudeArgs(prefix) {
         brief: { type: "string" },
         out: { type: "string" },
         events: { type: "string" },
+        head: { type: "string" },
+        tree: { type: "string" },
         schema: { type: "string" },
         "dry-run": { type: "boolean", default: false },
       },
@@ -31,10 +33,34 @@ export function parseClaudeArgs(prefix) {
     fail(prefix, error.message);
   }
 
-  for (const name of ["role", "cwd", "brief", "out", "events"]) {
+  for (const name of ["role", "cwd", "brief", "out", "events", "schema"]) {
     if (!values[name]) fail(prefix, `--${name} is required`);
   }
   return values;
+}
+
+export function usesRequestedClaudeModel(envelope, requestedModel) {
+  const usage = envelope?.modelUsage ?? envelope?.model_usage;
+  if (!usage || typeof usage !== "object") return false;
+  const needle = requestedModel.toLowerCase();
+  const counters = [
+    "inputTokens",
+    "outputTokens",
+    "cacheReadInputTokens",
+    "cacheCreationInputTokens",
+    "input_tokens",
+    "output_tokens",
+    "cache_read_input_tokens",
+    "cache_creation_input_tokens",
+    "costUSD",
+    "cost_usd",
+  ];
+  return Object.entries(usage).some(([model, values]) => (
+    model.toLowerCase().includes(needle)
+    && values
+    && typeof values === "object"
+    && counters.some((counter) => Number(values[counter]) > 0)
+  ));
 }
 
 export function binaryOnPath(name) {
@@ -88,5 +114,52 @@ export function assertIsolatedGitWorktree(
   const commonDir = resolveGitPath("--git-common-dir");
   if (gitDir === commonDir) {
     fail(prefix, `high-permission worker cannot run in the primary checkout: ${cwd}`);
+  }
+}
+
+export function assertTrackedWorktreeClean(prefix, cwd) {
+  const git = binaryOnPath("git");
+  if (!git) fail(prefix, "git was not found in an absolute PATH entry", 127);
+
+  for (const args of [
+    ["diff", "--quiet", "--no-ext-diff"],
+    ["diff", "--cached", "--quiet", "--no-ext-diff"],
+  ]) {
+    const result = spawnSync(git, args, { cwd, encoding: "utf8" });
+    if (result.status !== 0) {
+      fail(prefix, `reviewer modified tracked files in ${cwd}`);
+    }
+  }
+}
+
+export function readTrackedWorktreeIdentity(prefix, cwd) {
+  const git = binaryOnPath("git");
+  if (!git) fail(prefix, "git was not found in an absolute PATH entry", 127);
+
+  const resolve = (revision) => {
+    const result = spawnSync(git, ["rev-parse", revision], {
+      cwd,
+      encoding: "utf8",
+    });
+    if (result.status !== 0 || !result.stdout?.trim()) {
+      fail(prefix, `cannot resolve ${revision} in ${cwd}`);
+    }
+    return result.stdout.trim();
+  };
+
+  return {
+    headSha: resolve("HEAD"),
+    treeSha: resolve("HEAD^{tree}"),
+  };
+}
+
+export function assertTrackedWorktreeUnchanged(prefix, cwd, expected) {
+  assertTrackedWorktreeClean(prefix, cwd);
+  const actual = readTrackedWorktreeIdentity(prefix, cwd);
+  if (
+    actual.headSha !== expected.headSha
+    || actual.treeSha !== expected.treeSha
+  ) {
+    fail(prefix, `reviewer changed the frozen target in ${cwd}`);
   }
 }

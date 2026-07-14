@@ -9,7 +9,7 @@ const SCHEMA = join(
   "plugins",
   "bottega-dex",
   "skills",
-  "reviewing",
+  "run",
   "references",
   "report.schema.json",
 );
@@ -19,9 +19,9 @@ const validate = new Ajv({ strict: true }).compile(JSON.parse(readFileSync(SCHEM
 const report = {
   schema_version: 1,
   round: 1,
-  reviewer: { family: "codex", model: "gpt-5.6-sol" },
+  reviewer: { family: "codex", model: "gpt-5.6" },
   target: { base_sha: "base", head_sha: "head", tree_sha: "tree" },
-  evidence_paths: [".bottega/evidence/review/tests.log"],
+  evidence_paths: ["/tmp/review/tests.log"],
   rechecks: [],
   findings: [],
   blocked_checks: [],

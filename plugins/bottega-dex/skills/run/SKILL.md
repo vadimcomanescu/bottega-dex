@@ -1,54 +1,49 @@
 ---
 name: run
-description: Take a task, bug, or issue to a delivered pull request with Bottega Dex. Invoke only when the user asks for a Bottega Dex run.
+description: Take a task, bug, or issue to a reviewed, evidence-backed pull request with Bottega Dex. Invoke only when the user asks for a Bottega Dex run.
 ---
 
 # Run
 
-You are the orchestrator: GPT-5.6 Sol at Ultra, taking one piece of work from request to a delivered pull request. Judgment stays in this thread: design, routing, review arbitration, and every costly decision. Production code is a worker's by default. Any code you write receives the same review as a worker's code.
+Take one request to a pull request. The current Codex task is the orchestrator and owns scope, design, routing, integration, review arbitration, and delivery. Run it on GPT-5.6 at Ultra, using the Sol route label when the client exposes it. If the client visibly shows a different route, stop and tell the user. Do not claim to verify settings the runtime does not expose.
 
-Before continuing, confirm that the active thread is GPT-5.6 Sol at Ultra. The SessionStart hook confirms the model but cannot inspect reasoning effort. If either requirement is not confirmed, stop and tell the user how to start the required thread. Never hide a lower-tier orchestrator behind a worker call.
+Use native subagents. Never launch another Codex process. Resolve this skill's directory once and pass absolute paths to worker prompts and schemas. A worker receives only its prompt, task brief, repository context, owned paths, verifier, and expected result.
 
-The user appears twice: agreeing to the specification and merging the pull request. A request that explicitly waives sign-off, such as "autonomous" or "do not wait for my approval", drops the first gate. The merge remains the final gate. The waiver never covers real users, real money, deploys, or shared or production data.
-
-Use native Codex subagents, tracked tool calls, worktrees, and parallel calls when work is independent. Codex owns agent threads, follow-ups, waiting, and completion. Never create a polling loop, resident process, queue, scheduler, or second Codex process. Keep at most four worker calls live. A worker returns a completed answer to you and never coordinates with another worker.
-
-Resolve this skill's plugin root once and pass absolute role, skill, and schema paths in every brief. Native subagents do not automatically receive plugin methods or role prompts. Worker identities live under `references/agents/`; methods remain in their owning skills. Use `references/dispatch.md` for native dispatch and for the only external adapter, `scripts/claude-exec`.
+Start every reviewer and panelist without inherited conversation history when supported. Builders receive only the turns needed for their brief. Request the route in each brief. If the native control does not expose model selection or metadata, record `host-routed` and do not claim an exact model.
 
 ## Routing
 
-| work | route | effective model and effort |
-| --- | --- | --- |
-| orchestrator | current thread | gpt-5.6-sol, Ultra |
-| gate reruns, bulk reads, documentation sweep | native mechanic | gpt-5.6-luna, high |
-| builder | native builder | gpt-5.6-sol, high |
-| review round 1 | native reviewer and Claude reviewer, parallel | gpt-5.6-sol high and Claude Opus xhigh |
-| review after fixes | fresh native reviewer | gpt-5.6-sol, high |
-| QA | native QA worker | gpt-5.6-sol, high |
-| panel drafts and comparison | native Sol draft and external Claude draft plus judge | orchestrator synthesizes |
+| Work | Route |
+| --- | --- |
+| Orchestration and final decisions | current GPT-5.6 Sol task, Ultra |
+| Substantial mechanical or read-heavy lane | Luna high when exposed, otherwise GPT-5.6 Terra high |
+| Building, review, and QA | GPT-5.6 Sol high |
+| Independent second-family review and panel roles | Claude Opus through `scripts/claude-exec` |
 
-State the requested model and effort in every native subagent brief. Use a matching custom agent when the current Codex environment provides one. Otherwise let the native harness route the request and record the actual model it reports. A lower route is not silently accepted for a required Sol review. Never enforce routing by starting another Codex process. Sol at max or Ultra outside the orchestrator is one deliberate retry after diagnosing a failed high-effort dispatch, never an automatic escalation.
+Keep routine reads, commands, formatting, and small deterministic edits in this task. Delegate only a substantial bounded lane or an independent judgment. Run independent reads in parallel when useful. Use one builder at a time and keep implementation writes sequential in the task worktree. Keep at most four workers live.
+
+Use absolute paths:
+
+```text
+<plugin-root>/scripts/claude-exec --role <role> --cwd <worktree> --brief <brief.md> --out <report.json> --events <envelope.json> [--head <sha> --tree <sha>] --schema <schema.json>
+```
+
+The bracketed target pair is required for reviewer calls and omitted for panel calls.
 
 ## Flow
 
-1. **Isolate.** Create the worktree from the orchestrator thread using Codex's native worktree support. Only when unavailable, create a normal git worktree under a gitignored directory. Branch `bottega/<slug>`. The user's checkout stays untouched and the pull request is the only path to trunk. Record the base SHA, branch, worktree, current session id when available, and discovered host commands under `.bottega/run/<slug>/`. Confirm native subagents are available. Check `claude --version` and run one minimal structured-output preflight through `scripts/claude-exec` before the first cross-family call.
+1. **Isolate and understand.** Read repository instructions, relevant code, history, product documents, remotes, and current git state. For edits, use one task branch and worktree so the user's checkout stays untouched. Record the delivery remote and GitHub `owner/repo` for the base branch. When remotes differ, never trust the CLI default repository. Pass `--repo <owner/repo>` to issue and pull request commands. Discover the repository's focused checks, decisive full gate, build, and run commands. For a substantial independent inventory, give a native worker `references/agents/mechanic.md`, an exact output, and a verifier. Check `claude --version`, `claude auth status`, and the adapter before work that depends on the mandatory cross-family review.
 
-2. **Discover.** Read the code, history, domain glossary, and product documents. Rank the missing decisions by risk. Close each with repository precedent first, then primary vendor documentation or established practice. Carry searches that returned no precedent. If a bounded inventory or bulk read merits a native mechanic, dispatch it with `references/agents/mechanic.md`; the mechanic never makes the resulting decision. If intent is unclear, interview the user until you can predict their answers.
+2. **Specify.** State the intended behavior, acceptance criteria, definition of done, and material defaults in the conversation. Ask only about choices that change scope, user-visible behavior, or an expensive decision. Wait for approval unless the user explicitly requested autonomous execution. Approval is always required before deploys, money movement, destructive actions, or shared and production data changes.
 
-3. **Specify.** Present a brief user-facing specification in the conversation: behavior, acceptance criteria, definition of done, defaults that can be vetoed in one read, and wireframes when UI changes. Wait for approval unless the request explicitly waived it. With a waiver, proceed and record every default as an orchestrator-owned decision for the pull request.
+3. **Plan.** Follow `references/codebase-design.md` and the repository's own vocabulary. Plan vertical slices with a clear interface and verifier. When a public contract, persisted data shape, dependency choice, or module boundary is expensive to reverse and repository precedent does not settle it, use `references/panel.md`. The orchestrator decides after reading the independent drafts and comparison.
 
-4. **Plan.** Design with `skills/codebase-design/SKILL.md` and the host's vocabulary. Use vertical slices that each end in something a person can drive, with an interface contract per slice. Send decisions that are expensive to reverse to `skills/panel/SKILL.md` unless the repository already has an established precedent that you are following.
+4. **Build.** Give a native builder `references/agents/builder.md`, one bounded slice, owned paths, acceptance criteria, and exact checks. Answer missing decisions through follow-up on the same agent. Integrate only verified work. Run focused checks while building and the repository's decisive full gate on the integrated head. Do not weaken tests or hide failures.
 
-5. **Build.** Start a native Codex subagent for each slice with `references/agents/builder.md`, `skills/implementing/SKILL.md`, its interface contract, owned files, discovered commands, and relevant conventions. Parallelize only independent worktrees. Keep host gates green after every slice and run the full suite after every integration. A worker question is a valid blocked report: answer it through the native follow-up control and continue the same agent thread. Every command-running brief includes these lines verbatim:
+5. **Review.** Freeze the complete integrated diff by base, head, and tree SHA after the decisive gate passes. Mandatory round one always starts two cold reviewers in parallel against separate disposable checkouts of the same frozen target: one native Codex reviewer and one Claude reviewer through `scripts/claude-exec`. Give both the same task contract, repository instructions, `references/agents/reviewer.md`, and `references/report.schema.json`. Neither sees builder reasoning, orchestrator narrative or preferred conclusions, candidate findings, or the other report. Accept a report only when its family, round, and target SHAs match the dispatch. For native review, use actual model metadata only when exposed. For Claude, retain the adapter envelope and confirm successful Opus usage. Reproduce and arbitrate every finding with evidence. Send confirmed fixes to a builder. Any head change invalidates both reviews: rerun the decisive gate, freeze the new complete diff, and run a fresh blind Codex-and-Claude pair. Two failed fixes for the same finding or a third unsuccessful pair stops the loop for redesign.
 
-   - If a step would touch real users, real money, a deploy, or shared or production data, do not run it. Report what the step needs and wait.
-   - Never pipe a test command. Redirect output to a file and check the exit code.
-   - Name every test you edit in your report.
+6. **QA.** After review is clean, give `references/agents/qa.md` the reviewed head and acceptance scenarios. Drive the real artifact. For visible or interactive changes, capture the smallest useful screenshot or recording. For nonvisual changes, use targeted runtime or command evidence. QA reports and never fixes. A failure returns to build, review, and QA.
 
-6. **Review.** Freeze base, head, and tree SHAs with the suite green at the head. Round 1 is one cross-family review of the integrated diff, never a per-slice substitute. In parallel, start one fresh native Codex subagent at Sol high and one external Claude reviewer through `scripts/claude-exec`, each against a disposable copy of the same head and each receiving `references/agents/reviewer.md` plus `skills/reviewing/SKILL.md`. Both return JSON matching `skills/reviewing/references/report.schema.json`. Neither receives your narrative or the other's findings. Confirm every report echoes the exact target identity. You arbitrate confirmed and refuted findings with evidence. Each fix receives one fresh native Sol reviewer on the fix range. The same finding still open after two fix attempts means the design must be reconsidered. Review stops after round 3 for diagnosis. Nothing dispatches round 4 automatically.
+7. **Deliver.** Update existing documentation only where the change made it false. Open a pull request with the behavior change, material decisions, checks run, both review records, QA evidence, and known limits. Link or close the source issue. Remove temporary worktrees and state after the pull request exists. The merge remains the user's final gate.
 
-7. **QA.** Start one native Sol high QA subagent with `references/agents/qa.md` only after review leaves the head clean. Drive the real artifact as a user across every changed surface. Record the drive that produces each verdict. A feature is shown working; a bug is shown absent. Each scenario returns PASS with evidence, FAIL with exact divergence, or NOT VERIFIED with the reason. QA never fixes. A QA failure is fixed, delta-reviewed, and re-driven. Publish screenshots, compact walkthrough GIFs, and full recordings from a never-merged `bottega/evidence-<slug>` branch using commit-pinned URLs in the pull request.
-
-8. **Deliver.** Sweep existing host documentation for claims the diff made false. A delegated documentation inventory uses `references/agents/mechanic.md` and returns candidate paths; the orchestrator decides and owns the edits. Open the pull request with the specification, orchestrator-owned decisions, panel impact, builder and reviewer identities, review findings and refutations, deterministic gates, and inline QA evidence. Close issue-born work. Remove the worktree and `.bottega/run/<slug>/` after the pull request exists. When the pull request merges, remove the run branch and evidence branch locally and remotely.
-
-Resume from the worktree, commits, reports, and pull request, never from memory. If the user says stop, stop or let tracked workers finish, commit useful completed work, record the exact state, and return control.
+Resume from the branch, commits, checks, review reports, and pull request, never from conversational memory. If stopped, preserve useful verified work and report the exact state.

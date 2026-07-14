@@ -1,5 +1,13 @@
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -12,6 +20,8 @@ const SCRIPT = join(
   "claude-exec",
 );
 const SCHEMA = join(import.meta.dirname, "fixtures", "smoke.schema.json");
+const HEAD_SHA = "a".repeat(40);
+const TREE_SHA = "b".repeat(40);
 
 const BASE = [
   "--role", "reviewer",
@@ -19,6 +29,9 @@ const BASE = [
   "--brief", "/tmp/brief.md",
   "--out", "/tmp/out.json",
   "--events", "/tmp/events.json",
+  "--head", HEAD_SHA,
+  "--tree", TREE_SHA,
+  "--schema", SCHEMA,
 ];
 
 function run(args: string[]) {
@@ -26,21 +39,23 @@ function run(args: string[]) {
 }
 
 describe("claude-exec", () => {
-  it("pins a fresh Opus xhigh reviewer with a read-only tool surface", () => {
+  it("pins a fresh Opus xhigh reviewer with a non-editing role and probe tools", () => {
     const result = run(BASE);
     expect(result.status).toBe(0);
     const raw = JSON.parse(result.stdout);
     expect(raw.command).toBe("claude");
+    expect(raw.argv).toContain("-p");
     expect(raw.argv).toContain("--safe-mode");
     expect(raw.argv).toContain("opus");
     expect(raw.argv).toContain("xhigh");
     expect(raw.argv).toContain("dontAsk");
     expect(raw.argv).toContain("Bash,Read,Glob,Grep");
     expect(raw.argv).toContain("--no-session-persistence");
+    expect(raw.frozenTarget).toEqual({ headSha: HEAD_SHA, treeSha: TREE_SHA });
   });
 
   it("passes JSON Schema content to Claude, not a filesystem-only pointer", () => {
-    const result = run([...BASE, "--schema", SCHEMA]);
+    const result = run(BASE);
     expect(result.status).toBe(0);
     const raw = JSON.parse(result.stdout);
     expect(raw.schemaFile).toBe(SCHEMA);
@@ -48,6 +63,31 @@ describe("claude-exec", () => {
     expect(schemaIndex).toBeGreaterThan(-1);
     expect(raw.argv[schemaIndex + 1]).toBe(readFileSync(SCHEMA, "utf8"));
     expect(raw.route.timeoutMs).toBe(1_200_000);
+  });
+
+  it("requires structured output for every external role", () => {
+    const withoutSchema = BASE.slice(0, -2);
+    const result = run(withoutSchema);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toMatch(/--schema is required/i);
+  });
+
+  it("requires the frozen head and tree for reviewer calls", () => {
+    const withoutTarget = BASE.filter((value, index) => (
+      !["--head", "--tree"].includes(value)
+      && !["--head", "--tree"].includes(BASE[index - 1] ?? "")
+    ));
+    const result = run(withoutTarget);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toMatch(/--head is required/i);
+  });
+
+  it("requires distinct report and provenance paths", () => {
+    const collision = [...BASE];
+    collision[collision.indexOf("--events") + 1] = collision[collision.indexOf("--out") + 1]!;
+    const result = run(collision);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toMatch(/--out and --events.*distinct/i);
   });
 
   it.each([
@@ -66,7 +106,7 @@ describe("claude-exec", () => {
   });
 
   it.each(["user-facing-builder", "qa", "docs"])(
-    "rejects legacy non-cross-family role %s",
+    "rejects non-cross-family role %s",
     (role) => {
       const result = run([
         ...BASE.map((value) => (value === "reviewer" ? role : value)),
@@ -80,5 +120,92 @@ describe("claude-exec", () => {
     const result = run([...BASE, "--resume", "session-123"]);
     expect(result.status).toBe(2);
     expect(result.stderr).toMatch(/resume|unknown option/i);
+  });
+
+  it("fails if an adapter-owned output changes the frozen target", () => {
+    const root = mkdtempSync(join(tmpdir(), "bottega-dex-output-guard-"));
+    const repo = join(root, "repo");
+    const review = join(root, "review");
+    const bin = join(root, "bin");
+    mkdirSync(repo);
+    mkdirSync(bin);
+
+    const git = (cwd: string, ...args: string[]) => spawnSync("git", args, {
+      cwd,
+      encoding: "utf8",
+    });
+
+    try {
+      expect(git(repo, "init", "-q").status).toBe(0);
+      expect(git(repo, "config", "user.name", "Bottega Dex Test").status).toBe(0);
+      expect(git(repo, "config", "user.email", "test@example.com").status).toBe(0);
+      expect(git(repo, "config", "commit.gpgsign", "false").status).toBe(0);
+      writeFileSync(join(repo, "tracked.txt"), "frozen\n");
+      expect(git(repo, "add", "tracked.txt").status).toBe(0);
+      expect(git(repo, "commit", "-qm", "frozen").status).toBe(0);
+      expect(git(repo, "worktree", "add", "--detach", review, "HEAD").status).toBe(0);
+
+      const fakeClaude = join(bin, "claude");
+      writeFileSync(fakeClaude, `#!/usr/bin/env node
+if (process.argv.includes("--version")) {
+  process.stdout.write("test-claude 1.0\\n");
+} else {
+  process.stdout.write(JSON.stringify({
+    subtype: "success",
+    is_error: false,
+    modelUsage: { "claude-opus-4-8": { outputTokens: 1 } },
+    structured_output: { status: "ok" },
+  }));
+}
+`);
+      chmodSync(fakeClaude, 0o755);
+
+      const brief = join(root, "brief.md");
+      const events = join(root, "events.json");
+      const headSha = git(review, "rev-parse", "HEAD").stdout.trim();
+      const treeSha = git(review, "rev-parse", "HEAD^{tree}").stdout.trim();
+      writeFileSync(brief, "Return the schema.\n");
+
+      const wrongTarget = spawnSync(process.execPath, [
+        SCRIPT,
+        "--role", "reviewer",
+        "--cwd", review,
+        "--brief", brief,
+        "--out", join(root, "wrong-target.json"),
+        "--events", join(root, "wrong-target-events.json"),
+        "--head", "0".repeat(40),
+        "--tree", treeSha,
+        "--schema", SCHEMA,
+      ], {
+        encoding: "utf8",
+        env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+      });
+      expect(wrongTarget.status).not.toBe(0);
+      expect(wrongTarget.stderr).toMatch(/does not match.*frozen target/i);
+
+      const result = spawnSync(process.execPath, [
+        SCRIPT,
+        "--role", "reviewer",
+        "--cwd", review,
+        "--brief", brief,
+        "--out", join(review, "tracked.txt"),
+        "--events", events,
+        "--head", headSha,
+        "--tree", treeSha,
+        "--schema", SCHEMA,
+      ], {
+        encoding: "utf8",
+        env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+      });
+
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toMatch(/frozen target|modified tracked files/i);
+      expect(JSON.parse(readFileSync(events, "utf8")).frozen_target).toEqual({
+        headSha,
+        treeSha,
+      });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

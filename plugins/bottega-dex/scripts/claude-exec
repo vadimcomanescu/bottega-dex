@@ -4,12 +4,17 @@ import {
   readFileSync,
   writeFileSync,
 } from "node:fs";
+import { resolve } from "node:path";
 import {
   assertIsolatedGitWorktree,
+  assertTrackedWorktreeClean,
+  assertTrackedWorktreeUnchanged,
   binaryOnPath,
   fail,
   parseClaudeArgs,
+  readTrackedWorktreeIdentity,
   spawnBounded,
+  usesRequestedClaudeModel,
 } from "./exec-common.js";
 
 const ROUTES = {
@@ -41,22 +46,45 @@ const ROUTES = {
 
 const PREFIX = "claude-exec";
 const values = parseClaudeArgs(PREFIX);
+if (resolve(values.out) === resolve(values.events)) {
+  fail(PREFIX, "--out and --events must be distinct paths");
+}
 
 const route = ROUTES[values.role];
 if (!route) fail(PREFIX, `unknown role '${values.role}'`);
+const requestedFrozenTarget = route.requiresIsolatedWorktree
+  ? { headSha: values.head, treeSha: values.tree }
+  : null;
+if (route.requiresIsolatedWorktree) {
+  for (const name of ["head", "tree"]) {
+    if (!values[name]) fail(PREFIX, `--${name} is required for reviewer calls`);
+  }
+}
+let frozenTarget = null;
 if (route.requiresIsolatedWorktree) {
   assertIsolatedGitWorktree(PREFIX, values.cwd, {
     allowMissing: values["dry-run"],
   });
+  if (!values["dry-run"]) {
+    assertTrackedWorktreeClean(PREFIX, values.cwd);
+    frozenTarget = readTrackedWorktreeIdentity(PREFIX, values.cwd);
+    if (
+      frozenTarget.headSha !== requestedFrozenTarget.headSha
+      || frozenTarget.treeSha !== requestedFrozenTarget.treeSha
+    ) {
+      fail(
+        PREFIX,
+        `review checkout does not match the frozen target: expected ${requestedFrozenTarget.headSha}/${requestedFrozenTarget.treeSha}, got ${frozenTarget.headSha}/${frozenTarget.treeSha}`,
+      );
+    }
+  }
 }
 
-let schema = null;
-if (values.schema) {
-  try {
-    schema = readFileSync(values.schema, "utf8");
-  } catch (error) {
-    fail(PREFIX, `cannot read schema: ${error.message}`);
-  }
+let schema;
+try {
+  schema = readFileSync(values.schema, "utf8");
+} catch (error) {
+  fail(PREFIX, `cannot read schema: ${error.message}`);
 }
 
 const argv = [
@@ -69,9 +97,7 @@ const argv = [
   "--output-format", "json",
 ];
 argv.push("--no-session-persistence");
-if (values.schema) {
-  argv.push("--json-schema", schema);
-}
+argv.push("--json-schema", schema);
 
 if (values["dry-run"]) {
   process.stdout.write(`${JSON.stringify({
@@ -82,6 +108,7 @@ if (values["dry-run"]) {
     cwd: values.cwd,
     schemaFile: values.schema ?? null,
     route,
+    frozenTarget: requestedFrozenTarget,
   })}\n`);
   process.exit(0);
 }
@@ -91,6 +118,15 @@ if (!command) {
   process.stderr.write("claude-exec: claude was not found in an absolute PATH entry\n");
   process.exit(127);
 }
+
+const versionResult = spawnBounded(command, ["--version"], {
+  encoding: "utf8",
+}, 10_000);
+if (versionResult.status !== 0 || !versionResult.stdout?.trim()) {
+  process.stderr.write("claude-exec: could not record the Claude CLI version\n");
+  process.exit(1);
+}
+const cliVersion = versionResult.stdout.trim();
 
 const result = spawnBounded(command, argv, {
   cwd: values.cwd,
@@ -120,13 +156,40 @@ try {
   process.exit(1);
 }
 
-const answer = values.schema ? envelope.structured_output : envelope.result;
+if (envelope.is_error === true || envelope.subtype !== "success") {
+  process.stderr.write("claude-exec: Claude returned a non-success result envelope\n");
+  process.exit(1);
+}
+if (!usesRequestedClaudeModel(envelope, route.model)) {
+  process.stderr.write(
+    `claude-exec: result did not prove usage of requested model '${route.model}'\n`,
+  );
+  process.exit(1);
+}
+if (route.requiresIsolatedWorktree) {
+  assertTrackedWorktreeUnchanged(PREFIX, values.cwd, frozenTarget);
+}
+
+const answer = envelope.structured_output;
 if (answer === undefined || answer === null) {
   process.stderr.write("claude-exec: Claude result envelope contained no answer\n");
   process.exit(1);
 }
+writeFileSync(values.events, `${JSON.stringify({
+  schema_version: 1,
+  provider: "claude",
+  cli_version: cliVersion,
+  requested_role: values.role,
+  requested_route: route,
+  frozen_target: frozenTarget,
+  process: { status: result.status, signal: result.signal },
+  envelope,
+}, null, 2)}\n`);
 writeFileSync(
   values.out,
   typeof answer === "string" ? answer : `${JSON.stringify(answer, null, 2)}\n`,
 );
+if (route.requiresIsolatedWorktree) {
+  assertTrackedWorktreeUnchanged(PREFIX, values.cwd, frozenTarget);
+}
 process.exit(0);

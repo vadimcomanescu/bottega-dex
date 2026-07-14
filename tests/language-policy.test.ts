@@ -7,17 +7,14 @@ const FILES = [
   "README.md",
   "AGENTS.md",
   "plugins/bottega-dex/skills/run/SKILL.md",
-  "plugins/bottega-dex/skills/implementing/SKILL.md",
-  "plugins/bottega-dex/skills/reviewing/SKILL.md",
-  "plugins/bottega-dex/skills/panel/SKILL.md",
-  "plugins/bottega-dex/skills/codebase-design/SKILL.md",
-  "plugins/bottega-dex/skills/setup/SKILL.md",
+  "plugins/bottega-dex/skills/run/references/panel.md",
+  "plugins/bottega-dex/skills/run/references/codebase-design.md",
   "plugins/bottega-dex/skills/run/references/agents/mechanic.md",
   "plugins/bottega-dex/skills/run/references/agents/builder.md",
   "plugins/bottega-dex/skills/run/references/agents/reviewer.md",
   "plugins/bottega-dex/skills/run/references/agents/qa.md",
-  "plugins/bottega-dex/skills/panel/references/agents/panelist.md",
-  "plugins/bottega-dex/skills/panel/references/agents/panel-judge.md",
+  "plugins/bottega-dex/skills/run/references/agents/panelist.md",
+  "plugins/bottega-dex/skills/run/references/agents/panel-judge.md",
 ];
 
 describe("language policy", () => {
