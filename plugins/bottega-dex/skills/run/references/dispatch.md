@@ -6,12 +6,15 @@ Start Codex work with the harness's native subagent control. Keep the returned a
 
 Every native brief states:
 
-- Requested route and effort, such as `gpt-5.6-luna` at high or `gpt-5.6-sol` at high.
+- The selected role prompt by absolute path. The worker reads it before its method or task.
+- Requested route and effort. Use documented model identifiers when the dispatch primitive requires an identifier. Sol and Luna remain host routing labels when the host exposes them.
 - The linked worktree as the working directory.
 - The relevant plugin skill and schema as absolute paths.
 - The task contract, owned paths, host gates, and expected final report.
 
-Use a matching custom agent when the current environment exposes one. Otherwise steer the route in the prompt and record the model reported by the native agent. If a required Sol reviewer reports a lower route, do not silently accept it. Retry through an available native custom agent or ask the user how to proceed.
+Use a matching custom agent when the current environment exposes one: `bottega_dex_mechanic`, `bottega_dex_builder`, `bottega_dex_reviewer`, `bottega_dex_qa`, or `bottega_dex_panelist`. Otherwise spawn a generic native subagent with the same role prompt, steer the route in the brief, and record the model reported by the native agent. If a required Sol reviewer reports a lower route, do not silently accept it. Retry through an available native custom agent or ask the user how to proceed.
+
+The role prompt is the worker identity. The method skill is the reusable process. A custom-agent TOML only pins host configuration and never replaces either one. Plugin installation does not register custom agents. `$bottega-dex:setup` is the explicit opt-in path for project TOML installation.
 
 Use the native follow-up control when a worker asks a question. Native agents return summaries to the orchestrator and never coordinate with one another. Builders work in the run worktree. Reviewers work in disposable linked worktrees at the frozen head.
 

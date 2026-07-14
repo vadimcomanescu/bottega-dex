@@ -11,6 +11,8 @@ const PRODUCT_FILES = [
   join(PLUGIN, "skills", "run", "references", "dispatch.md"),
   join(PLUGIN, "skills", "panel", "SKILL.md"),
 ];
+const RUN_ROLES = ["mechanic", "builder", "reviewer", "qa"];
+const PANEL_ROLES = ["panelist", "panel-judge"];
 
 describe("native Codex orchestration", () => {
   it("contains no nested Codex process launch contract", () => {
@@ -30,10 +32,39 @@ describe("native Codex orchestration", () => {
     expect(run).toContain("claude-exec");
     expect(panel).toMatch(/native Codex subagent/i);
     expect(panel).toContain("claude-exec");
-    expect(panel).toMatch(/Give it only the question/i);
+    expect(panel).toMatch(/panelist\.md.*the question.*panelist\.schema\.json/i);
     expect(panel).not.toMatch(/Give it this skill/i);
-    expect(panel).toContain("identical question");
+    expect(panel).toMatch(/identical role prompt, question, and schema/i);
     expect(panel).toMatch(/compare.*only/i);
     expect(panel).toMatch(/Do not include provider, model, or role identities/i);
+  });
+
+  it("ships explicit plugin-owned role prompts for every worker identity", () => {
+    for (const role of RUN_ROLES) {
+      const path = join(PLUGIN, "skills", "run", "references", "agents", `${role}.md`);
+      expect(existsSync(path), path).toBe(true);
+      expect(readFileSync(path, "utf8")).toMatch(/do not delegate/i);
+    }
+    for (const role of PANEL_ROLES) {
+      const path = join(PLUGIN, "skills", "panel", "references", "agents", `${role}.md`);
+      expect(existsSync(path), path).toBe(true);
+      expect(readFileSync(path, "utf8")).toMatch(/do not delegate/i);
+    }
+  });
+
+  it("dispatches role prompts without handing workers an orchestration skill", () => {
+    const run = readFileSync(join(PLUGIN, "skills", "run", "SKILL.md"), "utf8");
+    const dispatch = readFileSync(
+      join(PLUGIN, "skills", "run", "references", "dispatch.md"),
+      "utf8",
+    );
+    const panel = readFileSync(join(PLUGIN, "skills", "panel", "SKILL.md"), "utf8");
+    expect(run).toContain("references/agents/builder.md");
+    expect(run).toContain("references/agents/reviewer.md");
+    expect(run).toContain("references/agents/qa.md");
+    expect(dispatch).toMatch(/role prompt.*absolute path/i);
+    expect(panel).toContain("references/agents/panelist.md");
+    expect(panel).toContain("references/agents/panel-judge.md");
+    expect(panel).not.toMatch(/Give it this skill/i);
   });
 });
