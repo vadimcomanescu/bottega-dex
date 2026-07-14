@@ -166,4 +166,7 @@ writeFileSync(
   values.out,
   typeof answer === "string" ? answer : `${JSON.stringify(answer, null, 2)}\n`,
 );
+if (route.requiresIsolatedWorktree) {
+  assertTrackedWorktreeUnchanged(PREFIX, values.cwd, frozenTarget);
+}
 process.exit(0);
