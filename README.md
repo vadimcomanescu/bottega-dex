@@ -47,7 +47,7 @@ $bottega-dex:run <task, bug, or issue URL>
 7. **QA.** Drive the reviewed artifact as a user. Capture screenshots or recordings for visible behavior and targeted runtime evidence for nonvisual behavior.
 8. **Deliver.** Open a pull request with the behavior change, decisions, checks, both review records, QA evidence, and known limits.
 
-Any fix after review changes the frozen head. Bottega Dex reruns the decisive gate and both complete-diff reviews before delivery.
+Any fix after review changes the frozen head. Bottega Dex reruns the decisive gate and rechecks the fix with a fresh cold reviewer from the model family opposite the fixer. A changed specification or design decision sends the new complete diff back through both families before delivery.
 
 The user approves the specification and merges the pull request. Autonomous execution can remove the specification pause, but it never removes approval for deploys, money movement, destructive actions, or changes to shared and production data.
 

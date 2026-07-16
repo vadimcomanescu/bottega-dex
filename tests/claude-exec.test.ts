@@ -116,6 +116,46 @@ describe("claude-exec", () => {
     },
   );
 
+  it("fails fast on an empty brief before spawning Claude", () => {
+    const root = mkdtempSync(join(tmpdir(), "bottega-dex-brief-guard-"));
+    try {
+      const brief = join(root, "brief.md");
+      writeFileSync(brief, "   \n");
+      const result = spawnSync(process.execPath, [
+        SCRIPT,
+        "--role", "panelist",
+        "--cwd", root,
+        "--brief", brief,
+        "--out", join(root, "out.json"),
+        "--events", join(root, "events.json"),
+        "--schema", SCHEMA,
+      ], { encoding: "utf8" });
+      expect(result.status).toBe(2);
+      expect(result.stderr).toMatch(/brief is empty/i);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("fails fast on an unreadable brief before spawning Claude", () => {
+    const root = mkdtempSync(join(tmpdir(), "bottega-dex-brief-guard-"));
+    try {
+      const result = spawnSync(process.execPath, [
+        SCRIPT,
+        "--role", "panelist",
+        "--cwd", root,
+        "--brief", join(root, "missing-brief.md"),
+        "--out", join(root, "out.json"),
+        "--events", join(root, "events.json"),
+        "--schema", SCHEMA,
+      ], { encoding: "utf8" });
+      expect(result.status).toBe(2);
+      expect(result.stderr).toMatch(/cannot read brief/i);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("does not expose session resume options", () => {
     const result = run([...BASE, "--resume", "session-123"]);
     expect(result.status).toBe(2);
