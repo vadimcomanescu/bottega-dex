@@ -6,7 +6,7 @@ Write one self-contained question with the approved specification, constraints, 
 
 Start two blinded drafts in parallel:
 
-- A native Codex panelist at Sol high with `agents/panelist.md` and `panelist.schema.json`.
+- A native Codex panelist at Sol on the highest effort the client exposes, with `agents/panelist.md` and `panelist.schema.json`. The panel serves the run's most demanding decisions, so each draft takes the strongest route its family offers.
 - A Claude panelist through `scripts/claude-exec --role panelist` with the identical prompt and schema.
 
 Neither sees the other draft. Label the results A and B without provider names. Send the question and both drafts to `scripts/claude-exec --role judge` with `agents/panel-judge.md` and `judge.schema.json`. The judge compares only. The orchestrator reads both drafts and the comparison, verifies decisive claims, and makes the decision. Record where the panel changed the plan.

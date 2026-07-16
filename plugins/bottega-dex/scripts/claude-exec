@@ -113,6 +113,16 @@ if (values["dry-run"]) {
   process.exit(0);
 }
 
+// An empty brief would still produce a schema-shaped report, so it is a
+// dispatch error, never a reviewable input.
+let brief;
+try {
+  brief = readFileSync(values.brief, "utf8");
+} catch (error) {
+  fail(PREFIX, `cannot read brief: ${error.message}`);
+}
+if (!brief.trim()) fail(PREFIX, "brief is empty");
+
 const command = binaryOnPath("claude");
 if (!command) {
   process.stderr.write("claude-exec: claude was not found in an absolute PATH entry\n");
@@ -130,7 +140,7 @@ const cliVersion = versionResult.stdout.trim();
 
 const result = spawnBounded(command, argv, {
   cwd: values.cwd,
-  input: readFileSync(values.brief),
+  input: brief,
   encoding: "utf8",
   maxBuffer: 64 * 1024 * 1024,
 }, route.timeoutMs);
