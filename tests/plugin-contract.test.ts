@@ -32,12 +32,10 @@ function sha256(text: string) {
 }
 
 describe("Codex plugin package", () => {
-  it("contains the complete maestro workflow and Claude adapter", () => {
+  it("contains the complete maestro workflow and autoreview", () => {
     const files = filesUnder(PLUGIN).sort();
     expect(files).toEqual(expect.arrayContaining([
       ".codex-plugin/plugin.json",
-      "scripts/claude-exec",
-      "scripts/exec-common.js",
       "skills/close/SKILL.md",
       "skills/close/references/qa-evidence.md",
       "skills/code-review/SKILL.md",
@@ -58,6 +56,8 @@ describe("Codex plugin package", () => {
     ]));
     expect(files).not.toContain("skills/code-review/references/report.schema.json");
     expect(files).not.toContain("skills/code-review/references/reviewer.md");
+    expect(files).not.toContain("scripts/claude-exec");
+    expect(files).not.toContain("scripts/exec-common.js");
   });
 
   it("keeps the orchestrate skill identical to the selected upstream source", () => {
@@ -118,7 +118,7 @@ describe("Codex plugin package", () => {
     const manifest = json(join(PLUGIN, ".codex-plugin", "plugin.json"));
     expect(manifest).toMatchObject({
       name: "bottega-dex",
-      version: "0.8.2",
+      version: "0.8.3",
       skills: "./skills/",
     });
     expect(manifest.interface.defaultPrompt).toEqual([
