@@ -17,6 +17,7 @@ const REVIEW = readFileSync(
 const START = readFileSync(join(PLUGIN, "skills", "start", "SKILL.md"), "utf8");
 const QA = readFileSync(join(PLUGIN, "skills", "qa", "SKILL.md"), "utf8");
 const CLOSE = readFileSync(join(PLUGIN, "skills", "close", "SKILL.md"), "utf8");
+const ADAPTER = readFileSync(join(PLUGIN, "scripts", "claude-exec"), "utf8");
 const AUTOREVIEW = readFileSync(
   join(PLUGIN, "skills", "code-review", "references", "autoreview.md"),
   "utf8",
@@ -61,5 +62,12 @@ describe("integrated review flow", () => {
     expect(QA).toMatch(/product code stays untouched/i);
     expect(QA).toMatch(/one or more subagents depending on their size/i);
     expect(CLOSE).toMatch(/head accepted by autoreview/i);
+  });
+
+  it("keeps the external adapter review-only and pins Claude Opus 5", () => {
+    expect(ADAPTER).toContain('model: "claude-opus-5"');
+    expect(ADAPTER).toContain('effort: "high"');
+    expect(ADAPTER).not.toContain("panelist:");
+    expect(ADAPTER).not.toContain("judge:");
   });
 });

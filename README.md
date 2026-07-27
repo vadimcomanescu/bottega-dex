@@ -39,6 +39,9 @@ Review and QA issues are fixed with subagents according to their size and the re
 ```text
 plugins/bottega-dex/
   .codex-plugin/plugin.json
+  scripts/
+    claude-exec
+    exec-common.js
   skills/
     maestro/SKILL.md
     start/SKILL.md
@@ -74,7 +77,13 @@ After the repository's decisive gate passes, `code-review` runs the vendored Bot
 
 The active Codex task verifies every finding. Accepted issues are fixed with subagents, the affected checks run again, and the same dual autoreview panel repeats until clean.
 
-Autoreview invokes Claude Code directly and owns its model, effort, isolation, structured output, and provenance. Anthropic documents `claude-opus-5` as the full pinned model name; the `opus` alias instead tracks the latest permitted Opus release. See [Claude Code model configuration](https://docs.anthropic.com/en/docs/claude-code/model-config.md).
+Anthropic documents `claude-opus-5` as the full pinned model name; the `opus` alias instead tracks the latest permitted Opus release. See [Claude Code model configuration](https://docs.anthropic.com/en/docs/claude-code/model-config.md).
+
+## Claude adapter
+
+`plugins/bottega-dex/scripts/claude-exec` remains available as the bounded direct Claude reviewer-role adapter requested for the plugin. It invokes `claude -p` with Claude Opus 5 at high effort, structured output, a worktree-scoped read-only tool policy, bounded execution, model-usage provenance, and frozen-target checks. It is separate from the autoreview panel: autoreview invokes Claude itself for code reviews and does not call this adapter.
+
+The adapter supports macOS and Linux. It requires Node.js 24 or newer and an authenticated Claude Code 2.1.219 or newer installation because it uses safe mode, structured output, and Claude Opus 5. Use `--dry-run` to inspect the bounded command without invoking Claude.
 
 ## Verify
 
@@ -84,6 +93,8 @@ npm test
 npm run typecheck
 python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/bottega-dex
 ```
+
+Adapter changes also require its dry-run contract tests and one minimal real structured-output smoke call.
 
 ## License
 

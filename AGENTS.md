@@ -20,7 +20,11 @@ Never apply changes from this repository to `/Users/vadimcomanescu/Code/bottega`
 | `plugins/bottega-dex/skills/code-review/references` | Autoreview contract and review baseline |
 | `plugins/bottega-dex/skills/code-review/scripts` | Vendored autoreview engine and harness |
 | `plugins/bottega-dex/skills/qa/SKILL.md` | Reviewed-head product QA procedure |
+| `plugins/bottega-dex/scripts/claude-exec` | Bounded `claude -p` adapter |
+| `plugins/bottega-dex/scripts/exec-common.js` | Shared adapter process and provenance helpers |
 | `tests/plugin-contract.test.ts` | Package and upstream-copy contracts |
+| `tests/claude-exec.test.ts` | Claude adapter contract tests |
+| `tests/exec-common.test.ts` | Adapter helper tests |
 | `tests/run-vendor-suites.py` | Vendored autoreview test runner |
 | `tests/review-orchestration.test.ts` | Autoreview panel contracts |
 
@@ -32,7 +36,7 @@ Never apply changes from this repository to `/Users/vadimcomanescu/Code/bottega`
 - Discovery hands its findings directly to orchestration.
 - The complete integrated diff runs through the vendored autoreview helper with GPT-5.6 Sol at high reasoning and Claude Opus 5 at high effort.
 - Native subagents perform orchestration work. The vendored autoreview helper is the review process boundary.
-- Autoreview is the only code-review and Claude invocation path.
+- Keep `claude-exec` as the bounded direct Claude reviewer-role adapter requested by the user. It is separate from code review; autoreview invokes Claude itself for reviews.
 - Verify every autoreview finding. Fix accepted issues with one or more subagents depending on size and repository methodology, then rerun affected proof and the dual panel.
 - QA drives the reviewed artifact and never fixes product code.
 - Keep `plugins/bottega-dex/skills/orchestrate/SKILL.md` identical to the upstream source linked in `README.md`.
@@ -49,3 +53,5 @@ npm test
 npm run typecheck
 python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/bottega-dex
 ```
+
+For adapter changes, also run the dry-run contract tests and one minimal real structured-output smoke call.
