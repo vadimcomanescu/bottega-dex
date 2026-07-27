@@ -1,11 +1,11 @@
 ---
 name: start
-description: Take on a Bottega Dex run before discovery or agent dispatch. Used by maestro to settle ownership, isolate the worktree and branch, record release intent, read project commands, and confirm the review and pull-request routes are ready.
+description: Take on a Bottega Dex run before discovery or agent dispatch. Used by maestro to settle ownership, isolate the worktree and branch, record release intent, read project commands, and confirm pull-request publication is ready.
 ---
 
 # Start
 
-Prepare the run before discovery or dispatch: owned, isolated, commands in hand, review and pull-request routes ready.
+Prepare the run before discovery or dispatch: owned, isolated, commands in hand, pull-request publication ready.
 
 ## 1. Settle release and ownership
 
@@ -25,6 +25,6 @@ Write `$CODEX_THREAD_ID` to `.bottega/run/<slug>/owner` before the run's first d
 
 Read the project's commands (format, lint, typecheck, test, build, run) from the repo's agent map (`AGENTS.md` or `CLAUDE.md`; setup keeps one a symlink of the other so Claude Code and the codex CLI read the one copy). The map is the commands' one home: a brief quotes them from it, never defines them elsewhere. A command missing or broken there is discovered once and written back to the map as part of the run's diff, and the same rule covers any operating fact a worker had to dig for: how the app boots from a worktree, seed data, migration steps. Complete when every command the run will brief is read from the map.
 
-## 5. Confirm the review and delivery routes
+## 5. Confirm publication
 
-Confirm Claude Code is installed and authenticated with `claude --version` and `claude auth status`. Resolve this plugin's `code-review` skill directory, then run `<code-review-skill>/scripts/autoreview --self-test`. Confirm `gh auth status` for the repository host and that the run can read its target repository and base branch. Missing authentication or a failed self-test stops the run before implementation and tells the user why. Complete when autoreview and pull-request publication are ready.
+Confirm `gh auth status` for the repository host and that the run can read its target repository and base branch. Complete when pull-request publication is ready or the user knows why it is not.

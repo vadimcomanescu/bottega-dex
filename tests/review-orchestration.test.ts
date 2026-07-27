@@ -48,22 +48,17 @@ describe("integrated review flow", () => {
   });
 
   it("reviews the integrated work through Bottega's autoreview panel", () => {
-    expect(REVIEW).toMatch(/completed integrated diff/i);
-    expect(REVIEW).toContain("references/autoreview.md");
-    expect(REVIEW).toContain("scripts/autoreview");
-    expect(REVIEW).toContain("--reviewers codex,claude");
-    expect(REVIEW).toContain("--model codex=gpt-5.6-sol --thinking codex=high");
-    expect(REVIEW).toContain("--model claude=claude-opus-5 --thinking claude=high");
-    expect(REVIEW).toMatch(/same dual autoreview command again/i);
+    expect(REVIEW).toContain("Run [autoreview](references/autoreview.md) on the completed work.");
+    expect(REVIEW).not.toMatch(/--reviewers|--model|--thinking|verify every finding|fix accepted|rerun/i);
     expect(AUTOREVIEW).toMatch(/^name: autoreview$/m);
     expect(AUTOREVIEW).toContain("# Auto Review");
     expect(AUTOREVIEW).toContain("--reviewers codex,claude");
     expect(AUTOREVIEW).toContain("--model claude=claude-opus-5 --thinking claude=high");
   });
 
-  it("starts only when autoreview and delivery are ready", () => {
-    expect(START).toContain("claude auth status");
-    expect(START).toContain("autoreview --self-test");
+  it("leaves review mechanics to autoreview", () => {
+    expect(START).not.toMatch(/autoreview|claude auth status/i);
+    expect(START).toContain("gh auth status");
     expect(QA).toMatch(/product code stays untouched/i);
     expect(QA).toMatch(/one or more subagents depending on their size/i);
     expect(CLOSE).toMatch(/head accepted by autoreview/i);

@@ -25,10 +25,10 @@ $bottega-dex:maestro <task, bug, or issue URL>
 
 ## Workflow
 
-1. `start` takes on the work, settles release intent, creates the run branch and worktree, reads the repository's commands, and confirms GitHub plus both review routes.
+1. `start` takes on the work, settles release intent, creates the run branch and worktree, reads the repository's commands, and confirms pull-request publication.
 2. `discover` reads the repository and relevant current sources, finds blind spots, and settles the direction and boundaries with the user.
 3. `maestro` runs the embedded `orchestrate` instructions on the original request and discovery findings. It delegates useful work to native Codex subagents, integrates the results, and runs the repository's decisive gate.
-4. `code-review` runs Bottega's vendored autoreview helper on the complete integrated diff with GPT-5.6 Sol high and Claude Opus 5 high.
+4. `code-review` hands the completed work to the bundled autoreview skill.
 5. `qa` drives every changed product scenario on the accepted review head and records evidence-backed verdicts.
 6. `close` confirms the review and QA records match the published head, files follow-ups, opens the pull request, and reports its checks and merge state.
 

@@ -85,7 +85,7 @@ describe("Codex plugin package", () => {
     expect(start).not.toContain("user-invocable");
     expect(start).toContain("## 1. Settle release and ownership");
     expect(start).toMatch(/land on green, or hold for you/i);
-    expect(start).toContain("## 5. Confirm the review and delivery routes");
+    expect(start).toContain("## 5. Confirm publication");
     expect(start).toContain("gh auth status");
     expect(discover).toMatch(/^name: discover$/m);
     expect(discover).not.toContain("user-invocable");
@@ -118,7 +118,7 @@ describe("Codex plugin package", () => {
     const manifest = json(join(PLUGIN, ".codex-plugin", "plugin.json"));
     expect(manifest).toMatchObject({
       name: "bottega-dex",
-      version: "0.8.1",
+      version: "0.8.2",
       skills: "./skills/",
     });
     expect(manifest.interface.defaultPrompt).toEqual([
