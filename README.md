@@ -23,6 +23,14 @@ $bottega-dex:maestro <task, bug, or issue URL>
 
 `maestro` is intentionally opt-in because one run can perform substantial agent work and open a pull request.
 
+To use the upstream orchestration method directly:
+
+```text
+$bottega-dex:orchestrate <substantial task>
+```
+
+`orchestrate` is a public skill and remains byte-for-byte identical to the upstream source.
+
 ## Workflow
 
 1. `start` takes on the work, settles release intent, creates the run branch and worktree, reads the repository's commands, and confirms pull-request publication.
@@ -46,7 +54,9 @@ plugins/bottega-dex/
     maestro/SKILL.md
     start/SKILL.md
     discover/SKILL.md
-    orchestrate/SKILL.md
+    orchestrate/
+      SKILL.md
+      agents/openai.yaml
     code-review/
       SKILL.md
       LICENSE

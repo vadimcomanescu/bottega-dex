@@ -1,0 +1,4 @@
+interface:
+  display_name: "Orchestrate"
+  short_description: "Coordinate agents on substantial tasks"
+  default_prompt: "Use $bottega-dex:orchestrate to coordinate this substantial task across focused agents."

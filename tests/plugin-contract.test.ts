@@ -52,6 +52,7 @@ describe("Codex plugin package", () => {
       "skills/code-review/tests/test_autoreview_hardening.py",
       "skills/discover/SKILL.md",
       "skills/maestro/SKILL.md",
+      "skills/orchestrate/agents/openai.yaml",
       "skills/orchestrate/SKILL.md",
       "skills/qa/SKILL.md",
       "skills/start/SKILL.md",
@@ -66,6 +67,16 @@ describe("Codex plugin package", () => {
       "utf8",
     );
     expect(skill).toBe(UPSTREAM_SKILL);
+    expect(skill).not.toContain("user-invocable: false");
+
+    const metadata = readFileSync(
+      join(PLUGIN, "skills", "orchestrate", "agents", "openai.yaml"),
+      "utf8",
+    );
+    expect(metadata).toContain('display_name: "Orchestrate"');
+    expect(metadata).toContain(
+      'default_prompt: "Use $bottega-dex:orchestrate ',
+    );
   });
 
   it("keeps the imported supporting procedures Codex-valid", () => {
@@ -118,7 +129,7 @@ describe("Codex plugin package", () => {
     const manifest = json(join(PLUGIN, ".codex-plugin", "plugin.json"));
     expect(manifest).toMatchObject({
       name: "bottega-dex",
-      version: "0.8.4",
+      version: "0.8.5",
       skills: "./skills/",
     });
     expect(manifest.interface.defaultPrompt).toEqual([
