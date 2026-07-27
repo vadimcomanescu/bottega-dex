@@ -3,10 +3,10 @@
 Bottega Dex takes one substantial task, bug, or issue through Bottega's delivery procedure using native Codex orchestration:
 
 ```text
-open → discover → orchestrate → dual code review → QA → open PR
+start → discover → orchestrate → dual code review → QA → close
 ```
 
-There is no separate specification or planning phase. Discovery settles the direction, then `maestro` executes the upstream `orchestrate` instructions directly for decomposition, implementation, integration, and proof.
+Discovery settles the direction, then `maestro` executes the upstream `orchestrate` instructions directly.
 
 ## Install
 
@@ -25,7 +25,7 @@ $bottega-dex:maestro <task, bug, or issue URL>
 
 ## Workflow
 
-1. `open` settles ownership and release intent, creates the run branch and worktree, reads the repository's commands, and confirms GitHub plus both review routes.
+1. `start` takes on the work, settles release intent, creates the run branch and worktree, reads the repository's commands, and confirms GitHub plus both review routes.
 2. `discover` reads the repository and relevant current sources, finds blind spots, and settles the direction and boundaries with the user.
 3. `maestro` runs the embedded `orchestrate` instructions on the original request and discovery findings. It delegates useful work to native Codex subagents, integrates the results, and runs the repository's decisive gate.
 4. `code-review` freezes the complete integrated diff and starts two blind reviewers against separate checkouts of the same base, head, and tree.
@@ -44,7 +44,7 @@ plugins/bottega-dex/
     exec-common.js
   skills/
     maestro/SKILL.md
-    open/SKILL.md
+    start/SKILL.md
     discover/SKILL.md
     orchestrate/SKILL.md
     code-review/
@@ -60,7 +60,7 @@ plugins/bottega-dex/
 
 The bundled `orchestrate` skill is an exact copy of [provencher/codex-skills `orchestrate/SKILL.md`](https://github.com/provencher/codex-skills/blob/main/orchestrate/SKILL.md), retrieved from commit [`8aa6c42`](https://github.com/provencher/codex-skills/commit/8aa6c42b73781c905c55f8a1253a18127079ac21). Its instruction paragraph is also embedded verbatim in `maestro`. The upstream copyright notice is preserved in [LICENSE](LICENSE).
 
-The surrounding procedures are adapted from [Bottega](https://github.com/vadimcomanescu/bottega/tree/4384beee72b5f45498fada686db1751d6ca78159/skills). Their ownership, worktree, discovery, QA, publication, hold, merge-state, and cleanup behavior remains intact. Claude-specific workers, spec, plan, build, and panel phases are replaced by the native Codex orchestrator.
+The surrounding procedures are adapted from [Bottega](https://github.com/vadimcomanescu/bottega/tree/4384beee72b5f45498fada686db1751d6ca78159/skills) for native Codex orchestration.
 
 ## Integrated review
 

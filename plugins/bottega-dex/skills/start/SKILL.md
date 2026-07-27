@@ -1,11 +1,11 @@
 ---
-name: open
-description: Prepare a Bottega Dex run before discovery or agent dispatch. Used by maestro to settle ownership, isolate the worktree and branch, record ownership and release intent, read project commands, and confirm the review and pull-request routes are ready.
+name: start
+description: Take on a Bottega Dex run before discovery or agent dispatch. Used by maestro to settle ownership, isolate the worktree and branch, record release intent, read project commands, and confirm the review and pull-request routes are ready.
 ---
 
-# Open
+# Start
 
-Prepare the run before discovery or dispatch: owned, isolated, commands in hand, review and pull-request routes ready. Discovery and every later phase work inside what this opens.
+Prepare the run before discovery or dispatch: owned, isolated, commands in hand, review and pull-request routes ready.
 
 ## 1. Settle release and ownership
 
@@ -19,7 +19,7 @@ First sweep finished work: a `.bottega/run/` entry or worktree whose PR has merg
 
 ## 3. Write the owner file
 
-Write `$CODEX_THREAD_ID` to `.bottega/run/<slug>/owner` before the run's first dispatch. It is the durable collision and continuation record for the active Codex task. Write the release answer the launch settled to `.bottega/run/<slug>/release`, `land` or `hold`; close reads it before the PR opens. Resuming in a later task, rewrite the owner file before dispatching anything, and write the release file when the run predates it, asking the user when no answer was ever settled. Complete when the owner file names this task and the release file carries the run's answer.
+Write `$CODEX_THREAD_ID` to `.bottega/run/<slug>/owner` before the run's first dispatch. It is the durable collision and continuation record for the active Codex task. Write the release answer to `.bottega/run/<slug>/release`, `land` or `hold`; close reads it before the PR opens. Resuming in a later task, rewrite the owner file before dispatching anything, and write the release file when the run predates it, asking the user when no answer was ever settled. Complete when the owner file names this task and the release file carries the run's answer.
 
 ## 4. Read the commands
 

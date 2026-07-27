@@ -1,11 +1,11 @@
 ---
 name: discover
-description: Find and settle the unknowns in a Bottega Dex run before orchestration. Used by maestro after open to establish the direction, boundaries, and decisions that the orchestrator receives directly, without creating a specification or plan.
+description: Find and settle the unknowns in a Bottega Dex run before orchestration. Used by maestro after start to establish the direction, boundaries, and decisions that guide the work.
 ---
 
 # Discover
 
-Find what the request does not settle before implementation makes it expensive. Return a clear direction, its boundaries, and each material decision to `maestro`; create no spec or plan document.
+Find what the request does not settle before implementation makes it expensive. Return a clear direction, its boundaries, and each material decision to `maestro`.
 
 ## 1. Explore
 

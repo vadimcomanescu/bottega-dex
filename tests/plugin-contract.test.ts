@@ -44,9 +44,9 @@ describe("Codex plugin package", () => {
       "skills/code-review/references/reviewer.md",
       "skills/discover/SKILL.md",
       "skills/maestro/SKILL.md",
-      "skills/open/SKILL.md",
       "skills/orchestrate/SKILL.md",
       "skills/qa/SKILL.md",
+      "skills/start/SKILL.md",
     ]);
   });
 
@@ -59,7 +59,7 @@ describe("Codex plugin package", () => {
   });
 
   it("keeps the imported supporting procedures Codex-valid", () => {
-    const open = readFileSync(join(PLUGIN, "skills", "open", "SKILL.md"), "utf8");
+    const start = readFileSync(join(PLUGIN, "skills", "start", "SKILL.md"), "utf8");
     const discover = readFileSync(
       join(PLUGIN, "skills", "discover", "SKILL.md"),
       "utf8",
@@ -71,15 +71,14 @@ describe("Codex plugin package", () => {
       "utf8",
     );
 
-    expect(open).toMatch(/^name: open$/m);
-    expect(open).not.toContain("user-invocable");
-    expect(open).toContain("## 1. Settle release and ownership");
-    expect(open).toMatch(/land on green, or hold for you/i);
-    expect(open).toContain("## 5. Confirm the review and delivery routes");
-    expect(open).toContain("gh auth status");
+    expect(start).toMatch(/^name: start$/m);
+    expect(start).not.toContain("user-invocable");
+    expect(start).toContain("## 1. Settle release and ownership");
+    expect(start).toMatch(/land on green, or hold for you/i);
+    expect(start).toContain("## 5. Confirm the review and delivery routes");
+    expect(start).toContain("gh auth status");
     expect(discover).toMatch(/^name: discover$/m);
     expect(discover).not.toContain("user-invocable");
-    expect(discover).toMatch(/create no spec or plan document/i);
     expect(qa).toMatch(/^name: qa$/m);
     expect(qa).not.toContain("user-invocable");
     expect(qa).toContain("qa/accepted.json");
@@ -109,7 +108,7 @@ describe("Codex plugin package", () => {
     const manifest = json(join(PLUGIN, ".codex-plugin", "plugin.json"));
     expect(manifest).toMatchObject({
       name: "bottega-dex",
-      version: "0.7.0",
+      version: "0.8.0",
       skills: "./skills/",
     });
     expect(manifest.interface.defaultPrompt).toEqual([

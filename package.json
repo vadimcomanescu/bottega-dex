@@ -1,6 +1,6 @@
 {
   "name": "bottega-dex",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Bottega delivery through native Codex orchestration, blind dual review, QA, and pull-request publication.",
   "type": "module",
   "scripts": {

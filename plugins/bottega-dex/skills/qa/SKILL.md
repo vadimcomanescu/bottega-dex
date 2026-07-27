@@ -27,4 +27,4 @@ Match evidence to the claim: text or structured output for behavior, screenshots
 
 Drive all supplied scenarios before reporting, unless one failure makes the rest impossible. Return every divergence together so `maestro` can route one repair cycle. QA may repair only disposable setup and evidence capture, never product code, tests, repository guidance, or run decisions.
 
-Write `.bottega/run/<slug>/qa/accepted.json` only when no scenario is `FAIL`. Record the reviewed head and tree, every scenario and verdict, evidence paths, disposable setup changes, and all `NOT VERIFIED` limits. A product defect returns to `orchestrate`; a tracked repair requires the decisive gate, a fresh blind dual review, and QA on the repaired scenarios plus every scenario the repair touched.
+Write `.bottega/run/<slug>/qa/accepted.json` only when no scenario is `FAIL`. Record the reviewed head and tree, every scenario and verdict, evidence paths, disposable setup changes, and all `NOT VERIFIED` limits. Fix product defects with one or more subagents depending on the size, respecting the repository's implementation methodologies. Review and QA the updated work again.

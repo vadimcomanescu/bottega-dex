@@ -14,20 +14,20 @@ const REVIEW = readFileSync(
   join(PLUGIN, "skills", "code-review", "SKILL.md"),
   "utf8",
 );
-const OPEN = readFileSync(join(PLUGIN, "skills", "open", "SKILL.md"), "utf8");
+const START = readFileSync(join(PLUGIN, "skills", "start", "SKILL.md"), "utf8");
 const QA = readFileSync(join(PLUGIN, "skills", "qa", "SKILL.md"), "utf8");
 const CLOSE = readFileSync(join(PLUGIN, "skills", "close", "SKILL.md"), "utf8");
 const ADAPTER = readFileSync(join(PLUGIN, "scripts", "claude-exec"), "utf8");
 
 describe("integrated review flow", () => {
-  it("runs the requested maestro phases in order without spec or plan", () => {
+  it("runs the requested maestro phases in order", () => {
     const phases = [
-      "## 1. Open",
+      "## 1. Start",
       "## 2. Discover",
       "## 3. Orchestrate",
       "## 4. Review",
       "## 5. QA",
-      "## 6. Open the pull request",
+      "## 6. Close",
     ];
     const indexes = phases.map((phase) => MAESTRO.indexOf(phase));
 
@@ -36,8 +36,9 @@ describe("integrated review flow", () => {
     const orchestrateBody = ORCHESTRATE.split("# Orchestrate\n\n")[1]!.trim();
     expect(MAESTRO).toContain(orchestrateBody);
     expect(MAESTRO).not.toContain("[orchestrate](../orchestrate/SKILL.md)");
-    expect(MAESTRO).toMatch(/Do not insert a separate specification or planning phase/i);
-    expect(MAESTRO).not.toMatch(/^## \d+\. (Spec|Plan)$/m);
+    expect(MAESTRO).not.toMatch(/\bwhole\b|specification or planning|bounded repair|durable state|Unproven means/i);
+    expect(MAESTRO).toMatch(/one or more subagents depending on the size/i);
+    expect(MAESTRO).toMatch(/respecting the repository's implementation methodologies/i);
     expect(DISCOVER).toMatch(/directly to `maestro`/i);
     expect(ORCHESTRATE).not.toMatch(/code-review|pull request|maestro/i);
   });
@@ -53,10 +54,10 @@ describe("integrated review flow", () => {
     expect(REVIEW).not.toMatch(/\bcodex exec\b|codex-exec/);
   });
 
-  it("opens only when both review routes are ready and closes only the accepted head", () => {
-    expect(OPEN).toContain("gpt-5.6-sol");
-    expect(OPEN).toContain("claude auth status");
-    expect(OPEN).toContain("report.schema.json");
+  it("starts only when both review routes are ready and closes only the accepted head", () => {
+    expect(START).toContain("gpt-5.6-sol");
+    expect(START).toContain("claude auth status");
+    expect(START).toContain("report.schema.json");
     expect(QA).toContain("review/accepted.json");
     expect(QA).toContain("qa/accepted.json");
     expect(QA).toMatch(/never product code/i);

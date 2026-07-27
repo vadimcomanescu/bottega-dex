@@ -32,7 +32,7 @@ Reproduce every finding against the frozen target. Accept or reject it from evid
 
 ## 4. Fix and rerun
 
-Return accepted blocking findings to `maestro`, which invokes `orchestrate` with the finding, its evidence, bounded ownership, and exact verification. A tracked change invalidates both reports. Rerun focused proof, the decisive gate, freeze the new head and tree, and start a fresh blind Sol-and-Opus pair. No rerun sees earlier reports or findings.
+Fix accepted blocking findings with one or more subagents depending on the size, respecting the repository's implementation methodologies. A tracked change invalidates both reports. Review the updated work again with a fresh blind Sol-and-Opus pair. No rerun sees earlier reports or findings.
 
 Two failed fixes for the same finding or a third unsuccessful review round stops for redesign and reports the evidence to the user.
 
