@@ -1,6 +1,8 @@
 # bottega-dex
 
-Bottega Dex is the Codex-native sibling of Bottega. It takes one task or issue to a reviewed, evidence-backed pull request. Never apply changes from this repository to `/Users/vadimcomanescu/Code/bottega` unless the user explicitly requests a separate port.
+Bottega Dex is the Codex-native Bottega workflow. `maestro` runs `open`, `discover`, the exact upstream `orchestrate` skill, blind dual `code-review`, `qa`, and `close` to deliver one task as a reviewed pull request.
+
+Never apply changes from this repository to `/Users/vadimcomanescu/Code/bottega` unless the user explicitly requests a separate port.
 
 ## Map
 
@@ -8,24 +10,37 @@ Bottega Dex is the Codex-native sibling of Bottega. It takes one task or issue t
 | --- | --- |
 | `.agents/plugins/marketplace.json` | Public Codex marketplace entry |
 | `plugins/bottega-dex/.codex-plugin/plugin.json` | Installable plugin manifest |
-| `plugins/bottega-dex/skills/run/SKILL.md` | The single user-facing workflow |
-| `plugins/bottega-dex/skills/run/references/agents` | Worker prompts passed to native subagents and Claude |
-| `plugins/bottega-dex/skills/run/references` | Design rules, panel method, and structured report contracts |
-| `plugins/bottega-dex/scripts/claude-exec` | Bounded `claude -p` adapter for cross-family review and panel roles |
-| `tests` | Packaging, orchestration, adapter, and schema contracts |
+| `plugins/bottega-dex/skills/maestro/SKILL.md` | User-facing end-to-end workflow |
+| `plugins/bottega-dex/skills/open/SKILL.md` | Supporting ownership, isolation, and launch procedure |
+| `plugins/bottega-dex/skills/discover/SKILL.md` | Supporting discovery procedure |
+| `plugins/bottega-dex/skills/orchestrate/SKILL.md` | Exact upstream decomposition and implementation method |
+| `plugins/bottega-dex/skills/close/SKILL.md` | Supporting publication, PR, and terminal-state procedure |
+| `plugins/bottega-dex/skills/close/references/qa-evidence.md` | QA evidence publication procedure |
+| `plugins/bottega-dex/skills/code-review/SKILL.md` | Integrated Sol and Claude Opus 5 review gate |
+| `plugins/bottega-dex/skills/code-review/references` | Common reviewer method and report schema |
+| `plugins/bottega-dex/skills/qa/SKILL.md` | Reviewed-head product QA procedure |
+| `plugins/bottega-dex/scripts/claude-exec` | Bounded `claude -p` adapter |
+| `plugins/bottega-dex/scripts/exec-common.js` | Shared adapter process and provenance helpers |
+| `tests/plugin-contract.test.ts` | Package and upstream-copy contracts |
+| `tests/claude-exec.test.ts` | Claude adapter contract tests |
+| `tests/exec-common.test.ts` | Adapter helper tests |
+| `tests/review-report.test.ts` | Shared review report schema tests |
+| `tests/review-orchestration.test.ts` | Frozen two-family gate contracts |
 
 ## Rules
 
 - Write plain engineering English. Do not use em dashes, metaphors, theatrical names, or invented process vocabulary.
-- The active Codex task orchestrates. Codex workers use native subagents. Never start a second Codex process.
-- The plugin exposes one skill and requires no host-agent setup or hooks.
-- Use GPT-5.6 Sol at Ultra for orchestration, Luna or the documented efficient route at high for substantial mechanical work, and Sol at high for sophisticated workers.
-- The complete integrated diff always receives one cold Codex review and one cold Claude review against the same frozen target and common schema. Neither reviewer sees the other report. This gate is never replaced by slice review.
-- `claude-exec` is the only external model boundary. It owns model, effort, permissions, tools, structured output, and timeout.
-- Use one task worktree and one builder at a time. Keep implementation writes sequential in that worktree.
-- Keep focused checks green while building and run the host's decisive full gate before delivery.
-- QA drives the reviewed artifact and never fixes it. Evidence must match the changed surface.
-- The user approves deploys, money movement, destructive actions, and changes to shared or production data.
+- Keep `maestro` as the user-facing end-to-end workflow and `orchestrate` as its complete build method.
+- The phase order is `open`, `discover`, `orchestrate`, `code-review`, `qa`, `close`. Never add separate spec or plan phases.
+- Discovery hands its settled findings directly to orchestration. Do not create a duplicate specification or planning document.
+- The complete integrated diff always receives one cold native GPT-5.6 Sol review and one cold Claude Opus 5 review against separate checkouts of the same frozen target and common schema. Neither reviewer sees the other report.
+- Use native subagents for Codex reviewers. Never start a second Codex process.
+- Keep `claude-exec` as the only external model boundary and only for the Claude reviewer. It owns model, effort, permissions, tools, structured output, timeout, and target identity.
+- Any tracked fix invalidates both reviews. Rerun the decisive gate and a fresh blind pair before close.
+- QA drives the dual-reviewed artifact and never fixes product code. `close` must read matching accepted review and QA records and publish only their exact head and tree.
+- Keep `plugins/bottega-dex/skills/orchestrate/SKILL.md` identical to the upstream source linked in `README.md`.
+- Keep imported `open`, `discover`, `qa`, and `close` procedures aligned with the Bottega source linked in `README.md`, except for the documented Codex-native orchestration and no-spec/no-plan adaptations.
+- Preserve the upstream copyright notice in `LICENSE`.
 - Preserve unrelated changes. Use `apply_patch` for edits and stage explicit paths.
 
 ## Verification

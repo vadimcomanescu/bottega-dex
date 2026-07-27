@@ -10,9 +10,23 @@
       "additionalProperties": false,
       "required": ["family", "model"],
       "properties": {
-        "family": { "type": "string", "enum": ["codex", "claude"] },
-        "model": { "type": "string", "minLength": 1 }
-      }
+        "family": { "type": "string" },
+        "model": { "type": "string" }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "family": { "const": "codex" },
+            "model": { "const": "gpt-5.6-sol" }
+          }
+        },
+        {
+          "properties": {
+            "family": { "const": "claude" },
+            "model": { "const": "claude-opus-5" }
+          }
+        }
+      ]
     },
     "target": {
       "type": "object",

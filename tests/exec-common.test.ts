@@ -50,23 +50,23 @@ describe("Claude provenance", () => {
     expect(usesRequestedClaudeModel({
       modelUsage: {
         "claude-haiku-4-5": { outputTokens: 3 },
-        "claude-opus-4-8": { outputTokens: 20 },
+        "claude-opus-5": { outputTokens: 20 },
       },
-    }, "opus")).toBe(true);
+    }, "claude-opus-5")).toBe(true);
   });
 
   it("rejects envelopes without usage from the requested family", async () => {
     const { usesRequestedClaudeModel } = await import(COMMON);
     expect(usesRequestedClaudeModel({
       modelUsage: { "claude-haiku-4-5": { outputTokens: 3 } },
-    }, "opus")).toBe(false);
+    }, "claude-opus-5")).toBe(false);
     expect(usesRequestedClaudeModel({
-      modelUsage: { "claude-opus-4-8": {} },
-    }, "opus")).toBe(false);
+      modelUsage: { "claude-opus-5": {} },
+    }, "claude-opus-5")).toBe(false);
     expect(usesRequestedClaudeModel({
-      modelUsage: { "claude-opus-4-8": { outputTokens: 0 } },
-    }, "opus")).toBe(false);
-    expect(usesRequestedClaudeModel({}, "opus")).toBe(false);
+      modelUsage: { "claude-opus-5": { outputTokens: 0 } },
+    }, "claude-opus-5")).toBe(false);
+    expect(usesRequestedClaudeModel({}, "claude-opus-5")).toBe(false);
   });
 });
 

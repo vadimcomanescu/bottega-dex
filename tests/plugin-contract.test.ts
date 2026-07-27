@@ -1,18 +1,102 @@
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { createHash } from "node:crypto";
+import { readFileSync, readdirSync } from "node:fs";
+import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const ROOT = join(import.meta.dirname, "..");
 const PLUGIN = join(ROOT, "plugins", "bottega-dex");
 
+const UPSTREAM_SKILL = `---
+name: orchestrate
+description: Coordinate multiple agents on large-scope tasks. Use whenever the work is substantial; trivial tasks do not require this skill.
+---
+
+# Orchestrate
+
+Remain available to the user while delegating substantive work. Run narrow, read-only scouts in parallel with \`reasoning_effort: "low"\` and \`fork_turns: "none"\`. Use \`reasoning_effort: "medium"\` for routine implementation and \`"high"\` for difficult work. Give each agent distinct ownership, prevent overlapping assignments, and instruct leaf workers not to delegate. Integrate the results and keep approvals with the user.
+`;
+
+function filesUnder(path: string): string[] {
+  return readdirSync(path, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = join(path, entry.name);
+    return entry.isDirectory() ? filesUnder(entryPath) : [relative(PLUGIN, entryPath)];
+  });
+}
+
 function json(path: string) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
+function sha256(text: string) {
+  return createHash("sha256").update(text).digest("hex");
+}
+
 describe("Codex plugin package", () => {
-  it("publishes one canonical marketplace entry", () => {
+  it("contains the complete maestro workflow and Claude adapter", () => {
+    expect(filesUnder(PLUGIN).sort()).toEqual([
+      ".codex-plugin/plugin.json",
+      "scripts/claude-exec",
+      "scripts/exec-common.js",
+      "skills/close/SKILL.md",
+      "skills/close/references/qa-evidence.md",
+      "skills/code-review/SKILL.md",
+      "skills/code-review/references/report.schema.json",
+      "skills/code-review/references/reviewer.md",
+      "skills/discover/SKILL.md",
+      "skills/maestro/SKILL.md",
+      "skills/open/SKILL.md",
+      "skills/orchestrate/SKILL.md",
+      "skills/qa/SKILL.md",
+    ]);
+  });
+
+  it("keeps the orchestrate skill identical to the selected upstream source", () => {
+    const skill = readFileSync(
+      join(PLUGIN, "skills", "orchestrate", "SKILL.md"),
+      "utf8",
+    );
+    expect(skill).toBe(UPSTREAM_SKILL);
+  });
+
+  it("keeps the imported supporting procedures Codex-valid", () => {
+    const open = readFileSync(join(PLUGIN, "skills", "open", "SKILL.md"), "utf8");
+    const discover = readFileSync(
+      join(PLUGIN, "skills", "discover", "SKILL.md"),
+      "utf8",
+    );
+    const qa = readFileSync(join(PLUGIN, "skills", "qa", "SKILL.md"), "utf8");
+    const close = readFileSync(join(PLUGIN, "skills", "close", "SKILL.md"), "utf8");
+    const qaEvidence = readFileSync(
+      join(PLUGIN, "skills", "close", "references", "qa-evidence.md"),
+      "utf8",
+    );
+
+    expect(open).toMatch(/^name: open$/m);
+    expect(open).not.toContain("user-invocable");
+    expect(open).toContain("## 1. Settle release and ownership");
+    expect(open).toMatch(/land on green, or hold for you/i);
+    expect(open).toContain("## 5. Confirm the review and delivery routes");
+    expect(open).toContain("gh auth status");
+    expect(discover).toMatch(/^name: discover$/m);
+    expect(discover).not.toContain("user-invocable");
+    expect(discover).toMatch(/create no spec or plan document/i);
+    expect(qa).toMatch(/^name: qa$/m);
+    expect(qa).not.toContain("user-invocable");
+    expect(qa).toContain("qa/accepted.json");
+    expect(close).toMatch(/^name: close$/m);
+    expect(close).not.toContain("user-invocable");
+    expect(close).toContain("references/qa-evidence.md");
+    expect(close).toContain("../code-review/SKILL.md");
+    expect(close).toContain("review/accepted.json");
+    expect(close).toMatch(/After the labeled PR exists and before arming auto-merge/i);
+    expect(close).toMatch(/poll its required checks for up to five minutes/i);
+    expect(sha256(qaEvidence)).toBe(
+      "2a24d58732beba3788e048a0c6f03c0e7aaef733dfe89f3ace454cfd8ac01a56",
+    );
+  });
+
+  it("publishes the plugin through the marketplace", () => {
     const marketplace = json(join(ROOT, ".agents", "plugins", "marketplace.json"));
-    expect(marketplace.name).toBe("bottega-dex");
     expect(marketplace.plugins).toEqual([
       expect.objectContaining({
         name: "bottega-dex",
@@ -21,38 +105,15 @@ describe("Codex plugin package", () => {
         category: "Coding",
       }),
     ]);
-  });
 
-  it("has a release-ready 0.3.0 manifest", () => {
     const manifest = json(join(PLUGIN, ".codex-plugin", "plugin.json"));
-    expect(manifest.name).toBe("bottega-dex");
-    expect(manifest.version).toMatch(/^0\.3\.0(?:\+codex\.[0-9-]+)?$/);
-    expect(manifest.author.name).toBe("Vadim Comanescu");
-    expect(manifest.repository).toBe("https://github.com/vadimcomanescu/bottega-dex");
-    expect(manifest.skills).toBe("./skills/");
-    expect(manifest.interface.defaultPrompt).toBeInstanceOf(Array);
-  });
-
-  it("defines routing as a workflow preference, not installed agent config", () => {
-    const run = readFileSync(join(PLUGIN, "skills", "run", "SKILL.md"), "utf8");
-    const readme = readFileSync(join(ROOT, "README.md"), "utf8");
-    const productText = `${run}\n${readme}`;
-
-    expect(productText).toMatch(/GPT-5\.6.*Ultra/i);
-    expect(productText).toMatch(/Luna|gpt-5\.6-terra/i);
-    expect(productText).toMatch(/Sol|gpt-5\.6/i);
-    expect(productText).toMatch(/native (Codex )?subagents/i);
-    expect(productText).toMatch(/Claude/i);
-    expect(productText).toContain("claude-exec");
-    expect(productText).not.toMatch(/CLIProxyAPI/i);
-    expect(productText).not.toContain("$bottega-dex:setup");
-    expect(productText).not.toMatch(/custom-agent|custom agent/i);
-    expect(existsSync(join(PLUGIN, "skills", "setup"))).toBe(false);
-  });
-
-  it("keeps the run skill concise enough to leave judgment to Codex", () => {
-    const run = readFileSync(join(PLUGIN, "skills", "run", "SKILL.md"), "utf8");
-    const body = run.replace(/^---[\s\S]*?---\s*/, "");
-    expect(body.trim().split(/\s+/).length).toBeLessThanOrEqual(900);
+    expect(manifest).toMatchObject({
+      name: "bottega-dex",
+      version: "0.7.0",
+      skills: "./skills/",
+    });
+    expect(manifest.interface.defaultPrompt).toEqual([
+      "$bottega-dex:maestro Take this task through discovery, orchestration, dual review, QA, and a pull request.",
+    ]);
   });
 });

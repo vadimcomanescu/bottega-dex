@@ -39,15 +39,15 @@ function run(args: string[]) {
 }
 
 describe("claude-exec", () => {
-  it("pins a fresh Opus xhigh reviewer with a non-editing role and probe tools", () => {
+  it("pins a fresh Claude Opus 5 high reviewer with probe-only tools", () => {
     const result = run(BASE);
     expect(result.status).toBe(0);
     const raw = JSON.parse(result.stdout);
     expect(raw.command).toBe("claude");
     expect(raw.argv).toContain("-p");
     expect(raw.argv).toContain("--safe-mode");
-    expect(raw.argv).toContain("opus");
-    expect(raw.argv).toContain("xhigh");
+    expect(raw.argv).toContain("claude-opus-5");
+    expect(raw.argv).toContain("high");
     expect(raw.argv).toContain("dontAsk");
     expect(raw.argv).toContain("Bash,Read,Glob,Grep");
     expect(raw.argv).toContain("--no-session-persistence");
@@ -65,7 +65,7 @@ describe("claude-exec", () => {
     expect(raw.route.timeoutMs).toBe(1_200_000);
   });
 
-  it("requires structured output for every external role", () => {
+  it("requires structured output for the external reviewer", () => {
     const withoutSchema = BASE.slice(0, -2);
     const result = run(withoutSchema);
     expect(result.status).toBe(2);
@@ -90,23 +90,8 @@ describe("claude-exec", () => {
     expect(result.stderr).toMatch(/--out and --events.*distinct/i);
   });
 
-  it.each([
-    ["panelist", "xhigh", "Bash,Read,Glob,Grep"],
-    ["judge", "high", ""],
-  ])("keeps the external %s route cold and fixed", (role, effort, tools) => {
-    const result = run([
-      ...BASE.map((value) => (value === "reviewer" ? role : value)),
-    ]);
-    expect(result.status).toBe(0);
-    const raw = JSON.parse(result.stdout);
-    expect(raw.argv).toContain("--no-session-persistence");
-    expect(raw.route.model).toBe("opus");
-    expect(raw.route.effort).toBe(effort);
-    expect(raw.route.tools).toBe(tools);
-  });
-
-  it.each(["user-facing-builder", "qa", "docs"])(
-    "rejects non-cross-family role %s",
+  it.each(["panelist", "judge", "user-facing-builder", "qa", "docs"])(
+    "rejects non-review role %s",
     (role) => {
       const result = run([
         ...BASE.map((value) => (value === "reviewer" ? role : value)),
@@ -153,7 +138,7 @@ if (process.argv.includes("--version")) {
   process.stdout.write(JSON.stringify({
     subtype: "success",
     is_error: false,
-    modelUsage: { "claude-opus-4-8": { outputTokens: 1 } },
+    modelUsage: { "claude-opus-5": { outputTokens: 1 } },
     structured_output: { status: "ok" },
   }));
 }

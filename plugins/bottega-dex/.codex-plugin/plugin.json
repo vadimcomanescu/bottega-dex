@@ -1,7 +1,7 @@
 {
   "name": "bottega-dex",
-  "version": "0.3.0",
-  "description": "One Codex-native issue-to-PR workflow with mandatory cross-family review.",
+  "version": "0.7.0",
+  "description": "Run Bottega's delivery workflow through native Codex orchestration, dual review, QA, and pull-request publication.",
   "author": {
     "name": "Vadim Comanescu",
     "url": "https://github.com/vadimcomanescu"
@@ -11,23 +11,20 @@
   "license": "MIT",
   "keywords": [
     "codex",
-    "autonomous",
     "agents",
     "orchestration",
-    "code-review",
-    "qa"
+    "code-review"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Bottega Dex",
-    "shortDescription": "Take an issue to a reviewed, evidence-backed PR.",
-    "longDescription": "Runs discovery, specification, planning, native subagent implementation, mandatory Codex and Claude review, proportional product QA, and pull request delivery from one Codex task.",
+    "shortDescription": "Deliver reviewed PRs with Codex agents.",
+    "longDescription": "Runs open, discovery, native Codex orchestration, blind GPT-5.6 Sol and Claude Opus 5 review, product QA, and pull-request publication without separate spec or plan phases.",
     "developerName": "Vadim Comanescu",
     "category": "Coding",
-    "capabilities": ["Agents", "Write", "Code review"],
+    "capabilities": ["Agents", "Code review", "QA", "Pull requests"],
     "defaultPrompt": [
-      "$bottega-dex:run Ship this issue to a pull request.",
-      "$bottega-dex:run Fix this bug and prove it is gone."
+      "$bottega-dex:maestro Take this task through discovery, orchestration, dual review, QA, and a pull request."
     ]
   }
 }
