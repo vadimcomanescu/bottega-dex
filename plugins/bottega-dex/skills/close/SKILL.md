@@ -5,7 +5,7 @@ description: Publish a Bottega Dex run after mandatory dual review and QA. Used 
 
 # Close
 
-Take the dual-reviewed, QA-verified head to a PR that lands on sight: open, readable, its checks green, its merge state clean, its deferred work filed. The launch decided the release: the run's recorded answer, `.bottega/run/<slug>/release`, says whether the PR lands on green or holds for the user, and a host repository that arms its own auto-merge may land a green PR while close watches. A run never merges a PR by hand and never approves one; it arms auto-merge on the PR it opens where the repository's own merging procedure makes arming the opener's act, and what decides whether an armed PR lands stays the repository's required checks and the `hold` label. A requirement only a person can satisfy before the PR is ready ends the run with that action named to the user. Review feedback after the PR opens returns through the bundled [code-review skill](../code-review/SKILL.md) as claimed findings. Fix accepted issues with one or more subagents depending on the size, respecting the repository's implementation methodologies, then review and QA the updated work again.
+Take the reviewed, QA-verified head to a PR that lands on sight: open, readable, its checks green, its merge state clean, its deferred work filed. The launch decided the release: the run's recorded answer, `.bottega/run/<slug>/release`, says whether the PR lands on green or holds for the user, and a host repository that arms its own auto-merge may land a green PR while close watches. A run never merges a PR by hand and never approves one; it arms auto-merge on the PR it opens where the repository's own merging procedure makes arming the opener's act, and what decides whether an armed PR lands stays the repository's required checks and the `hold` label. A requirement only a person can satisfy before the PR is ready ends the run with that action named to the user. Review feedback after the PR opens returns through the bundled [code-review skill](../code-review/SKILL.md) as claimed findings. Fix accepted issues with one or more subagents depending on the size, respecting the repository's implementation methodologies, then review and QA the updated work again.
 
 Run the phases in order; a followup and its evidence must exist before the PR body links them.
 
@@ -17,11 +17,11 @@ Everything close writes for someone outside the run (the PR body, each followup 
 
 ## 1. Confirm the head
 
-Read `.bottega/run/<slug>/review/accepted.json` and `.bottega/run/<slug>/qa/accepted.json`. Their head and tree, the current branch head and tree, and the head the PR will publish are identical. The review record names both `gpt-5.6-sol` and `claude-opus-5`, with reports matching that target. The QA record contains every changed scenario, its verdict, and its evidence or exact `NOT VERIFIED` limit, with no `FAIL`. Close has changed no tracked file. A missing record or mismatch returns to the run, never patched here.
+The head accepted by autoreview, the head QA verified, and the head the PR will publish are one SHA. Close has changed no tracked file. A mismatch returns to the run, never patched here.
 
 ## 2. Push and mark reviewed
 
-Push the branch and post the `bottega/review` success status on the accepted head, naming the reviewed base from `accepted.json` and referencing both accepted reports, before the PR opens, so it arrives already carrying its reviewed marker.
+Push the branch and post the `bottega/review` success status on the accepted head, naming the base reviewed by autoreview, before the PR opens, so it arrives already carrying its reviewed marker.
 
 ## 3. Publish evidence
 

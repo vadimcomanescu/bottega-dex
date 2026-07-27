@@ -28,11 +28,11 @@ $bottega-dex:maestro <task, bug, or issue URL>
 1. `start` takes on the work, settles release intent, creates the run branch and worktree, reads the repository's commands, and confirms GitHub plus both review routes.
 2. `discover` reads the repository and relevant current sources, finds blind spots, and settles the direction and boundaries with the user.
 3. `maestro` runs the embedded `orchestrate` instructions on the original request and discovery findings. It delegates useful work to native Codex subagents, integrates the results, and runs the repository's decisive gate.
-4. `code-review` freezes the complete integrated diff and starts two blind reviewers against separate checkouts of the same base, head, and tree.
+4. `code-review` runs Bottega's vendored autoreview helper on the complete integrated diff with GPT-5.6 Sol high and Claude Opus 5 high.
 5. `qa` drives every changed product scenario on the accepted review head and records evidence-backed verdicts.
 6. `close` confirms the review and QA records match the published head, files follow-ups, opens the pull request, and reports its checks and merge state.
 
-Any tracked repair returns through the same orchestration step. It then reruns the decisive gate, both blind reviews, and the affected QA scenarios before publication continues.
+Review and QA issues are fixed with subagents according to their size and the repository's implementation methodology, then checked again before publication continues.
 
 ## Plugin structure
 
@@ -49,9 +49,15 @@ plugins/bottega-dex/
     orchestrate/SKILL.md
     code-review/
       SKILL.md
+      LICENSE
       references/
-        report.schema.json
-        reviewer.md
+        autoreview.md
+        smell-baseline.md
+      scripts/
+        autoreview
+        test-review-harness
+      tests/
+        test_autoreview_hardening.py
     qa/SKILL.md
     close/
       SKILL.md
@@ -62,20 +68,20 @@ The bundled `orchestrate` skill is an exact copy of [provencher/codex-skills `or
 
 The surrounding procedures are adapted from [Bottega](https://github.com/vadimcomanescu/bottega/tree/4384beee72b5f45498fada686db1751d6ca78159/skills) for native Codex orchestration.
 
-## Integrated review
+## Autoreview
 
-After all subagent work is integrated and the repository's decisive gate passes, `code-review` freezes the complete diff by base, head, and tree SHA. It starts two cold reviewers in parallel:
+After the repository's decisive gate passes, `code-review` runs the vendored Bottega autoreview helper on the integrated branch diff. The panel is pinned to:
 
-- a native Codex subagent on `gpt-5.6-sol` at high reasoning;
-- Claude Code on the pinned `claude-opus-5` model at high effort through the bundled adapter.
+- GPT-5.6 Sol at high reasoning;
+- Claude Opus 5 at high effort.
 
-Both reviewers use one report schema. Neither receives implementation history, candidate findings, or the other report. The active Codex task reproduces and arbitrates every finding. Any tracked fix invalidates both reports and requires a fresh blind pair.
+The active Codex task verifies every finding. Accepted issues are fixed with subagents, the affected checks run again, and the same dual autoreview panel repeats until clean.
 
 Anthropic documents `claude-opus-5` as the full pinned model name; the `opus` alias instead tracks the latest permitted Opus release. See [Claude Code model configuration](https://docs.anthropic.com/en/docs/claude-code/model-config.md).
 
 ## Claude adapter
 
-`plugins/bottega-dex/scripts/claude-exec` is the plugin's only external model boundary. It invokes `claude -p` only for the reviewer role, with Claude Opus 5 at high effort, structured output, bounded execution, model-usage provenance, and frozen-target checks.
+`plugins/bottega-dex/scripts/claude-exec` remains available as the bounded direct Claude adapter requested for the plugin. It invokes `claude -p` with Claude Opus 5 at high effort, structured output, bounded execution, model-usage provenance, and frozen-target checks. The code-review workflow itself uses the vendored autoreview helper, matching Bottega.
 
 The adapter requires an authenticated Claude Code installation and Node.js 24 or newer. Use `--dry-run` to inspect the bounded command without invoking Claude.
 

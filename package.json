@@ -1,10 +1,11 @@
 {
   "name": "bottega-dex",
-  "version": "0.8.0",
-  "description": "Bottega delivery through native Codex orchestration, blind dual review, QA, and pull-request publication.",
+  "version": "0.8.1",
+  "description": "Bottega delivery through native Codex orchestration, dual autoreview, QA, and pull-request publication.",
   "type": "module",
   "scripts": {
-    "test": "vitest run",
+    "test": "vitest run && npm run test:autoreview-vendor",
+    "test:autoreview-vendor": "python3 tests/run-vendor-suites.py",
     "typecheck": "tsc --noEmit"
   },
   "engines": {

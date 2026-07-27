@@ -1,6 +1,6 @@
 # bottega-dex
 
-Bottega Dex is the Codex-native Bottega workflow. `maestro` runs `start`, `discover`, embedded orchestration, blind dual `code-review`, `qa`, and `close` to deliver one task as a reviewed pull request.
+Bottega Dex is the Codex-native Bottega workflow. `maestro` runs `start`, `discover`, embedded orchestration, dual autoreview, `qa`, and `close` to deliver one task as a reviewed pull request.
 
 Never apply changes from this repository to `/Users/vadimcomanescu/Code/bottega` unless the user explicitly requests a separate port.
 
@@ -16,16 +16,17 @@ Never apply changes from this repository to `/Users/vadimcomanescu/Code/bottega`
 | `plugins/bottega-dex/skills/orchestrate/SKILL.md` | Exact upstream decomposition and implementation method |
 | `plugins/bottega-dex/skills/close/SKILL.md` | Supporting publication, PR, and terminal-state procedure |
 | `plugins/bottega-dex/skills/close/references/qa-evidence.md` | QA evidence publication procedure |
-| `plugins/bottega-dex/skills/code-review/SKILL.md` | Integrated Sol and Claude Opus 5 review gate |
-| `plugins/bottega-dex/skills/code-review/references` | Common reviewer method and report schema |
+| `plugins/bottega-dex/skills/code-review/SKILL.md` | Vendored autoreview entrypoint for Sol and Claude Opus 5 |
+| `plugins/bottega-dex/skills/code-review/references` | Autoreview contract and review baseline |
+| `plugins/bottega-dex/skills/code-review/scripts` | Vendored autoreview engine and harness |
 | `plugins/bottega-dex/skills/qa/SKILL.md` | Reviewed-head product QA procedure |
 | `plugins/bottega-dex/scripts/claude-exec` | Bounded `claude -p` adapter |
 | `plugins/bottega-dex/scripts/exec-common.js` | Shared adapter process and provenance helpers |
 | `tests/plugin-contract.test.ts` | Package and upstream-copy contracts |
 | `tests/claude-exec.test.ts` | Claude adapter contract tests |
 | `tests/exec-common.test.ts` | Adapter helper tests |
-| `tests/review-report.test.ts` | Shared review report schema tests |
-| `tests/review-orchestration.test.ts` | Frozen two-family gate contracts |
+| `tests/run-vendor-suites.py` | Vendored autoreview test runner |
+| `tests/review-orchestration.test.ts` | Autoreview panel contracts |
 
 ## Rules
 
@@ -33,11 +34,11 @@ Never apply changes from this repository to `/Users/vadimcomanescu/Code/bottega`
 - Keep `maestro` as the user-facing end-to-end workflow and `orchestrate` as its complete build method.
 - The phase order is `start`, `discover`, `orchestrate`, `code-review`, `qa`, `close`.
 - Discovery hands its findings directly to orchestration.
-- The complete integrated diff always receives one cold native GPT-5.6 Sol review and one cold Claude Opus 5 review against separate checkouts of the same frozen target and common schema. Neither reviewer sees the other report.
-- Use native subagents for Codex reviewers. Never start a second Codex process.
-- Keep `claude-exec` as the only external model boundary and only for the Claude reviewer. It owns model, effort, permissions, tools, structured output, timeout, and target identity.
-- Any tracked fix invalidates both reviews. Rerun the decisive gate and a fresh blind pair before close.
-- QA drives the dual-reviewed artifact and never fixes product code. `close` must read matching accepted review and QA records and publish only their exact head and tree.
+- The complete integrated diff runs through the vendored autoreview helper with GPT-5.6 Sol at high reasoning and Claude Opus 5 at high effort.
+- Native subagents perform orchestration work. The vendored autoreview helper is the review process boundary.
+- Keep `claude-exec` as the bounded direct Claude adapter requested by the user. Autoreview remains the code-review entrypoint.
+- Verify every autoreview finding. Fix accepted issues with one or more subagents depending on size and repository methodology, then rerun affected proof and the dual panel.
+- QA drives the reviewed artifact and never fixes product code.
 - Keep `plugins/bottega-dex/skills/orchestrate/SKILL.md` identical to the upstream source linked in `README.md`.
 - Keep imported `start`, `discover`, `qa`, and `close` procedures aligned with the Bottega source linked in `README.md`, except for Codex-native adaptations.
 - Preserve the upstream copyright notice in `LICENSE`.

@@ -18,6 +18,10 @@ const START = readFileSync(join(PLUGIN, "skills", "start", "SKILL.md"), "utf8");
 const QA = readFileSync(join(PLUGIN, "skills", "qa", "SKILL.md"), "utf8");
 const CLOSE = readFileSync(join(PLUGIN, "skills", "close", "SKILL.md"), "utf8");
 const ADAPTER = readFileSync(join(PLUGIN, "scripts", "claude-exec"), "utf8");
+const AUTOREVIEW = readFileSync(
+  join(PLUGIN, "skills", "code-review", "references", "autoreview.md"),
+  "utf8",
+);
 
 describe("integrated review flow", () => {
   it("runs the requested maestro phases in order", () => {
@@ -43,28 +47,26 @@ describe("integrated review flow", () => {
     expect(ORCHESTRATE).not.toMatch(/code-review|pull request|maestro/i);
   });
 
-  it("reviews the complete frozen work with blind Sol and Opus 5 seats", () => {
-    expect(REVIEW).toMatch(/complete integrated|integrated diff/i);
-    expect(REVIEW).toContain('model: "gpt-5.6-sol"');
-    expect(REVIEW).toContain("claude-opus-5");
-    expect(REVIEW).toMatch(/parallel/i);
-    expect(REVIEW).toMatch(/separate disposable detached worktrees/i);
-    expect(REVIEW).toMatch(/Neither reviewer sees the other report/i);
-    expect(REVIEW).toMatch(/tracked change invalidates both reports/i);
-    expect(REVIEW).not.toMatch(/\bcodex exec\b|codex-exec/);
+  it("reviews the integrated work through Bottega's autoreview panel", () => {
+    expect(REVIEW).toMatch(/completed integrated diff/i);
+    expect(REVIEW).toContain("references/autoreview.md");
+    expect(REVIEW).toContain("scripts/autoreview");
+    expect(REVIEW).toContain("--reviewers codex,claude");
+    expect(REVIEW).toContain("--model codex=gpt-5.6-sol --thinking codex=high");
+    expect(REVIEW).toContain("--model claude=claude-opus-5 --thinking claude=high");
+    expect(REVIEW).toMatch(/same dual autoreview command again/i);
+    expect(AUTOREVIEW).toMatch(/^name: autoreview$/m);
+    expect(AUTOREVIEW).toContain("# Auto Review");
+    expect(AUTOREVIEW).toContain("--reviewers codex,claude");
+    expect(AUTOREVIEW).toContain("--model claude=claude-opus-5 --thinking claude=high");
   });
 
-  it("starts only when both review routes are ready and closes only the accepted head", () => {
-    expect(START).toContain("gpt-5.6-sol");
+  it("starts only when autoreview and delivery are ready", () => {
     expect(START).toContain("claude auth status");
-    expect(START).toContain("report.schema.json");
-    expect(QA).toContain("review/accepted.json");
-    expect(QA).toContain("qa/accepted.json");
-    expect(QA).toMatch(/never product code/i);
-    expect(CLOSE).toContain("review/accepted.json");
-    expect(CLOSE).toContain("qa/accepted.json");
-    expect(CLOSE).toContain("gpt-5.6-sol");
-    expect(CLOSE).toContain("claude-opus-5");
+    expect(START).toContain("autoreview --self-test");
+    expect(QA).toMatch(/product code stays untouched/i);
+    expect(QA).toMatch(/one or more subagents depending on their size/i);
+    expect(CLOSE).toMatch(/head accepted by autoreview/i);
   });
 
   it("keeps the external adapter review-only and pins Claude Opus 5", () => {

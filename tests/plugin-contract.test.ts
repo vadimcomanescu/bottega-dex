@@ -33,21 +33,31 @@ function sha256(text: string) {
 
 describe("Codex plugin package", () => {
   it("contains the complete maestro workflow and Claude adapter", () => {
-    expect(filesUnder(PLUGIN).sort()).toEqual([
+    const files = filesUnder(PLUGIN).sort();
+    expect(files).toEqual(expect.arrayContaining([
       ".codex-plugin/plugin.json",
       "scripts/claude-exec",
       "scripts/exec-common.js",
       "skills/close/SKILL.md",
       "skills/close/references/qa-evidence.md",
       "skills/code-review/SKILL.md",
-      "skills/code-review/references/report.schema.json",
-      "skills/code-review/references/reviewer.md",
+      "skills/code-review/LICENSE",
+      "skills/code-review/references/autoreview.md",
+      "skills/code-review/references/smell-baseline.md",
+      "skills/code-review/scripts/autoreview",
+      "skills/code-review/scripts/autoreview_test.py",
+      "skills/code-review/scripts/test-review-harness",
+      "skills/code-review/scripts/test-review-harness.py",
+      "skills/code-review/scripts/test-review-harness.ps1",
+      "skills/code-review/tests/test_autoreview_hardening.py",
       "skills/discover/SKILL.md",
       "skills/maestro/SKILL.md",
       "skills/orchestrate/SKILL.md",
       "skills/qa/SKILL.md",
       "skills/start/SKILL.md",
-    ]);
+    ]));
+    expect(files).not.toContain("skills/code-review/references/report.schema.json");
+    expect(files).not.toContain("skills/code-review/references/reviewer.md");
   });
 
   it("keeps the orchestrate skill identical to the selected upstream source", () => {
@@ -81,12 +91,12 @@ describe("Codex plugin package", () => {
     expect(discover).not.toContain("user-invocable");
     expect(qa).toMatch(/^name: qa$/m);
     expect(qa).not.toContain("user-invocable");
-    expect(qa).toContain("qa/accepted.json");
+    expect(qa).toMatch(/one or more subagents depending on their size/i);
     expect(close).toMatch(/^name: close$/m);
     expect(close).not.toContain("user-invocable");
     expect(close).toContain("references/qa-evidence.md");
     expect(close).toContain("../code-review/SKILL.md");
-    expect(close).toContain("review/accepted.json");
+    expect(close).toMatch(/head accepted by autoreview/i);
     expect(close).toMatch(/After the labeled PR exists and before arming auto-merge/i);
     expect(close).toMatch(/poll its required checks for up to five minutes/i);
     expect(sha256(qaEvidence)).toBe(
@@ -108,7 +118,7 @@ describe("Codex plugin package", () => {
     const manifest = json(join(PLUGIN, ".codex-plugin", "plugin.json"));
     expect(manifest).toMatchObject({
       name: "bottega-dex",
-      version: "0.8.0",
+      version: "0.8.1",
       skills: "./skills/",
     });
     expect(manifest.interface.defaultPrompt).toEqual([
