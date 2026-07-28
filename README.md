@@ -37,14 +37,14 @@ $bottega-dex:bro
 
 ## Workflow
 
-1. `start` settles whether the pull request should hold or merge on green, then creates the isolated branch and worktree and reads the repository's instructions and gates.
+1. `start` settles whether the pull request should hold or merge on green, then creates the isolated branch and worktree and reads the repository's commands and documented merge procedure.
 2. `discover` uses narrow read-only scouts and works with the user to settle the direction and boundaries.
 3. `architect` makes the design, acceptance criteria, and independent vertical slices explicit. `panel` is available for the small set of consequential decisions that need model diversity.
 4. `use-claude` sends the settled design and execution proposal to Claude Fable 5 at high effort for a read-only second opinion.
 5. `maestro` invokes the exact upstream `orchestrate` skill. Native Codex subagents fan out across distinct slices, following `implement`; the main task integrates their work and retains approvals.
 6. `code-review` runs the bundled Bottega autoreview method on the integrated code diff with GPT-5.6 Sol at high reasoning and Claude Opus 5 at high effort. Autoreview owns its Claude invocation.
 7. `qa` drives the reviewed artifact through every affected user-visible scenario and records evidence-backed verdicts without editing product code.
-8. `close` publishes the evidence, opens the pull request, applies the user's release choice, and reports the real checks and merge state.
+8. `close` publishes the evidence, opens the pull request, and follows the repository's documented landing mechanism. Opening the PR arms a merge queue where the repository uses one; opener-armed GitHub auto-merge with a red hold check remains the fallback where the repository documents it.
 
 Narrow read-only scouts use low reasoning with no inherited conversation. Routine implementation uses medium reasoning and difficult work uses high reasoning. Every agent receives distinct ownership, leaf workers do not delegate, and the main task remains available to the user.
 
@@ -88,7 +88,7 @@ plugins/bottega-dex/
 
 The bundled `orchestrate` skill is byte-for-byte identical to [provencher/codex-skills `orchestrate/SKILL.md`](https://github.com/provencher/codex-skills/blob/main/orchestrate/SKILL.md), retrieved from commit [`8aa6c42`](https://github.com/provencher/codex-skills/commit/8aa6c42b73781c905c55f8a1253a18127079ac21). Its user-facing metadata lives in `skills/orchestrate/agents/openai.yaml`. The upstream copyright notice is preserved in [LICENSE](LICENSE).
 
-The surrounding procedures are adapted from [Bottega at `72122a3`](https://github.com/vadimcomanescu/bottega/tree/72122a3/skills). Bottega's Fable and Opus worker roles become native Codex orchestration; its GPT cross-read becomes the direct Claude cross-read in `use-claude`.
+The surrounding procedures are adapted from [Bottega at `b4fc3ee`](https://github.com/vadimcomanescu/bottega/tree/b4fc3ee/skills). Bottega's Fable and Opus worker roles become native Codex orchestration; its GPT cross-read becomes the direct Claude cross-read in `use-claude`. Bottega's queue-first merge doctrine is applied through the host repository's documented procedure rather than a hard-coded Mergify configuration.
 
 ## Review and Claude boundaries
 

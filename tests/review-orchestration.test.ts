@@ -75,6 +75,8 @@ describe("Bottega Dex workflow", () => {
     expect(QA).toMatch(/Product code.*stay as you found them/i);
     expect(CLOSE).toMatch(/head accepted by autoreview/i);
     expect(CLOSE).toContain("references/qa-evidence.md");
+    expect(CLOSE).toMatch(/merge-queue repository/i);
+    expect(CLOSE).toMatch(/runs no merge command/i);
     expect(ADAPTER).toContain('model: "claude-opus-5"');
     expect(ADAPTER).toContain('effort: "high"');
     expect(ADAPTER).not.toContain("panelist:");

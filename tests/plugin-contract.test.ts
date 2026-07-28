@@ -127,6 +127,9 @@ describe("Codex plugin package", () => {
     expect(start).not.toContain("user-invocable");
     expect(start).toContain("## 1. Settle release and ownership");
     expect(start).toMatch(/land on green, or hold for you/i);
+    expect(start).toMatch(/atomic claim is the create-only remote branch push/i);
+    expect(start).toContain("## 4. Read the commands and merge procedure");
+    expect(start).toMatch(/opening an eligible non-draft PR enters a merge queue/i);
     expect(start).toContain("## 5. Confirm GitHub publication");
     expect(start).toContain("gh auth status");
     expect(discover).toMatch(/^name: discover$/m);
@@ -152,8 +155,15 @@ describe("Codex plugin package", () => {
     expect(close).toContain("references/qa-evidence.md");
     expect(close).toContain("../code-review/SKILL.md");
     expect(close).toMatch(/head accepted by autoreview/i);
-    expect(close).toMatch(/After the labeled PR exists and before arming auto-merge/i);
+    expect(close).toMatch(/opening an eligible non-draft PR is the arm/i);
+    expect(close).toMatch(/For Mergify this is the Mergify summary/i);
+    expect(close).toMatch(/project checks remain ordinary checks and are not expected to turn red/i);
+    expect(close).toMatch(/Opener-armed auto-merge fallback/i);
     expect(close).toMatch(/poll its required checks for up to five minutes/i);
+    expect(close).toMatch(/non-null on both land and hold runs/i);
+    expect(close).toMatch(/hold check and queue summary are merge-control signals/i);
+    expect(close).toMatch(/An `autoMergeRequest` of null is expected/i);
+    expect(close).not.toContain("gh pr merge --squash <PR-URL>");
     expect(qaEvidence).toMatch(/artifacts QA actually captured/i);
     expect(qaEvidence).toMatch(/recordings when the driving tool produced them/i);
   });

@@ -41,12 +41,14 @@ Native Codex subagent instructions in this plugin are intentional. The Claude co
 - Keep `maestro` as the user-facing end-to-end workflow and `orchestrate` as its complete build method.
 - The phase order is `start`, `discover`, `architect`, optional `panel`, `use-claude`, `orchestrate`, `code-review`, `qa`, `close`.
 - Discovery findings feed architecture and the orchestration brief.
+- `start` reads the host repository's documented merge procedure. `close` follows that procedure: opening the PR arms a queue where one owns landing, while opener-armed GitHub auto-merge and its red hold check remain a documented fallback only.
 - `use-claude` invokes Claude Fable 5 at high effort through direct `claude -p` for design cross-reads and the Claude panel seat.
 - The complete integrated diff runs through the vendored autoreview helper with GPT-5.6 Sol at high reasoning and Claude Opus 5 at high effort.
 - Native subagents perform orchestration work. The vendored autoreview helper is the review process boundary.
 - Keep `claude-exec` as the bounded direct Claude reviewer-role adapter requested by the user. It is separate from code review; autoreview invokes Claude itself for reviews.
 - Verify every autoreview finding. Fix accepted issues with one or more subagents depending on size and repository methodology, then rerun affected proof and follow the code-review skill's pinned cross-family rerun rule.
 - QA drives the reviewed artifact and never fixes product code.
+- Never issue a direct merge command. A queue-owned PR is watched through its queue summary and updated-base checks; an `autoMergeRequest` of null is normal there.
 - Keep `plugins/bottega-dex/skills/orchestrate/SKILL.md` identical to the upstream source linked in `README.md`.
 - Keep imported `start`, `discover`, `architect`, `implement`, `panel`, `qa`, and `close` procedures aligned with the Bottega source linked in `README.md`, except for Codex-native adaptations.
 - Preserve the upstream copyright notice in `LICENSE`.
