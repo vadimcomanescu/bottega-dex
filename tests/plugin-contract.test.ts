@@ -156,7 +156,7 @@ describe("Codex plugin package", () => {
     const manifest = json(join(PLUGIN, ".codex-plugin", "plugin.json"));
     expect(manifest).toMatchObject({
       name: "bottega-dex",
-      version: "0.9.0",
+      version: "0.9.1",
       skills: "./skills/",
     });
     expect(manifest.interface.defaultPrompt).toEqual([

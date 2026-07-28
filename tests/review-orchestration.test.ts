@@ -35,7 +35,6 @@ describe("Bottega Dex workflow", () => {
     expect(indexes.every((index) => index >= 0)).toBe(true);
     expect(indexes).toEqual([...indexes].sort((left, right) => left - right));
     expect(MAESTRO).toMatch(/Then use \[orchestrate\]/);
-    expect(MAESTRO).toMatch(/Its method is authoritative/);
     expect(MAESTRO).not.toMatch(/(?:Fable|Opus) (?:worker|builder|fixer)/i);
     expect(MAESTRO).toContain("Claude Fable 5 at high effort");
     expect(DISCOVER).toContain('`fork_turns: "none"`');
@@ -43,11 +42,11 @@ describe("Bottega Dex workflow", () => {
   });
 
   it("routes work through native Codex subagents", () => {
-    expect(MAESTRO).toContain('reasoning_effort: "medium"');
-    expect(MAESTRO).toContain('`"high"` for difficult work');
-    expect(MAESTRO).toMatch(/distinct ownership/i);
-    expect(MAESTRO).toMatch(/leaf workers not to delegate/i);
-    expect(MAESTRO).toMatch(/Remain available to the user/i);
+    expect(ORCHESTRATE).toContain('reasoning_effort: "medium"');
+    expect(ORCHESTRATE).toContain('`"high"` for difficult work');
+    expect(ORCHESTRATE).toMatch(/distinct ownership/i);
+    expect(ORCHESTRATE).toMatch(/leaf workers not to delegate/i);
+    expect(ORCHESTRATE).toMatch(/Remain available to the user/i);
     expect(MAESTRO).toMatch(/Keep approvals.*with the user/i);
   });
 
@@ -70,8 +69,6 @@ describe("Bottega Dex workflow", () => {
     expect(REVIEW).toContain("--model codex=gpt-5.6-sol --thinking codex=high");
     expect(REVIEW).toContain("--model claude=claude-opus-5 --thinking claude=high");
     expect(REVIEW).toMatch(/Do not run autoreview.*`SKILL\.md`/i);
-    expect(MAESTRO).toMatch(/Do not run autoreview on `SKILL\.md`/i);
-    expect(MAESTRO).toMatch(/pinned cross-family rerun rule/i);
   });
 
   it("keeps review, QA, close, and the reviewer adapter at their boundaries", () => {
