@@ -33,6 +33,8 @@ describe("Codex plugin package", () => {
       ".codex-plugin/plugin.json",
       "scripts/claude-exec",
       "scripts/exec-common.js",
+      "skills/bro/SKILL.md",
+      "skills/bro/agents/openai.yaml",
       "skills/close/SKILL.md",
       "skills/close/references/qa-evidence.md",
       "skills/code-review/SKILL.md",
@@ -79,6 +81,20 @@ describe("Codex plugin package", () => {
     expect(metadata).toContain(
       'default_prompt: "Use $bottega-dex:orchestrate ',
     );
+  });
+
+  it("exposes bro as an independently invocable skill", () => {
+    const bro = readFileSync(join(PLUGIN, "skills", "bro", "SKILL.md"), "utf8");
+    const metadata = readFileSync(
+      join(PLUGIN, "skills", "bro", "agents", "openai.yaml"),
+      "utf8",
+    );
+
+    expect(bro).toMatch(/^name: bro$/m);
+    expect(bro).not.toContain("disable-model-invocation");
+    expect(bro).toContain("Restate your last message");
+    expect(metadata).toContain('display_name: "Bro"');
+    expect(metadata).toContain('default_prompt: "Use $bottega-dex:bro ');
   });
 
   it("keeps the imported supporting procedures Codex-valid", () => {
@@ -156,7 +172,7 @@ describe("Codex plugin package", () => {
     const manifest = json(join(PLUGIN, ".codex-plugin", "plugin.json"));
     expect(manifest).toMatchObject({
       name: "bottega-dex",
-      version: "0.9.1",
+      version: "0.9.2",
       skills: "./skills/",
     });
     expect(manifest.interface.defaultPrompt).toEqual([

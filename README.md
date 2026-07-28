@@ -29,6 +29,12 @@ The upstream orchestration method is also directly invocable:
 $bottega-dex:orchestrate <substantial task>
 ```
 
+To restate the last reply in plain language:
+
+```text
+$bottega-dex:bro
+```
+
 ## Workflow
 
 1. `start` settles whether the pull request should hold or merge on green, then creates the isolated branch and worktree and reads the repository's instructions and gates.
@@ -54,6 +60,9 @@ plugins/bottega-dex/
     exec-common.js
   skills/
     maestro/SKILL.md
+    bro/
+      SKILL.md
+      agents/openai.yaml
     start/SKILL.md
     discover/SKILL.md
     architect/

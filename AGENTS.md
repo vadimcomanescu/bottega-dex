@@ -13,6 +13,7 @@ Native Codex subagent instructions in this plugin are intentional. The Claude co
 | `.agents/plugins/marketplace.json` | Public Codex marketplace entry |
 | `plugins/bottega-dex/.codex-plugin/plugin.json` | Installable plugin manifest |
 | `plugins/bottega-dex/skills/maestro/SKILL.md` | User-facing end-to-end workflow |
+| `plugins/bottega-dex/skills/bro/SKILL.md` | User-facing plain-language restatement skill |
 | `plugins/bottega-dex/skills/start/SKILL.md` | Supporting ownership, isolation, and launch procedure |
 | `plugins/bottega-dex/skills/discover/SKILL.md` | Supporting discovery procedure |
 | `plugins/bottega-dex/skills/architect/SKILL.md` | Shared architecture doctrine |
