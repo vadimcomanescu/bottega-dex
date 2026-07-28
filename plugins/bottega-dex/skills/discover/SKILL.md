@@ -1,37 +1,33 @@
 ---
 name: discover
-description: Find and settle the unknowns in a Bottega Dex run before orchestration. Used by maestro after start to establish the direction, boundaries, and decisions that guide the work.
+description: Find what a request does not say and settle its direction and boundaries with the user before anything is built.
 ---
 
 # Discover
 
-Find what the request does not settle before implementation makes it expensive. Return a clear direction, its boundaries, and each material decision to `maestro`.
+Find what I could not tell you, before anything is built: what my request does not say, what I could not put into words, what neither of us thought to ask. Follow it too literally and you build what I wrote when a different approach was better. Read it too loosely and you build something generic when this product needed its own answer. I can only settle what I understand, so explain every unknown in plain words before you ask me to decide it.
 
-## 1. Explore
+Read this repo's lessons and decision records (`docs/lessons`, `docs/adr`). Send native Codex subagents out, one job each, to return findings on:
 
-Read the request, repository instructions, affected code, tests, history, product precedent, and installed dependency versions. Use narrow native read-only subagents only for independent exploration that benefits from separate context. Give each one a distinct question, `fork_turns: "none"`, no write ownership, and no permission to delegate. A scout returns evidence and uncertainty, never a decision.
+- the code this change touches, and how this repo already does things like it
+- how other people already solved this, searched online, so the build takes a proven pattern rather than an invented one
+- the libraries and tools the work will use: what the version installed here actually does, read from its own documentation and source rather than from memory
+- what the relevant installed agent skills would change here, not that they exist
 
-Verify current provider behavior against the applicable installed version and official documentation before relying on it. Complete when repository and source evidence have answered everything they can and the remaining unknowns are explicit.
+Use `fork_turns: "none"` and low reasoning for a narrow read-only scout; give every scout a distinct question, no write ownership, and no permission to delegate. Use medium reasoning for routine bounded work and high reasoning only where the question is difficult. A scout returns evidence and uncertainty, never a decision. The root task integrates the findings and retains every user approval.
 
-## 2. Find blind spots
+You are finished here when the reading and the scouts have answered everything they can and what is still open is written down. When I have already settled everything, skip the rest of this skill.
 
-Check for missing constraints, affected callers, data and permission boundaries, compatibility expectations, migration needs, user-visible states, failure behavior, and proof the repository will require. Explain any material blind spot to the user in plain language.
+Ask me where I am in my thinking, and what experience I have with this problem and with this part of the code. Where the work turns on something I do not know, teach me that first, in as much depth as judging your choices takes, because I cannot decide anything when I do not know what its words mean.
 
-## 3. Settle the direction
+Name my blind spots: what I have not thought to ask, each explained in plain words, until you have covered all of them.
 
-When more than one viable direction remains, present the smallest useful options and recommend one. Prototype only when the choice depends on seeing or driving behavior. Ask one consequential question at a time, with the recommended answer, until the work's direction and boundaries are predictable.
+While the scope is still open, put the options on the table, cheapest to most ambitious, and say which one you would take. My reactions set the direction. Some things I can only judge by seeing, so build those instead of asking: rough prototypes in genuinely different directions. Draw a wireframe only when nothing can be rendered, keep it to layout and flow, and never show me an image posing as the finished product. A decision that is open, costly to reverse, and settled by no cheap check goes to the root task for an independent panel or user decision, and what it returns feeds the questions you ask next. You are through this when the direction is chosen and its edges are stated: what is in, and what is out.
 
-When the user cannot describe a desired behavior, ask for an existing product or source example and inspect it directly. A pointer is evidence and travels with the settled findings.
+Ask me what is still ambiguous, one question at a time, the ones that change the architecture first, each with your recommended answer so my reply can be a yes or a correction. Every question carries its explanation in the same message, in the product's own words and with a concrete example: what happens today, what each answer would change, and what it would cost. Explain any term I have not been given before you use it, whatever the run called it while exploring. When I say "I don't understand", something was missing from the explanation. Explain more fully and ask again, never shorter. Keep asking until you can predict how I will judge the finished work.
 
-## 4. Hand off to orchestration
+When I cannot find words for what I want, ask me for code that already does it my way, in any repo or language. That tells you more than anything I could describe.
 
-Return directly to `maestro`:
+Keep everything that settled a decision for as long as you are building: the approved prototype sources, their screenshots, the references I pointed at. Point a builder's brief at a render I approved instead of describing it in prose.
 
-- the intended outcome;
-- what is in and out;
-- repository and external precedents that constrain the work;
-- each decision and its reason;
-- acceptance signals and known limits;
-- any unresolved blocker that prevents implementation.
-
-An autonomous run resolves user-answerable questions from repository precedent and the standard provider pattern, recording each assumption and reason. If a material choice cannot be resolved safely, stop for the user instead of hiding it in implementation.
+When the run is autonomous I am not there: settle each step from the repo's precedent and the standard way, and record each settlement with its reason.

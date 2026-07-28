@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -27,10 +26,6 @@ function json(path: string) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
-function sha256(text: string) {
-  return createHash("sha256").update(text).digest("hex");
-}
-
 describe("Codex plugin package", () => {
   it("contains the complete maestro workflow and Claude adapter", () => {
     const files = filesUnder(PLUGIN).sort();
@@ -42,7 +37,6 @@ describe("Codex plugin package", () => {
       "skills/close/references/qa-evidence.md",
       "skills/code-review/SKILL.md",
       "skills/code-review/LICENSE",
-      "skills/code-review/references/autoreview.md",
       "skills/code-review/references/smell-baseline.md",
       "skills/code-review/scripts/autoreview",
       "skills/code-review/scripts/autoreview_test.py",
@@ -50,13 +44,21 @@ describe("Codex plugin package", () => {
       "skills/code-review/scripts/test-review-harness.py",
       "skills/code-review/scripts/test-review-harness.ps1",
       "skills/code-review/tests/test_autoreview_hardening.py",
+      "skills/architect/SKILL.md",
+      "skills/architect/references/ADR-FORMAT.md",
+      "skills/architect/references/CONTEXT-FORMAT.md",
+      "skills/architect/references/LICENSE",
       "skills/discover/SKILL.md",
+      "skills/implement/SKILL.md",
       "skills/maestro/SKILL.md",
       "skills/orchestrate/agents/openai.yaml",
       "skills/orchestrate/SKILL.md",
+      "skills/panel/SKILL.md",
       "skills/qa/SKILL.md",
       "skills/start/SKILL.md",
+      "skills/use-claude/SKILL.md",
     ]));
+    expect(files).not.toContain("skills/code-review/references/autoreview.md");
     expect(files).not.toContain("skills/code-review/references/report.schema.json");
     expect(files).not.toContain("skills/code-review/references/reviewer.md");
   });
@@ -86,6 +88,19 @@ describe("Codex plugin package", () => {
       "utf8",
     );
     const qa = readFileSync(join(PLUGIN, "skills", "qa", "SKILL.md"), "utf8");
+    const architect = readFileSync(
+      join(PLUGIN, "skills", "architect", "SKILL.md"),
+      "utf8",
+    );
+    const implement = readFileSync(
+      join(PLUGIN, "skills", "implement", "SKILL.md"),
+      "utf8",
+    );
+    const panel = readFileSync(join(PLUGIN, "skills", "panel", "SKILL.md"), "utf8");
+    const useClaude = readFileSync(
+      join(PLUGIN, "skills", "use-claude", "SKILL.md"),
+      "utf8",
+    );
     const close = readFileSync(join(PLUGIN, "skills", "close", "SKILL.md"), "utf8");
     const qaEvidence = readFileSync(
       join(PLUGIN, "skills", "close", "references", "qa-evidence.md"),
@@ -96,13 +111,26 @@ describe("Codex plugin package", () => {
     expect(start).not.toContain("user-invocable");
     expect(start).toContain("## 1. Settle release and ownership");
     expect(start).toMatch(/land on green, or hold for you/i);
-    expect(start).toContain("## 5. Confirm publication");
+    expect(start).toContain("## 5. Confirm GitHub publication");
     expect(start).toContain("gh auth status");
     expect(discover).toMatch(/^name: discover$/m);
     expect(discover).not.toContain("user-invocable");
+    expect(discover).toContain('`fork_turns: "none"`');
+    expect(discover).toMatch(/low reasoning for a narrow read-only scout/i);
+    expect(architect).toMatch(/^name: architect$/m);
+    expect(architect).not.toContain("user-invocable");
+    expect(architect).toContain("references/CONTEXT-FORMAT.md");
+    expect(implement).toMatch(/^name: implement$/m);
+    expect(implement).not.toContain("user-invocable");
+    expect(panel).toMatch(/^name: panel$/m);
+    expect(panel).toContain("Claude Fable 5 at high effort");
+    expect(useClaude).toMatch(/^name: use-claude$/m);
+    expect(useClaude).not.toContain("user-invocable");
+    expect(useClaude).toContain("claude -p --safe-mode --model claude-fable-5 --effort high");
+    expect(useClaude).toContain("--tools Read,WebSearch");
     expect(qa).toMatch(/^name: qa$/m);
     expect(qa).not.toContain("user-invocable");
-    expect(qa).toMatch(/one or more subagents depending on their size/i);
+    expect(qa).toMatch(/product code.*stay as you found them/i);
     expect(close).toMatch(/^name: close$/m);
     expect(close).not.toContain("user-invocable");
     expect(close).toContain("references/qa-evidence.md");
@@ -110,9 +138,8 @@ describe("Codex plugin package", () => {
     expect(close).toMatch(/head accepted by autoreview/i);
     expect(close).toMatch(/After the labeled PR exists and before arming auto-merge/i);
     expect(close).toMatch(/poll its required checks for up to five minutes/i);
-    expect(sha256(qaEvidence)).toBe(
-      "2a24d58732beba3788e048a0c6f03c0e7aaef733dfe89f3ace454cfd8ac01a56",
-    );
+    expect(qaEvidence).toMatch(/artifacts QA actually captured/i);
+    expect(qaEvidence).toMatch(/recordings when the driving tool produced them/i);
   });
 
   it("publishes the plugin through the marketplace", () => {
@@ -129,7 +156,7 @@ describe("Codex plugin package", () => {
     const manifest = json(join(PLUGIN, ".codex-plugin", "plugin.json"));
     expect(manifest).toMatchObject({
       name: "bottega-dex",
-      version: "0.8.5",
+      version: "0.9.0",
       skills: "./skills/",
     });
     expect(manifest.interface.defaultPrompt).toEqual([

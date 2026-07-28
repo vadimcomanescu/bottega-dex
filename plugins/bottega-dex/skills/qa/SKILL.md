@@ -1,14 +1,32 @@
 ---
 name: qa
-description: Drive the reviewed work through every changed user or integration scenario and return an evidence-backed verdict. Used by maestro after code review and before close.
+description: Drive the reviewed interface as a user and return an evidence-backed product verdict for every changed scenario.
 ---
 
 # QA
 
-Verify the reviewed work as a user or integrator would. Product code stays untouched. Confirm the checkout is at the reviewed head before driving it.
+Verify the shipped product the way a user would, independently of the builders and reviewers who produced it, leaving architecture out of scope and product code untouched, and return one verdict with its evidence per scenario.
 
-Drive every changed scenario through the real interface: browser for web, computer use for a desktop app, a real process for a CLI, or the public integration boundary for an API. Fixtures may set up the drive, but verdicts come from observed behavior, not code inspection.
+## Drive each scenario
 
-Return `PASS` with evidence, `FAIL` with the expected and observed difference, or `NOT VERIFIED` with the exact blocker. Capture evidence that matches the claim and report runtime errors even when the visible action succeeds. Do not touch real users, money, deploys, or shared or production data without user approval.
+- Confirm the checkout sits at the head SHA your dispatch names before you drive anything.
+- Drive every supplied scenario through the interface a user or integrator actually uses, with the tool the surface calls for: the installed browser skill for web (a scripted driver where the runtime has none), computer use for a desktop app, on the local machine only, a real process run for a CLI. A fixture or demo may set up the drive, but take the verdict from behavior you observed through that interface, never from code inspection or a screenshot staged after the run.
+- Record the drive that produced each verdict, and match the evidence to the claim: a text snapshot for behavior, a screenshot for appearance, raw output for encoding. Capture a screenshot for any rendered output, and report console or runtime errors even when the visible action succeeds.
+- When a step would touch real users, real money, a deploy, or shared or production data, leave it undriven and return `NOT VERIFIED` with what the step needs.
+- Return `PASS` with the observed evidence, `FAIL` with the exact expected and observed divergence, or `NOT VERIFIED` with the blocking reason. Keep credentials out of the evidence.
 
-Report all scenario verdicts together. After a repair, drive the failed scenarios and anything the repair touched. Fix product defects with one or more subagents depending on their size, respecting the repository's implementation methodologies, then run code review and QA again.
+## Report every divergence in one batch
+
+Drive every supplied scenario and return the divergences together, so the orchestrator classifies and routes the whole set at once instead of one repair cycle per divergence. Stop early only when a divergence leaves the remaining scenarios undrivable, and return those as `NOT VERIFIED` with that reason. Drive only the scenarios you were given, and report every defect you find, including the ones outside those scenarios, with the evidence a scenario verdict carries.
+
+## Re-drive after a repair
+
+Cover the scenarios that failed and the scenarios the repair touched. Your dispatch names both sets, and their union is the whole scope.
+
+## Stay inside QA
+
+Repair only disposable drive setup and evidence capture. Product code, product tests, the domain glossary, and the run's design records stay as you found them.
+
+## Report
+
+Return the driven head SHA, one verdict and evidence path per scenario, any disposable setup changes you made, and anything you could not drive with its blocking reason.

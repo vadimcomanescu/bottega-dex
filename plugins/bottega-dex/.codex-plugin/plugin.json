@@ -1,6 +1,6 @@
 {
   "name": "bottega-dex",
-  "version": "0.8.5",
+  "version": "0.9.0",
   "description": "Run Bottega's delivery workflow through native Codex orchestration, dual review, QA, and pull-request publication.",
   "author": {
     "name": "Vadim Comanescu",
