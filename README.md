@@ -23,6 +23,14 @@ $bottega-dex:maestro <task, bug, or issue URL>
 
 `maestro` is opt-in because a run can perform substantial agent work and open a pull request.
 
+To scan for the strongest codebase improvement, choose one candidate, and take it through Maestro:
+
+```text
+$bottega-dex:improve [area or direction]
+```
+
+`improve` is also opt-in. It checks code and change-history hot spots, checks open issues and pull requests for collisions, presents its strongest candidates in the conversation, and waits for your choice before starting a run. The accepted scan becomes Maestro's discovery, so the run does not repeat it.
+
 The upstream orchestration method is also directly invocable:
 
 ```text
@@ -62,6 +70,9 @@ plugins/bottega-dex/
   skills/
     maestro/SKILL.md
     bro/
+      SKILL.md
+      agents/openai.yaml
+    improve/
       SKILL.md
       agents/openai.yaml
     start/SKILL.md

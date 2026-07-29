@@ -37,6 +37,8 @@ describe("Codex plugin package", () => {
       "scripts/exec-common.js",
       "skills/bro/SKILL.md",
       "skills/bro/agents/openai.yaml",
+      "skills/improve/SKILL.md",
+      "skills/improve/agents/openai.yaml",
       "skills/close/SKILL.md",
       "skills/close/references/qa-evidence.md",
       "skills/code-review/SKILL.md",
@@ -99,6 +101,36 @@ describe("Codex plugin package", () => {
     expect(bro).not.toMatch(/certif(?:y|ied|ication)/i);
     expect(metadata).toContain('display_name: "Bro"');
     expect(metadata).toContain('default_prompt: "Use $bottega-dex:bro ');
+  });
+
+  it("exposes improve as an opt-in architecture scan that hands one choice to Maestro", () => {
+    const improve = readFileSync(
+      join(PLUGIN, "skills", "improve", "SKILL.md"),
+      "utf8",
+    );
+    const metadata = readFileSync(
+      join(PLUGIN, "skills", "improve", "agents", "openai.yaml"),
+      "utf8",
+    );
+    const maestro = readFileSync(
+      join(PLUGIN, "skills", "maestro", "SKILL.md"),
+      "utf8",
+    );
+
+    expect(improve).toMatch(/^name: improve$/m);
+    expect(improve).toMatch(/Never (?:invoke|use).*proactively/i);
+    expect(improve).toMatch(/commit history.*hot spots/is);
+    expect(improve).toMatch(/Check open issues and pull requests before proposing/i);
+    expect(improve).toMatch(/official documentation.*runtime skill.*industry patterns/is);
+    expect(improve).toMatch(/Leave interface design to the run/i);
+    expect(improve).toMatch(/No HTML.*No file report/i);
+    expect(improve).toMatch(/The user picks one or rejects them/i);
+    expect(improve).toMatch(/scan stands as.*discovery/i);
+    expect(improve).toContain("[maestro](../maestro/SKILL.md)");
+    expect(metadata).toContain('display_name: "Improve"');
+    expect(metadata).toContain('default_prompt: "Use $bottega-dex:improve ');
+    expect(metadata).toMatch(/policy:\s+allow_implicit_invocation: false/s);
+    expect(maestro).toMatch(/improve.*scan.*discovery.*without repeating/is);
   });
 
   it("keeps the imported supporting procedures Codex-valid", () => {
@@ -188,12 +220,12 @@ describe("Codex plugin package", () => {
     const packageLock = json(join(ROOT, "package-lock.json"));
     expect(manifest).toMatchObject({
       name: "bottega-dex",
-      version: "0.9.4",
+      version: "0.9.5",
       skills: "./skills/",
     });
-    expect(packageJson.version).toBe("0.9.4");
-    expect(packageLock.version).toBe("0.9.4");
-    expect(packageLock.packages[""].version).toBe("0.9.4");
+    expect(packageJson.version).toBe("0.9.5");
+    expect(packageLock.version).toBe("0.9.5");
+    expect(packageLock.packages[""].version).toBe("0.9.5");
     expect(manifest.interface.defaultPrompt).toEqual([
       "$bottega-dex:maestro Take this task through adaptive delivery, dual review, any required QA, and a pull request.",
     ]);
@@ -217,5 +249,8 @@ describe("Codex plugin package", () => {
     expect(AGENTS).toMatch(/must re-enter a skipped phase/i);
     expect(AGENTS).toMatch(/QA is required when.*user-facing surface or product behavior/i);
     expect(AGENTS).toMatch(/SKILL.*prose exception.*fresh high-reasoning.*whole docs diff/is);
+    expect(README).toContain("$bottega-dex:improve [area or direction]");
+    expect(README).toMatch(/scan.*strongest.*candidate.*maestro/is);
+    expect(AGENTS).toContain("plugins/bottega-dex/skills/improve/SKILL.md");
   });
 });
