@@ -15,6 +15,7 @@ Native Codex subagent instructions in this plugin are intentional. The Claude co
 | `plugins/bottega-dex/skills/maestro/SKILL.md` | User-facing end-to-end workflow |
 | `plugins/bottega-dex/skills/bro/SKILL.md` | User-facing plain-language restatement skill |
 | `plugins/bottega-dex/skills/improve/SKILL.md` | User-facing codebase improvement scan and Maestro handoff |
+| `plugins/bottega-dex/skills/setup/SKILL.md` | User-facing one-time machine and repository reconciliation |
 | `plugins/bottega-dex/skills/start/SKILL.md` | Supporting ownership, isolation, and launch procedure |
 | `plugins/bottega-dex/skills/discover/SKILL.md` | Supporting discovery procedure |
 | `plugins/bottega-dex/skills/architect/SKILL.md` | Shared architecture doctrine |
@@ -41,6 +42,7 @@ Native Codex subagent instructions in this plugin are intentional. The Claude co
 - Write plain engineering English. Do not use em dashes, metaphors, theatrical names, or invented process vocabulary.
 - Keep `maestro` as the user-facing end-to-end workflow and `orchestrate` as its complete build method.
 - Keep `improve` explicitly invoked. It scans and proposes before a run exists, waits for the user's candidate choice, then gives the accepted scan to `maestro` as completed discovery.
+- Keep `setup` explicitly invoked and separate from a run. It reads the repository's existing authorities, proposes exact machine, file, and GitHub changes, waits for approval, and is idempotent.
 - The fixed phase order is `start`, `discover`, `architect`, optional `panel`, `use-claude`, `orchestrate`, `code-review`, `qa`, `close`. Adaptive execution may omit an unnecessary nonmandatory later phase but never reorder phases, and it must re-enter a skipped phase if the work grows to need it.
 - Discovery findings feed architecture and the orchestration brief.
 - `start` reads the host repository's documented merge procedure. `close` follows that procedure: opening the PR arms a queue where one owns landing, while opener-armed GitHub auto-merge and its red hold check remain a documented fallback only.
@@ -53,7 +55,7 @@ Native Codex subagent instructions in this plugin are intentional. The Claude co
 - QA is required when a user-facing surface or product behavior changed. Otherwise `maestro` skips it. When run, QA drives the reviewed artifact and never fixes product code.
 - Never issue a direct merge command. A queue-owned PR is watched through its queue summary and updated-base checks; an `autoMergeRequest` of null is normal there.
 - Keep `plugins/bottega-dex/skills/orchestrate/SKILL.md` identical to the upstream source linked in `README.md`.
-- Keep imported `start`, `discover`, `architect`, `improve`, `implement`, `panel`, `qa`, and `close` procedures aligned with the Bottega source linked in `README.md`, except for Codex-native adaptations.
+- Keep imported `setup`, `start`, `discover`, `architect`, `improve`, `implement`, `panel`, `qa`, and `close` procedures aligned with the Bottega source linked in `README.md`, except for Codex-native adaptations.
 - Preserve the upstream copyright notice in `LICENSE`.
 - Preserve unrelated changes. Use `apply_patch` for edits and stage explicit paths.
 

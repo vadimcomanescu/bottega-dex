@@ -23,6 +23,14 @@ $bottega-dex:maestro <task, bug, or issue URL>
 
 `maestro` is opt-in because a run can perform substantial agent work and open a pull request.
 
+Before the first run in a repository, reconcile its agent map, commands, domain documentation, tracker conventions, merge governance, and labels:
+
+```text
+$bottega-dex:setup
+```
+
+`setup` is explicit-only. It checks the installed Codex and Claude harness, reads the repository's existing authorities, presents each exact file or GitHub change, and waits for approval before applying anything. A conforming repository produces no changes on a rerun.
+
 To scan for the strongest codebase improvement, choose one candidate, and take it through Maestro:
 
 ```text
@@ -75,6 +83,9 @@ plugins/bottega-dex/
     improve/
       SKILL.md
       agents/openai.yaml
+    setup/
+      SKILL.md
+      agents/openai.yaml
     start/SKILL.md
     discover/SKILL.md
     architect/
@@ -100,7 +111,7 @@ plugins/bottega-dex/
 
 The bundled `orchestrate` skill is byte-for-byte identical to [provencher/codex-skills `orchestrate/SKILL.md`](https://github.com/provencher/codex-skills/blob/main/orchestrate/SKILL.md), retrieved from commit [`8aa6c42`](https://github.com/provencher/codex-skills/commit/8aa6c42b73781c905c55f8a1253a18127079ac21). Its user-facing metadata lives in `skills/orchestrate/agents/openai.yaml`. The upstream copyright notice is preserved in [LICENSE](LICENSE).
 
-The surrounding procedures are adapted from [Bottega at `1de2acabd1004ebd9cae697e89f9b2889571bea9`](https://github.com/vadimcomanescu/bottega/tree/1de2acabd1004ebd9cae697e89f9b2889571bea9/skills). Bottega's Fable and Opus worker roles become native Codex orchestration; its GPT cross-read becomes the direct Claude cross-read in `use-claude`. Bottega's queue-first merge doctrine is applied through the host repository's documented procedure rather than a hard-coded Mergify configuration.
+The surrounding procedures, including `setup`, are adapted from [Bottega at `1de2acabd1004ebd9cae697e89f9b2889571bea9`](https://github.com/vadimcomanescu/bottega/tree/1de2acabd1004ebd9cae697e89f9b2889571bea9/skills). Bottega's Claude-host harness setup becomes Codex plugin and Claude CLI verification; its Fable and Opus worker roles become native Codex orchestration; its GPT cross-read becomes the direct Claude cross-read in `use-claude`. Bottega's queue-first merge doctrine is applied through the host repository's documented procedure rather than a hard-coded Mergify configuration.
 
 ## Review and Claude boundaries
 

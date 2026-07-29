@@ -39,6 +39,8 @@ describe("Codex plugin package", () => {
       "skills/bro/agents/openai.yaml",
       "skills/improve/SKILL.md",
       "skills/improve/agents/openai.yaml",
+      "skills/setup/SKILL.md",
+      "skills/setup/agents/openai.yaml",
       "skills/close/SKILL.md",
       "skills/close/references/qa-evidence.md",
       "skills/code-review/SKILL.md",
@@ -133,6 +135,40 @@ describe("Codex plugin package", () => {
     expect(maestro).toMatch(/improve.*scan.*discovery.*without repeating/is);
   });
 
+  it("exposes setup as an explicit, idempotent Codex-native repository reconciliation", () => {
+    const setup = readFileSync(
+      join(PLUGIN, "skills", "setup", "SKILL.md"),
+      "utf8",
+    );
+    const metadata = readFileSync(
+      join(PLUGIN, "skills", "setup", "agents", "openai.yaml"),
+      "utf8",
+    );
+
+    expect(setup).toMatch(/^name: setup$/m);
+    expect(setup).toMatch(/only when the user explicitly invokes/i);
+    expect(setup).toContain("[architect](../architect/SKILL.md)");
+    expect(setup).toContain("codex plugin list --json");
+    expect(setup).toMatch(/Report its installed version/i);
+    expect(setup).toMatch(/Do not claim.*current.*same installed plugin/is);
+    expect(setup).toMatch(/separately approved marketplace refresh/i);
+    expect(setup).toContain("claude auth status");
+    expect(setup).toMatch(/Do not make a paid model call only to inspect authentication/i);
+    expect(setup).toMatch(/default to `AGENTS\.md`/i);
+    expect(setup).toContain("<!-- bottega-dex:setup v1 begin -->");
+    expect(setup).toMatch(/every available command from a disposable worktree, never the user's checkout/i);
+    expect(setup).toMatch(/category the project does not provide.*instead of inventing/is);
+    expect(setup).toMatch(/discovered command fails.*exact failure.*leave it unwritten/is);
+    expect(setup).toContain("docs/agents/issue-tracker.md");
+    expect(setup).toMatch(/showing the exact change and receiving the user's approval/i);
+    expect(setup).toMatch(/rerun on a conforming repo(?:sitory)? makes zero file and zero GitHub changes/is);
+    expect(setup).not.toContain("BASH_MAX_TIMEOUT_MS");
+    expect(setup).not.toMatch(/Route guard/i);
+    expect(metadata).toContain('display_name: "Setup"');
+    expect(metadata).toContain('default_prompt: "Use $bottega-dex:setup ');
+    expect(metadata).toMatch(/policy:\s+allow_implicit_invocation: false/s);
+  });
+
   it("keeps the imported supporting procedures Codex-valid", () => {
     const start = readFileSync(join(PLUGIN, "skills", "start", "SKILL.md"), "utf8");
     const discover = readFileSync(
@@ -220,12 +256,12 @@ describe("Codex plugin package", () => {
     const packageLock = json(join(ROOT, "package-lock.json"));
     expect(manifest).toMatchObject({
       name: "bottega-dex",
-      version: "0.9.5",
+      version: "0.9.6",
       skills: "./skills/",
     });
-    expect(packageJson.version).toBe("0.9.5");
-    expect(packageLock.version).toBe("0.9.5");
-    expect(packageLock.packages[""].version).toBe("0.9.5");
+    expect(packageJson.version).toBe("0.9.6");
+    expect(packageLock.version).toBe("0.9.6");
+    expect(packageLock.packages[""].version).toBe("0.9.6");
     expect(manifest.interface.defaultPrompt).toEqual([
       "$bottega-dex:maestro Take this task through adaptive delivery, dual review, any required QA, and a pull request.",
     ]);
@@ -251,6 +287,9 @@ describe("Codex plugin package", () => {
     expect(AGENTS).toMatch(/SKILL.*prose exception.*fresh high-reasoning.*whole docs diff/is);
     expect(README).toContain("$bottega-dex:improve [area or direction]");
     expect(README).toMatch(/scan.*strongest.*candidate.*maestro/is);
+    expect(README).toContain("$bottega-dex:setup");
+    expect(README).toMatch(/setup.*explicit-only.*exact file or GitHub change.*approval/is);
     expect(AGENTS).toContain("plugins/bottega-dex/skills/improve/SKILL.md");
+    expect(AGENTS).toContain("plugins/bottega-dex/skills/setup/SKILL.md");
   });
 });
