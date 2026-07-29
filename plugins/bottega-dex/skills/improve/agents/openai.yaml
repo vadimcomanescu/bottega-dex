@@ -1,0 +1,7 @@
+interface:
+  display_name: "Improve"
+  short_description: "Find the strongest codebase improvement"
+  default_prompt: "Use $bottega-dex:improve to scan this codebase for the strongest architecture improvement."
+
+policy:
+  allow_implicit_invocation: false

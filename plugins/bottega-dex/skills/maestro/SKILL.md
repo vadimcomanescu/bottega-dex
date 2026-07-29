@@ -9,7 +9,7 @@ Take the request to a green pull request. Ask first whether to hold it or let it
 
 Use [start](../start/SKILL.md) to take on the work.
 
-Run [discover](../discover/SKILL.md) with the user.
+Run [discover](../discover/SKILL.md) with the user. When [improve](../improve/SKILL.md) hands over an accepted scan, treat that scan as discovery, confirm the agreed candidate and criteria, and continue without repeating the scan.
 
 When discovery is done, tell the user how much of the remaining process the work needs, then run only that. Skip a later step only when nothing in it is still unclear and a wrong call would be cheap to reverse after merge. Never skip the isolated worktree and branch, green project gates, review of the whole diff, or the pull request. If the work grows, go back and run any skipped steps it now needs.
 

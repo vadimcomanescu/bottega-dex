@@ -1,6 +1,6 @@
 {
   "name": "bottega-dex",
-  "version": "0.9.4",
+  "version": "0.9.5",
   "description": "Run Bottega's delivery workflow through native Codex orchestration, dual review, QA, and pull-request publication.",
   "author": {
     "name": "Vadim Comanescu",
@@ -19,10 +19,10 @@
   "interface": {
     "displayName": "Bottega Dex",
     "shortDescription": "Deliver reviewed PRs with Codex agents.",
-    "longDescription": "Runs setup, discovery, native Codex orchestration, GPT-5.6 Sol and Claude Opus 5 autoreview, product QA, and pull-request publication.",
+    "longDescription": "Scans for codebase improvements and runs setup, discovery, native Codex orchestration, GPT-5.6 Sol and Claude Opus 5 autoreview, product QA, and pull-request publication.",
     "developerName": "Vadim Comanescu",
     "category": "Coding",
-    "capabilities": ["Agents", "Code review", "QA", "Pull requests"],
+    "capabilities": ["Agents", "Architecture", "Code review", "QA", "Pull requests"],
     "defaultPrompt": [
       "$bottega-dex:maestro Take this task through adaptive delivery, dual review, any required QA, and a pull request."
     ]
