@@ -50,6 +50,42 @@ describe("Bottega Dex workflow", () => {
     expect(MAESTRO).toMatch(/Keep approvals.*with the user/i);
   });
 
+  it("adapts the middle phases without weakening delivery or user authority", () => {
+    expect(MAESTRO).toMatch(/tell the user how much of the remaining process/i);
+    expect(MAESTRO).toMatch(/nothing.*unclear.*cheap to reverse/i);
+    expect(MAESTRO).toMatch(/worktree and branch.*project gates.*whole diff.*pull request/is);
+    expect(MAESTRO).toMatch(/go back.*skipped/i);
+    expect(MAESTRO).toMatch(/repository.*answer.*cheaply reversible/i);
+    expect(MAESTRO).toMatch(/choice and (?:the )?reason.*keep moving/i);
+    expect(MAESTRO).toMatch(/approvals.*consequential product choices.*rule exceptions.*irreversible actions/is);
+    expect(MAESTRO).toMatch(/review fix.*promised contract/i);
+    expect(MAESTRO).toMatch(/costly to reverse.*second opinion/is);
+    expect(MAESTRO).toMatch(/revision.*new requirement.*user.*before.*builder/is);
+    expect(MAESTRO).toMatch(/new requirement.*check,? gate,? or validator.*threat model/is);
+    expect(MAESTRO).toMatch(/only one builder.*skip.*review only when.*integrated structured review.*will run/is);
+    expect(MAESTRO).toMatch(/SKILL.*prose exception.*fresh high-reasoning review.*whole docs diff/is);
+    expect(MAESTRO).toMatch(/more than one builder.*fresh.*review/is);
+    expect(MAESTRO).toMatch(/user-facing surface or product behavior.*use \[qa\]/is);
+    expect(MAESTRO).toMatch(/no user-facing surface or product behavior.*skip QA/is);
+  });
+
+  it("governs validator threat models and review repair cycles", () => {
+    expect(MAESTRO).toMatch(/check,? gate,? or validator/i);
+    expect(MAESTRO).toMatch(/threat model.*input or actor class.*deliberately excludes/is);
+    expect(MAESTRO).toMatch(/rule on every finding.*threat model/is);
+    expect(MAESTRO).toMatch(/record and reject.*out of (?:the )?threat model/is);
+    expect(MAESTRO).toMatch(/fix.*change.*promised contract.*user/is);
+    expect(MAESTRO).toMatch(/two.*cycles.*not converged.*pause.*reclassify.*code-review.*decide whether to continue or.*user/is);
+    expect(MAESTRO).not.toMatch(/two.*cycles.*not converged.*stop dispatching and bring/is);
+
+    expect(REVIEW).toMatch(/scope baseline:.*one sentence of threat model/is);
+    expect(REVIEW).toContain("**Out of threat model**");
+    expect(REVIEW).toMatch(/compute both numbers.*before each.*dispatch/i);
+    expect(REVIEW).toMatch(/two-cycle pause.*inside the threat model.*cycles are narrowing/is);
+    expect(REVIEW).toMatch(/`REVIEW\.md`.*smell-baseline\.md.*threat-model sentence/is);
+    expect(REVIEW).toMatch(/never the run's other design decisions/i);
+  });
+
   it("uses direct Claude only for cross-reads and panels", () => {
     expect(USE_CLAUDE).toContain(
       "claude -p --safe-mode --model claude-fable-5 --effort high",
@@ -72,6 +108,7 @@ describe("Bottega Dex workflow", () => {
   });
 
   it("keeps review, QA, close, and the reviewer adapter at their boundaries", () => {
+    expect(REVIEW).toContain("QA on the accepted head when required");
     expect(QA).toMatch(/Product code.*stay as you found them/i);
     expect(CLOSE).toMatch(/head accepted by autoreview/i);
     expect(CLOSE).toContain("references/qa-evidence.md");
@@ -81,5 +118,33 @@ describe("Bottega Dex workflow", () => {
     expect(ADAPTER).toContain('effort: "high"');
     expect(ADAPTER).not.toContain("panelist:");
     expect(ADAPTER).not.toContain("judge:");
+  });
+
+  it("closes reviewed heads with QA only when Maestro required it", () => {
+    expect(CLOSE).toMatch(
+      /mandatory dual whole-diff review and any QA required for a user-facing surface or product behavior change/i,
+    );
+    expect(CLOSE).toMatch(
+      /head accepted by autoreview and the head the PR will publish are one SHA/i,
+    );
+    expect(CLOSE).toMatch(
+      /When QA ran, the head QA verified is that same SHA/i,
+    );
+    expect(CLOSE).toMatch(/When QA ran, put its evidence where the PR can read it/i);
+    expect(CLOSE).toMatch(
+      /When QA ran, the body also carries the QA evidence.*NOT VERIFIED/is,
+    );
+    expect(CLOSE).toMatch(
+      /When QA ran, publish its fresh evidence and update the PR body's evidence links/i,
+    );
+    expect(CLOSE).toMatch(
+      /When QA ran, rerun the affected QA scenarios on the updated head/i,
+    );
+    expect(CLOSE).toMatch(/When QA ran, include its evidence links/i);
+    expect(CLOSE).not.toMatch(
+      /The head accepted by autoreview, the head QA verified, and the head the PR will publish are one SHA/i,
+    );
+    expect(CLOSE).not.toMatch(/then review and QA the updated work again/i);
+    expect(CLOSE).not.toMatch(/publish its fresh QA evidence/i);
   });
 });

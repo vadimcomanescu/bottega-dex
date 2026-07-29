@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 
 const ROOT = join(import.meta.dirname, "..");
 const PLUGIN = join(ROOT, "plugins", "bottega-dex");
+const README = readFileSync(join(ROOT, "README.md"), "utf8");
+const AGENTS = readFileSync(join(ROOT, "AGENTS.md"), "utf8");
 
 const UPSTREAM_SKILL = `---
 name: orchestrate
@@ -93,6 +95,8 @@ describe("Codex plugin package", () => {
     expect(bro).toMatch(/^name: bro$/m);
     expect(bro).not.toContain("disable-model-invocation");
     expect(bro).toContain("Restate your last message");
+    expect(bro).toContain("ASD-STE100 Simplified Technical English");
+    expect(bro).not.toMatch(/certif(?:y|ied|ication)/i);
     expect(metadata).toContain('display_name: "Bro"');
     expect(metadata).toContain('default_prompt: "Use $bottega-dex:bro ');
   });
@@ -180,13 +184,38 @@ describe("Codex plugin package", () => {
     ]);
 
     const manifest = json(join(PLUGIN, ".codex-plugin", "plugin.json"));
+    const packageJson = json(join(ROOT, "package.json"));
+    const packageLock = json(join(ROOT, "package-lock.json"));
     expect(manifest).toMatchObject({
       name: "bottega-dex",
-      version: "0.9.3",
+      version: "0.9.4",
       skills: "./skills/",
     });
+    expect(packageJson.version).toBe("0.9.4");
+    expect(packageLock.version).toBe("0.9.4");
+    expect(packageLock.packages[""].version).toBe("0.9.4");
     expect(manifest.interface.defaultPrompt).toEqual([
-      "$bottega-dex:maestro Take this task through discovery, orchestration, dual review, QA, and a pull request.",
+      "$bottega-dex:maestro Take this task through adaptive delivery, dual review, any required QA, and a pull request.",
     ]);
+  });
+
+  it("documents the adaptive ordered workflow and selected Bottega snapshot", () => {
+    expect(README).toContain("1de2acabd1004ebd9cae697e89f9b2889571bea9");
+    expect(README).toContain(
+      "start → discover → architect when needed → panel when its three conditions hold → Claude cross-read when reversal is costly → orchestrate → code-review → QA when user-facing behavior changes → close",
+    );
+    expect(README).toMatch(/Architect runs only when.*acceptance criteria.*slices need settling/i);
+    expect(README).toMatch(/Claude cross-read runs only when.*costly to reverse/i);
+    expect(README).toMatch(/QA runs only when.*user-facing surface or product behavior changed/i);
+    expect(README).toMatch(/skip a later phase only when nothing.*unclear.*cheap to reverse/i);
+    expect(README).toMatch(/isolated branch and worktree.*project gates.*whole-diff review.*pull request/i);
+    expect(README).toMatch(/QA is required when.*user-facing surface or product behavior/i);
+    expect(README).toMatch(/no user-facing surface or product behavior.*skips QA/i);
+    expect(README).toMatch(/single builder.*structured whole-diff review will run/is);
+    expect(README).toMatch(/SKILL.*prose exception.*fresh high-reasoning.*whole docs diff/is);
+    expect(AGENTS).toMatch(/fixed phase order.*start.*discover.*architect.*panel.*use-claude.*orchestrate.*code-review.*qa.*close/is);
+    expect(AGENTS).toMatch(/must re-enter a skipped phase/i);
+    expect(AGENTS).toMatch(/QA is required when.*user-facing surface or product behavior/i);
+    expect(AGENTS).toMatch(/SKILL.*prose exception.*fresh high-reasoning.*whole docs diff/is);
   });
 });
