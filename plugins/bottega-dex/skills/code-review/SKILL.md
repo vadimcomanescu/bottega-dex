@@ -45,31 +45,32 @@ Do not run autoreview when the entire diff is `SKILL.md` files, their supporting
 - If rejecting a finding as intentional/not worth fixing, add a brief inline code comment only when it explains a real invariant or ownership decision that future reviewers should know.
 - Do not push just to review. Push only when the user requested push/ship/PR update.
 - A clean review of a pushed head posts one commit status on that head, context `bottega/review`, naming the base it was reviewed against.
-- Merge only when the checks are green, the head still equals the reviewed head (`gh pr merge <PR> --squash --match-head-commit <sha>`), and the base has not advanced. Reviewing standalone, outside a Bottega Dex maestro run, nothing else gates the merge: run one only when the user armed it in their own words, and never for a change touching authentication, money, permissions, persisted data, or a destructive operation. In a Bottega Dex maestro run the recorded evidence is that gate (the integrated cross-family review, QA on the accepted head, the project's checks), and the run's Close phase merges on it.
+- Merge only when the checks are green, the head still equals the reviewed head (`gh pr merge <PR> --squash --match-head-commit <sha>`), and the base has not advanced. Reviewing standalone, outside a Bottega Dex maestro run, nothing else gates the merge: run one only when the user armed it in their own words, and never for a change touching authentication, money, permissions, persisted data, or a destructive operation. In a Bottega Dex maestro run the recorded evidence is that gate (the integrated cross-family review, QA on the accepted head when required, the project's checks), and the run's Close phase merges on it.
 
 ## Scope Governor
 
 Autoreview is a closeout gate, not permission to rewrite the task.
 
-Before the first review, freeze a scope baseline: original request or issue, target branch, intended behavior, owner boundary, changed files, and non-test LOC. For inherited or already-bloated branches, use the intended PR diff as the baseline rather than accepting all existing branch drift.
+Before the first review, freeze a scope baseline: original request or issue, target branch, intended behavior, owner boundary, changed files, non-test LOC, and one sentence of threat model naming the input or actor class the changed code covers and its deliberate exclusions. For inherited or already-bloated branches, use the intended PR diff as the baseline rather than accepting all existing branch drift.
 
 Before patching a finding, classify it:
 
 - **In-scope blocker**: the finding is introduced by the current diff, affects the same owner boundary, and can be fixed without changing the task's contract.
 - **Follow-up**: the finding is real but belongs to an adjacent bug class, sibling surface, cleanup, or broader hardening track.
 - **Stop-and-escalate**: the finding requires a new protocol/config/storage/public API contract, a different owner boundary, a release-process change, or a design choice outside the original request.
+- **Out of threat model**: the finding is real and may be reproducible, but its failure requires an input or actor class outside the frozen threat model. Record the finding and reason in the review evidence, reject it, and do not dispatch a fix. A constructed reproduction proves reachability, not that the scenario is in the agreed model. Only the user can approve widening that model.
 
 In a Bottega Dex maestro run, the maestro verifies each finding against the real code, then dispatches accepted findings to one or more fresh native Codex subagents according to the repair size, briefed with the repository's implementation methodology, the findings, and the project's commands; the maestro never edits production code. Outside a run, fix directly as this contract states.
 
 Stop patching and report the scope break instead of continuing when:
 
 - a narrow PR turns into an architecture change, protocol change, migration, or release-process change;
-- the diff grows past 2x the original files or non-test LOC without explicit approval to expand scope;
+- the diff grows past 2x the original files or non-test LOC without explicit approval to expand scope; compute both numbers against the frozen baseline before each repair dispatch;
 - two review-triggered patch cycles have not converged; pause and reclassify every remaining finding before another edit;
 - the best fix is "define the canonical contract first" rather than another local inference layer;
 - fixing the accepted finding would make the PR no longer describe the same behavior, issue, or owner boundary.
 
-After the two-cycle pause, continue only when every remaining accepted finding is still an in-scope blocker. Otherwise preserve the useful analysis, identify the smallest safe landed subset if one exists, and open or request a follow-up for the larger fix. Do not keep committing speculative fixes just to satisfy the reviewer.
+After the two-cycle pause, continue only when every remaining accepted finding is an in-scope blocker inside the threat model and the cycles are narrowing: each cycle has fewer accepted findings than the previous cycle and does not reopen a fixed finding. Otherwise preserve the useful analysis, identify the smallest safe landed subset if one exists, and open or request a follow-up for the larger fix. Do not keep committing speculative fixes just to satisfy the reviewer.
 
 Do not stack or push review-triggered fix commits while scope classification or focused proof is unresolved. Keep exploratory edits local until the cycle is proven in scope; if scope breaks, remove them from the landing lane instead of preserving them as branch history.
 
@@ -151,7 +152,7 @@ Optional review context is first-class. Prompt files and datasets must be repo-r
 "$AUTOREVIEW" --mode branch --base origin/main --prompt-file review-notes.md --dataset evidence.json
 ```
 
-In a Bottega Dex maestro run the prompt carries the reviewed repository's root `REVIEW.md` when one exists and the fixed standards baseline ([references/smell-baseline.md](references/smell-baseline.md)), never the run's own design decisions. A decision record the run committed on the branch arrives in the bundle as changed content and is reviewed as any file; the isolation rule governs the prompt, not the diff. Write any prompt to a file outside the reviewed repo and pass it as `--prompt "$(cat <file>)"`; never paste PR text into the command source, and keep `--json-output` outside the reviewed repo.
+In a Bottega Dex maestro run the prompt carries the reviewed repository's root `REVIEW.md` when one exists, the fixed standards baseline ([references/smell-baseline.md](references/smell-baseline.md)), and the frozen threat-model sentence. This sentence is the only run-design exception, never the run's other design decisions. A decision record the run committed on the branch arrives in the bundle as changed content and is reviewed as any file; the isolation rule governs the prompt, not the diff. Write any prompt to a file outside the reviewed repo and pass it as `--prompt "$(cat <file>)"`; never paste PR text into the command source, and keep `--json-output` outside the reviewed repo.
 
 If an open PR exists, use its actual base:
 

@@ -1,6 +1,6 @@
 {
   "name": "bottega-dex",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "description": "Run Bottega's delivery workflow through native Codex orchestration, dual review, QA, and pull-request publication.",
   "author": {
     "name": "Vadim Comanescu",
@@ -24,7 +24,7 @@
     "category": "Coding",
     "capabilities": ["Agents", "Code review", "QA", "Pull requests"],
     "defaultPrompt": [
-      "$bottega-dex:maestro Take this task through discovery, orchestration, dual review, QA, and a pull request."
+      "$bottega-dex:maestro Take this task through adaptive delivery, dual review, any required QA, and a pull request."
     ]
   }
 }

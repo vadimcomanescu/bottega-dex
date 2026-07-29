@@ -1,0 +1,25 @@
+name: Merge control
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  hold:
+    name: hold
+    runs-on: ubuntu-latest
+    steps:
+      # This check blocks any pull request currently carrying the hold label. It does not evaluate code, review approval, or other readiness.
+      # It assumes this repository's owner-authored and cooperative-contributor model and is not tamper-resistant against a hostile pull request that changes this workflow.
+      - name: Enforce hold label
+        env:
+          HOLD_LABEL_PRESENT: ${{ contains(github.event.pull_request.labels.*.name, 'hold') }}
+        run: |
+          if [ "$HOLD_LABEL_PRESENT" = "true" ]; then
+            echo "Pull request is held."
+            exit 1
+          fi
+          echo "Pull request is not held."

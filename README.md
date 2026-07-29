@@ -3,10 +3,10 @@
 Bottega Dex ports Bottega's issue-to-pull-request workflow to Codex:
 
 ```text
-start → discover → architect → Claude cross-read → orchestrate → code-review → QA → close
+start → discover → architect when needed → panel when its three conditions hold → Claude cross-read when reversal is costly → orchestrate → code-review → QA when user-facing behavior changes → close
 ```
 
-`panel` joins architecture only when an open decision is costly to reverse and cannot be settled by a cheap check.
+Architect runs only when the design, acceptance criteria, or slices need settling. `panel` runs only when a decision is open, costly to reverse, and cannot be settled by a cheap check. The Claude cross-read runs only when a poor design would be costly to reverse. QA runs only when a user-facing surface or product behavior changed.
 
 ## Install
 
@@ -39,12 +39,13 @@ $bottega-dex:bro
 
 1. `start` settles whether the pull request should hold or merge on green, then creates the isolated branch and worktree and reads the repository's commands and documented merge procedure.
 2. `discover` uses narrow read-only scouts and works with the user to settle the direction and boundaries.
-3. `architect` makes the design, acceptance criteria, and independent vertical slices explicit. `panel` is available for the small set of consequential decisions that need model diversity.
-4. `use-claude` sends the settled design and execution proposal to Claude Fable 5 at high effort for a read-only second opinion.
-5. `maestro` invokes the exact upstream `orchestrate` skill. Native Codex subagents fan out across distinct slices, following `implement`; the main task integrates their work and retains approvals.
-6. `code-review` runs the bundled Bottega autoreview method on the integrated code diff with GPT-5.6 Sol at high reasoning and Claude Opus 5 at high effort. Autoreview owns its Claude invocation.
-7. `qa` drives the reviewed artifact through every affected user-visible scenario and records evidence-backed verdicts without editing product code.
-8. `close` publishes the evidence, opens the pull request, and follows the repository's documented landing mechanism. Opening the PR arms a merge queue where the repository uses one; opener-armed GitHub auto-merge with a red hold check remains the fallback where the repository documents it.
+3. After discovery, `maestro` states how much later process the work needs. It may skip a later phase only when nothing there is unclear and a wrong call is cheap to reverse. If the work grows, it re-enters skipped phases. The isolated branch and worktree, green project gates, whole-diff review, and pull request are the only phases or outcomes that are always required.
+4. When needed, `architect` makes the design, acceptance criteria, and independent vertical slices explicit. `panel` is available for the small set of consequential decisions that need model diversity.
+5. When a poor design would be costly to reverse, `use-claude` sends the settled design and execution proposal to Claude Fable 5 at high effort for a read-only second opinion.
+6. `maestro` invokes the exact upstream `orchestrate` skill. Native Codex subagents fan out across distinct slices, following `implement`; the main task integrates their work and retains approvals. A single builder skips its slice review only when the structured whole-diff review will run. When the integrated diff falls under the `SKILL.md` and prose exception, one fresh high-reasoning reviewer checks the whole docs diff. Multiple builders receive fresh slice reviews before integration.
+7. `code-review` runs the bundled Bottega autoreview method on the integrated code diff with GPT-5.6 Sol at high reasoning and Claude Opus 5 at high effort. Autoreview owns its Claude invocation.
+8. QA is required when a user-facing surface or product behavior changed. In that case, `qa` drives the reviewed artifact through every affected user-visible scenario and records evidence-backed verdicts without editing product code. When no user-facing surface or product behavior changed, `maestro` skips QA.
+9. `close` publishes the evidence, opens the pull request, and follows the repository's documented landing mechanism. Opening the PR arms a merge queue where the repository uses one; opener-armed GitHub auto-merge with a red hold check remains the fallback where the repository documents it.
 
 Narrow read-only scouts use low reasoning with no inherited conversation. Routine implementation uses medium reasoning and difficult work uses high reasoning. Every agent receives distinct ownership, leaf workers do not delegate, and the main task remains available to the user.
 
@@ -88,7 +89,7 @@ plugins/bottega-dex/
 
 The bundled `orchestrate` skill is byte-for-byte identical to [provencher/codex-skills `orchestrate/SKILL.md`](https://github.com/provencher/codex-skills/blob/main/orchestrate/SKILL.md), retrieved from commit [`8aa6c42`](https://github.com/provencher/codex-skills/commit/8aa6c42b73781c905c55f8a1253a18127079ac21). Its user-facing metadata lives in `skills/orchestrate/agents/openai.yaml`. The upstream copyright notice is preserved in [LICENSE](LICENSE).
 
-The surrounding procedures are adapted from [Bottega at `b4fc3ee`](https://github.com/vadimcomanescu/bottega/tree/b4fc3ee/skills). Bottega's Fable and Opus worker roles become native Codex orchestration; its GPT cross-read becomes the direct Claude cross-read in `use-claude`. Bottega's queue-first merge doctrine is applied through the host repository's documented procedure rather than a hard-coded Mergify configuration.
+The surrounding procedures are adapted from [Bottega at `1de2acabd1004ebd9cae697e89f9b2889571bea9`](https://github.com/vadimcomanescu/bottega/tree/1de2acabd1004ebd9cae697e89f9b2889571bea9/skills). Bottega's Fable and Opus worker roles become native Codex orchestration; its GPT cross-read becomes the direct Claude cross-read in `use-claude`. Bottega's queue-first merge doctrine is applied through the host repository's documented procedure rather than a hard-coded Mergify configuration.
 
 ## Review and Claude boundaries
 
