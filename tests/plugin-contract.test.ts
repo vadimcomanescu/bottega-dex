@@ -262,12 +262,12 @@ describe("Codex plugin package", () => {
     const packageLock = json(join(ROOT, "package-lock.json"));
     expect(manifest).toMatchObject({
       name: "bottega-dex",
-      version: "0.9.7",
+      version: "0.9.8",
       skills: "./skills/",
     });
-    expect(packageJson.version).toBe("0.9.7");
-    expect(packageLock.version).toBe("0.9.7");
-    expect(packageLock.packages[""].version).toBe("0.9.7");
+    expect(packageJson.version).toBe("0.9.8");
+    expect(packageLock.version).toBe("0.9.8");
+    expect(packageLock.packages[""].version).toBe("0.9.8");
     expect(manifest.interface.defaultPrompt).toEqual([
       "$bottega-dex:maestro Take this task through adaptive delivery, dual review, any required QA, and a pull request.",
     ]);

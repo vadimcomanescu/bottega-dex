@@ -51,7 +51,7 @@ Do not run autoreview when the entire diff is `SKILL.md` files, their supporting
 
 Autoreview is a closeout gate, not permission to rewrite the task.
 
-Before the first review, freeze a scope baseline: original request or issue, target branch, intended behavior, owner boundary, changed files, non-test LOC, and one sentence of threat model naming the input or actor class the changed code covers and its deliberate exclusions. For inherited or already-bloated branches, use the intended PR diff as the baseline rather than accepting all existing branch drift.
+Before the first review, freeze a scope baseline: original request or issue, target branch, intended behavior, owner boundary, changed files, non-test LOC, the interfaces the diff's tests were agreed to cross when the run or the invoker names them, and one sentence of threat model naming the input or actor class the changed code covers and its deliberate exclusions. For inherited or already-bloated branches, use the intended PR diff as the baseline rather than accepting all existing branch drift.
 
 Before patching a finding, classify it:
 
@@ -152,7 +152,7 @@ Optional review context is first-class. Prompt files and datasets must be repo-r
 "$AUTOREVIEW" --mode branch --base origin/main --prompt-file review-notes.md --dataset evidence.json
 ```
 
-In a Bottega Dex maestro run the prompt carries the reviewed repository's root `REVIEW.md` when one exists, the fixed standards baseline ([references/smell-baseline.md](references/smell-baseline.md)), and the frozen threat-model sentence. This sentence is the only run-design exception, never the run's other design decisions. A decision record the run committed on the branch arrives in the bundle as changed content and is reviewed as any file; the isolation rule governs the prompt, not the diff. Write any prompt to a file outside the reviewed repo and pass it as `--prompt "$(cat <file>)"`; never paste PR text into the command source, and keep `--json-output` outside the reviewed repo.
+In a Bottega Dex maestro run the prompt carries the reviewed repository's root `REVIEW.md` when one exists, the fixed standards baseline ([references/smell-baseline.md](references/smell-baseline.md)), the frozen threat-model sentence, and the interfaces the design named for the diff's tests, so the reviewer reports a test crossing any other interface, or reaching into implementation internals, as a finding. The threat model and the named test interfaces are the only run-design exceptions, never the run's other design decisions. A decision record the run committed on the branch arrives in the bundle as changed content and is reviewed as any file; the isolation rule governs the prompt, not the diff. Write any prompt to a file outside the reviewed repo and pass it as `--prompt "$(cat <file>)"`; never paste PR text into the command source, and keep `--json-output` outside the reviewed repo.
 
 If an open PR exists, use its actual base:
 
