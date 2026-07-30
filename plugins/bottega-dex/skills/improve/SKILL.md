@@ -9,7 +9,7 @@ Find the refactors that turn shallow modules into deep ones, so the codebase get
 
 ## 1. Read
 
-Start with the smallest map that routes the work, normally the root `AGENTS.md`. Then read only what the scan needs: the relevant `CONTEXT.md` glossaries, the `docs/adr/` decisions covering the code in scope, and the document the repository names as its documentation authority.
+Start with the canonical agent map when one exists, then the domain owner it routes you to. When either route is absent, locate the smallest existing map and domain material by what they govern. Treat genuinely absent domain material as absent, not as a setup requirement. Read only what the scan needs: the vocabulary you find, the relevant contexts and decisions covering the code you will touch, and the document the repository names as its documentation authority. A missing context map, glossary, or ADR is not a gap. Surface a relevant ADR conflict before proposing a change.
 
 ## 2. Scope
 
