@@ -1,11 +1,11 @@
 ---
 name: setup
-description: Reconcile a machine and repository with Bottega Dex once, covering Codex plugin discovery, Claude CLI authentication, the repository's agent map and commands, domain documentation, tracker conventions, merge governance, and GitHub labels. Use only when the user explicitly invokes Bottega Dex setup for a repository.
+description: Reconcile a machine and repository with Bottega Dex by finding its existing maps and owners, filling only actual gaps, and proposing GitHub conventions and labels for approval. Use only when the user explicitly invokes Bottega Dex setup for a repository.
 ---
 
 # Setup
 
-Reconcile a machine and a repo with Bottega Dex, once. Configure Codex and the Claude CLI that carries the run's cross-family reads, then bring the project to the shape [architect](../architect/SKILL.md) defines: its domain docs and its documentation architecture. Read that skill before you start the repo work.
+Reconcile a machine and repository with Bottega Dex without replacing the repository's own documentation architecture. This procedure is safe to rerun. Configure Codex and the Claude CLI that carries cross-family reads, then make the existing agent map route to the repository's issue-tracker and domain owners. Read [architect](../architect/SKILL.md) before you start the repository work.
 
 Do not install tools, edit files, change repository settings, or mutate GitHub before showing the exact change and receiving the user's approval.
 
@@ -14,67 +14,65 @@ Do not install tools, edit files, change repository settings, or mutate GitHub b
 Check the Codex-native harness. Anything missing, report it rather than installing it silently.
 
 - **Requirements.** Verify `git`, Node.js 24 or later, and `gh`.
-- **Skill discovery.** Run `codex plugin list --json` and confirm `bottega-dex@bottega-dex` is installed and enabled. Report its installed version. When it is absent, walk me through the marketplace and plugin install commands from the README rather than symlinking anything. Do not claim the installed version is current by comparing it with files from the same installed plugin. Checking for an update requires a separately approved marketplace refresh.
-- **Claude CLI.** Verify `claude` is installed and logged in (`claude auth status`). The design cross-read and one review engine go through it. Do not make a paid model call only to inspect authentication.
+- **Skill discovery.** Run `codex plugin list --json` and confirm `bottega-dex@bottega-dex` is installed and enabled. Report its installed version. When it is absent, walk me through these commands rather than symlinking anything:
+
+  ```bash
+  codex plugin marketplace add vadimcomanescu/bottega-dex
+  codex plugin add bottega-dex@bottega-dex
+  ```
+
+  Do not claim the installed version is current by comparing it with files from the same installed plugin. Checking for an update requires a separately approved marketplace refresh.
+- **Claude CLI.** Verify `claude` is installed and logged in with `claude auth status`. The design cross-read and one review engine go through it. Do not make a paid model call only to inspect authentication.
 - **GitHub CLI.** Run `gh auth status`. Missing issue, label, ruleset, or repository-setting permissions are findings, not reasons to broaden access silently.
 
-## 2. Discover what the repo already has
+## 2. Find the existing owners
 
-Resolve symlinks first, then read. Never search by a fixed list of filenames. For each part of the shape below, find where it lives today, whatever it is called and wherever it sits. You are done when every part has either the home you located or a stated "nowhere":
+Resolve symlinks before reading. Find the repository's equivalent owners by what they govern, not by a prescribed path. An existing map route or owner doc wins wherever it lives, including under `docs/internal/` rather than `docs/agents/`. Finish with a named owner or `nowhere` for every item below.
 
-- The map: the root agent docs, whether one symlinks the other, and any existing `bottega-dex:setup` managed block.
-- Domain terms: whatever currently defines the repo's vocabulary, in any file or doc section.
-- Decisions: wherever design decisions are recorded today, including prose sections of README-class docs.
-- Tracker conventions, the GitHub remote, its labels, and whether `gh` is authenticated with issue and label permissions.
-- The project's commands (test, lint, format, typecheck, build, run), whether the canonical map states them, and `.gitignore`.
-- The end-to-end suite where the repo ships a user-facing surface: which flows it drives, and how a subset of them is named to its runner.
-- The default branch's merge governance: rulesets or branch protection, the auto-merge setting, and any automation that merges or arms auto-merge.
-- Any index the repo declares for its own agent skills.
+- The canonical agent map: root `AGENTS.md` and `CLAUDE.md`, their symlink state, the exact `<!-- bottega-dex:setup v1 begin -->` or `<!-- bottega-dex:setup v2 begin -->` block when either exists, and the map's routes. This is separate from `CONTEXT-MAP.md`, which maps bounded contexts and is not an agent map.
+- The issue-tracker owner: GitHub remote, issue and label permissions, tracker conventions, labels, and any repository-declared triage capability or triage owner.
+- The domain owner: the doc a consumer reads for domain vocabulary, relevant contexts, and decisions, including declared root or system and context-local ADR homes. It is meaningful even where no `CONTEXT.md`, `CONTEXT-MAP.md`, or `docs/adr/` exists. Read only the contexts and decisions relevant to the repository or work at hand.
+- The project's commands: test, lint, format, typecheck, build, and run, whether the canonical map states them, and `.gitignore`.
+- The end-to-end suite where the repository ships a user-facing surface: the flows it drives and how its runner names a subset.
+- The default branch's merge governance: rulesets or branch protection, auto-merge, and automation that merges or arms auto-merge.
+- Any index the repository declares for its own agent skills.
 
-## 3. Decide, one at a time
+## 3. Settle only missing choices
 
-Present the findings, then walk only the decisions the repo cannot answer, one per exchange, waiting for each answer:
+Present the findings, then ask one question at a time only where the repository cannot settle it.
 
-- **Canonical map**: which of `AGENTS.md` and `CLAUDE.md` is the map. Ask only when both exist as independent files. When one symlinks the other, its target is the map. When neither exists, default to `AGENTS.md` and present the choice so I can veto it in one read. The non-map filename only ever exists as a symlink to the map, so both harnesses load the one copy.
-- **Tracker location**, only when no remote settles it. A single GitHub remote settles it (GitHub Issues on that remote).
-- **Context count**, when the code suggests more than one bounded context.
-- **Area labels**, only when the repo has more than one bounded context whose names the tree does not settle. A single-context repo has none.
+- **Canonical map.** When both root files are independent, ask which is canonical. When one symlinks the other, its target is the map. When neither exists, default to `AGENTS.md` and let me veto it. Create the other filename as a symlink only when it has no material of its own.
+- **Tracker location.** Ask only when no GitHub remote settles it. One GitHub remote means GitHub Issues.
+- **Context count and area labels.** Ask only when the code suggests multiple bounded contexts whose names the tree does not settle. A single-context repository needs no area labels.
+- **Claim and force-push rules.** Propose a create-only branch claim only when the repository says multiple agents take tracker work and no concurrency-safe claim exists. Preserve an existing force-push rule. When it conflicts with the create-only claim, put the conflict to me as an approval decision.
 
-## 4. Propose the edits
+## 4. Propose actual gaps
 
-For every gap between the found state and the shape, show me the exact edit that closes it. Move content that already exists rather than inventing any, so you never create an empty glossary, ADR scaffold, or owner doc.
+Show the exact changes for approval. A conforming repository receives no file or GitHub changes. Do not add a marker, an agent-skills heading, or a second table merely to identify setup.
 
-- **The managed block** in the canonical map, delimited by versioned markers (`<!-- bottega-dex:setup v1 begin -->` and `<!-- bottega-dex:setup v1 end -->`) so a rerun updates only its own block. It routes to each fact's home and never restates it, and it records the symlink when the non-map file links the map.
-- **A commands section** in the canonical map when the map does not already state them: the project's test, lint, format, typecheck, build, and run commands. Verify every available command from a disposable worktree, never the user's checkout, before you write it. For a category the project does not provide, state that it is not provided instead of inventing a command. When a discovered command fails in the fresh worktree, report its exact failure as a finding and leave it unwritten rather than calling it unavailable. For an available run command: start it, watch for readiness, stop it, and confirm its processes and ports are released. Remove the disposable worktree after recording the results. The map is the commands' one home, so runs read them from it and fix them there when one breaks.
-- **The map symlink** when only one of `CLAUDE.md` and `AGENTS.md` exists: create the other as a symlink to it.
-- **Migrations.** Move discovered term definitions into the relevant `CONTEXT.md`. Move discovered decision records that meet the ADR bar into `docs/adr/`. A committed research, findings, or reading note is not a record at all, so the decision it reached becomes one ADR paragraph and the note is deleted. Two files claiming the same authority merge into one home. Every reference updates in the same change. Formats follow [architect](../architect/SKILL.md) and its references. When a source and its target both hold material, put the merge to me before you write.
-- **The missing end-to-end specs** when a flow the product cannot ship broken has no check the suite runs and names on its own (a tag, or whatever naming its runner offers). Draft them in the suite's own conventions for me to correct before they land. Where the harness cannot run that suite, file one issue naming the uncovered flows instead. Runs scope QA from that named set, so the suite is where these flows are named and you write no prose inventory of them.
-- **Owner docs** for tracker conventions, always reusing an existing equivalent home instead of creating a second one. When no equivalent exists, propose `docs/agents/issue-tracker.md` as the first owner. Where the repo takes tracker work with more than one agent, the conventions include the claim: an issue is claimed by creating its branch on origin with a create-only push, `git push -u origin <branch> --force-with-lease=refs/heads/<branch>:`, whose empty expected value means the ref must not exist. Exactly one creation wins, and the loser's push is rejected. Ref creation is the one operation GitHub performs atomically. Assigning, labelling, and commenting are plain writes: two agents that read the same instant both succeed, so assignment is proposed as the human-visible signal and never the lock. The claim releases when the branch is deleted on merge. Where you find a claim label or claim-comment protocol, show an edit that removes it.
-- **A merge-governance proposal** when the default branch has none. A merge queue is the preferred shape: it tests each PR against the default branch it will actually land on, and it makes the `hold` brake a queue condition, so a held PR keeps its green checks while the queue's summary names the hold, and red keeps one meaning. GitHub's own queue needs an organization-owned public repository or GitHub Enterprise Cloud (https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue). Where the plan lacks it, Mergify's queue is free for up to five users on private repositories. It reads the ruleset's required checks as queue conditions, so the ruleset stays the one home of what green means and the queue config file never restates the gate list. Either way the ruleset carries the project's gates as required checks, squash merges, no bypass actors, and zero required approvals while the owner authors the PRs, because an author cannot approve their own PR. The strict up-to-date requirement stays off, since the queue itself tests against the moved base. Changing a required check is ordered. To add one, land the workflow on the default branch before the ruleset requires it. To remove one, stop the live ruleset requiring it before you delete the reporting workflow. Either order inverted deadlocks every open PR on an unreported context. Where no queue is adoptable at all, the fallback stands: auto-merge allowed, armed by the account that opens the PR in the same breath as `gh pr create`, never a workflow holding a long-lived token. Two things rule out arming from a workflow: a merge made with `GITHUB_TOKEN` starts no workflow run on the default branch (https://docs.github.com/en/actions/concepts/security/github_token), and a token the owner has to mint by hand leaves the arming step skipping green until someone notices. In the fallback the `hold` brake is a required check that fails while the label is present, its workflow triggered on `pull_request` types `opened, reopened, synchronize, labeled, unlabeled`. The default trigger set omits the last two, and without them removing the label never re-runs the check. How a green PR lands is then the repository's own decision, written in its own documented procedure, which runs read from its map, so propose the shape and keep no second copy of the procedure. Where you find automation that merges a PR directly, show an edit that removes it.
-- **A `.bottega/` entry in `.gitignore`** when missing.
-- **The approved `area:*` labels, plus the `hold` label a held PR carries**, each created with `gh` as get-or-create and read back. The `area:*` labels organize the backlog for people, and the method never reads them. Never rename or delete an existing label.
+- **Routes and managed text.** First reconcile an existing v1 block as setup-owned routes, not as a second owner. Replace it with one `<!-- bottega-dex:setup v2 begin -->` and `<!-- bottega-dex:setup v2 end -->` block when setup-owned text remains, or preserve every needed route in the repository's existing map and remove the block. Never leave both versions. Keep every existing equivalent map route and owner doc. Only when a missing route needs setup-owned text, create or update the one v2 block in place. It routes to the existing issue-tracker and domain owners without restating them, and records the non-map symlink. When no equivalent owner exists, use `docs/agents/issue-tracker.md` and `docs/agents/domain.md` as the fallback owners. The tracker owner records the GitHub remote, concrete read, assign, comment, and close operations, any approved branch claim, and a pointer to the repository landing procedure without copying it. The domain owner tells consumers where vocabulary, relevant contexts, and declared root or system and context-local ADRs live. It creates no glossary, context map, or ADR scaffold. The glossary vocabulary governs new output, and a relevant ADR conflict is surfaced for a decision.
+- **Migrations.** When the reading in step 2 finds real domain terms outside the vocabulary home declared by the domain owner, propose moving them to that home. A new Bottega Dex-owned layout uses the relevant `CONTEXT.md`. When that reading finds a qualifying decision outside the ADR home declared by the domain owner, propose moving it there. Update every reference in the same approved change. Existing formats win, and a new artifact has material to contain.
+- **Commands.** Add a commands section to the canonical map only when it has no equivalent owner: test, lint, format, typecheck, build, and run. Verify every available command from a disposable worktree, never the user's checkout, before you write it. For a category the project does not provide, state that it is not provided instead of inventing a command. When a discovered command fails in the fresh worktree, report its exact failure as a finding and leave it unwritten rather than calling it unavailable. For an available run command, start it, wait for readiness, stop it, and confirm its processes and ports are released. Remove the disposable worktree after recording the results. The map is the commands' one home.
+- **Map symlink.** When only one root map exists, create the other as its symlink. When both independent maps have material, bring their merge to me before writing.
+- **End-to-end coverage.** When a product flow has no named executable check, draft the missing spec in the suite's own conventions for my approval. Where the suite cannot run, file one issue naming the uncovered flows. Do not write a duplicate prose inventory.
+- **Issue tracker.** Reuse an equivalent tracker owner and its existing claim protocol. Bottega Dex routes only to GitHub and does not import a tracker or triage engine. Add a triage mapping only when the repository declares or surfaces a compatible triage capability, reusing its equivalent owner. Without that capability, omit the mapping and route. Where multiple agents take tracker work, no concurrency-safe claim exists, and I approve the claim, document this exact create-only branch claim:
+
+  ```bash
+  git push -u origin <branch> --force-with-lease=refs/heads/<branch>:
+  ```
+
+  The empty expected value requires the ref not to exist, so exactly one creation wins. A rejected push means another agent owns the branch. Assignment is the human-visible signal, not the lock, because concurrent assignment, label, and comment writes can all succeed. The claim releases when the branch is deleted on merge.
+- **Merge governance.** Reuse the repository's documented procedure. Where it has none, use the [merge-governance reference](references/merge-governance.md) to inspect the available queue and form an exact proposal. Wait for my approval before changing repository files, settings, labels, or workflows.
+- **Ignore and labels.** Add `.bottega/` to `.gitignore` only when missing. Create approved `area:*` labels and `hold` with GitHub get-or-create, then read them back. Existing labels stay as they are.
 
 ## 5. Apply
 
-Apply only what was approved, exactly as shown, and finish when every proposed edit is either applied or explicitly declined. A declined edit leaves its gap open on purpose, so record it in the report as remaining work and expect a rerun to propose it again.
+Apply only what I approved, exactly as shown. Finish when every proposed edit is applied or declined. A declined edit remains a reported gap for the next reconciliation.
 
 ## 6. Report
 
-Report what you wrote, what was declined, and the findings that remain mine to fix. Distinguish local verification from remote repository state.
-
-## Findings (the genuinely un-writable)
-
-Report these and leave the fix to me:
-
-- `gh` lacks issue or label permissions on the remote.
-- No project gate command is discoverable. Report that and never invent one.
-- The app does not boot from a fresh worktree. QA drives the shipped interface from the run's worktree, so every run inherits this gap until the project fixes it.
-- An index the repo declares for its own agent skills has broken links. Never create such an index or rewrite its shape.
-
-## Leaves alone
-
-Leave CI, the project's own hooks, gate design, technology skills, MCP config, and triage state machines exactly as you found them.
+Report what changed, what I declined, and what only I can fix: missing GitHub issue or label permissions, no discoverable project gate, an app that cannot boot from a fresh worktree, or broken links in a repository-declared agent-skill index.
 
 ## Idempotency
 
-Read your state from the repository. A doc setup created becomes repo-owned, so a rerun validates it and proposes a diff rather than overwriting it. A rerun on a conforming repo makes zero file and zero GitHub changes, and says so.
+Read state from the repository. A setup-owned route becomes repository-owned once written, so a rerun validates it and proposes a diff rather than overwriting it.

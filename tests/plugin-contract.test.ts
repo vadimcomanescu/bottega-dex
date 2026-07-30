@@ -41,6 +41,7 @@ describe("Codex plugin package", () => {
       "skills/improve/agents/openai.yaml",
       "skills/setup/SKILL.md",
       "skills/setup/agents/openai.yaml",
+      "skills/setup/references/merge-governance.md",
       "skills/close/SKILL.md",
       "skills/close/references/qa-evidence.md",
       "skills/code-review/SKILL.md",
@@ -151,17 +152,20 @@ describe("Codex plugin package", () => {
     expect(setup).toContain("codex plugin list --json");
     expect(setup).toMatch(/Report its installed version/i);
     expect(setup).toMatch(/Do not claim.*current.*same installed plugin/is);
+    expect(setup).toContain("codex plugin marketplace add vadimcomanescu/bottega-dex");
+    expect(setup).toContain("codex plugin add bottega-dex@bottega-dex");
     expect(setup).toMatch(/separately approved marketplace refresh/i);
     expect(setup).toContain("claude auth status");
     expect(setup).toMatch(/Do not make a paid model call only to inspect authentication/i);
     expect(setup).toMatch(/default to `AGENTS\.md`/i);
     expect(setup).toContain("<!-- bottega-dex:setup v1 begin -->");
+    expect(setup).toContain("<!-- bottega-dex:setup v2 begin -->");
     expect(setup).toMatch(/every available command from a disposable worktree, never the user's checkout/i);
     expect(setup).toMatch(/category the project does not provide.*instead of inventing/is);
     expect(setup).toMatch(/discovered command fails.*exact failure.*leave it unwritten/is);
     expect(setup).toContain("docs/agents/issue-tracker.md");
     expect(setup).toMatch(/showing the exact change and receiving the user's approval/i);
-    expect(setup).toMatch(/rerun on a conforming repo(?:sitory)? makes zero file and zero GitHub changes/is);
+    expect(setup).toMatch(/A conforming repository receives no file or GitHub changes/is);
     expect(setup).not.toContain("BASH_MAX_TIMEOUT_MS");
     expect(setup).not.toMatch(/Route guard/i);
     expect(metadata).toContain('display_name: "Setup"');
@@ -199,7 +203,9 @@ describe("Codex plugin package", () => {
     expect(start).not.toContain("user-invocable");
     expect(start).toContain("## 1. Settle release and ownership");
     expect(start).toMatch(/land on green, or hold for you/i);
-    expect(start).toMatch(/atomic claim is the create-only remote branch push/i);
+    expect(start).toMatch(/Follow its claim procedure without changing the user's checkout/i);
+    expect(start).toMatch(/reserve that claim from the isolated worktree/i);
+    expect(start).toMatch(/Preserve the tracker owner's force-push rule/i);
     expect(start).toContain("## 4. Read the commands and merge procedure");
     expect(start).toMatch(/opening an eligible non-draft PR enters a merge queue/i);
     expect(start).toContain("## 5. Confirm GitHub publication");
@@ -256,19 +262,19 @@ describe("Codex plugin package", () => {
     const packageLock = json(join(ROOT, "package-lock.json"));
     expect(manifest).toMatchObject({
       name: "bottega-dex",
-      version: "0.9.6",
+      version: "0.9.7",
       skills: "./skills/",
     });
-    expect(packageJson.version).toBe("0.9.6");
-    expect(packageLock.version).toBe("0.9.6");
-    expect(packageLock.packages[""].version).toBe("0.9.6");
+    expect(packageJson.version).toBe("0.9.7");
+    expect(packageLock.version).toBe("0.9.7");
+    expect(packageLock.packages[""].version).toBe("0.9.7");
     expect(manifest.interface.defaultPrompt).toEqual([
       "$bottega-dex:maestro Take this task through adaptive delivery, dual review, any required QA, and a pull request.",
     ]);
   });
 
   it("documents the adaptive ordered workflow and selected Bottega snapshot", () => {
-    expect(README).toContain("1de2acabd1004ebd9cae697e89f9b2889571bea9");
+    expect(README).toContain("20caad4488d4bb29871a6549bc1c5d23cf73b8d7");
     expect(README).toContain(
       "start → discover → architect when needed → panel when its three conditions hold → Claude cross-read when reversal is costly → orchestrate → code-review → QA when user-facing behavior changes → close",
     );

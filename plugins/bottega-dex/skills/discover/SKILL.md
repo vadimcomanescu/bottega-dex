@@ -7,7 +7,7 @@ description: Find what a request does not say and settle its direction and bound
 
 Find what I could not tell you, before anything is built: what my request does not say, what I could not put into words, what neither of us thought to ask. Follow it too literally and you build what I wrote when a different approach was better. Read it too loosely and you build something generic when this product needed its own answer. I can only settle what I understand, so explain every unknown in plain words before you ask me to decide it.
 
-Read this repo's lessons and decision records (`docs/lessons`, `docs/adr`). Send native Codex subagents out, one job each, to return findings on:
+Read the canonical agent map when one exists, then the domain owner it routes you to. When either route is absent, locate the smallest existing map and domain material by what they govern. Treat genuinely absent domain material as absent, not as a setup requirement. Use the vocabulary you find in the work you report. Read only the contexts, lessons, and decisions relevant to this request. A missing context map, glossary, or ADR is not a gap. Surface a relevant ADR conflict before you design around it. Send native Codex subagents out, one job each, to return findings on:
 
 - the code this change touches, and how this repo already does things like it
 - how other people already solved this, searched online, so the build takes a proven pattern rather than an invented one
