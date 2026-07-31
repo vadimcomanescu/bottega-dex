@@ -54,22 +54,34 @@ describe("Codex plugin package", () => {
       "skills/code-review/scripts/test-review-harness.ps1",
       "skills/code-review/tests/test_autoreview_hardening.py",
       "skills/architect/SKILL.md",
-      "skills/architect/references/ADR-FORMAT.md",
-      "skills/architect/references/CONTEXT-FORMAT.md",
-      "skills/architect/references/LICENSE",
+      "skills/domain-modeling/SKILL.md",
+      "skills/domain-modeling/agents/openai.yaml",
+      "skills/domain-modeling/references/ADR-FORMAT.md",
+      "skills/domain-modeling/references/CONTEXT-FORMAT.md",
+      "skills/domain-modeling/references/LICENSE",
       "skills/discover/SKILL.md",
+      "skills/discover/agents/openai.yaml",
       "skills/implement/SKILL.md",
       "skills/maestro/SKILL.md",
       "skills/orchestrate/agents/openai.yaml",
       "skills/orchestrate/SKILL.md",
       "skills/panel/SKILL.md",
+      "skills/prototype/SKILL.md",
+      "skills/prototype/agents/openai.yaml",
+      "skills/prototype/LICENSE",
+      "skills/prototype/LOGIC.md",
+      "skills/prototype/UI.md",
       "skills/qa/SKILL.md",
+      "skills/spec/SKILL.md",
       "skills/start/SKILL.md",
       "skills/use-claude/SKILL.md",
     ]));
     expect(files).not.toContain("skills/code-review/references/autoreview.md");
     expect(files).not.toContain("skills/code-review/references/report.schema.json");
     expect(files).not.toContain("skills/code-review/references/reviewer.md");
+    expect(files).not.toContain("skills/architect/references/ADR-FORMAT.md");
+    expect(files).not.toContain("skills/architect/references/CONTEXT-FORMAT.md");
+    expect(files).not.toContain("skills/architect/references/LICENSE");
   });
 
   it("keeps the orchestrate skill identical to the selected upstream source", () => {
@@ -104,6 +116,52 @@ describe("Codex plugin package", () => {
     expect(bro).not.toMatch(/certif(?:y|ied|ication)/i);
     expect(metadata).toContain('display_name: "Bro"');
     expect(metadata).toContain('default_prompt: "Use $bottega-dex:bro ');
+  });
+
+  it("exposes domain modeling and prototype as opt-in Codex-native skills", () => {
+    const domainModeling = readFileSync(
+      join(PLUGIN, "skills", "domain-modeling", "SKILL.md"),
+      "utf8",
+    );
+    const domainMetadata = readFileSync(
+      join(PLUGIN, "skills", "domain-modeling", "agents", "openai.yaml"),
+      "utf8",
+    );
+    const prototype = readFileSync(
+      join(PLUGIN, "skills", "prototype", "SKILL.md"),
+      "utf8",
+    );
+    const prototypeMetadata = readFileSync(
+      join(PLUGIN, "skills", "prototype", "agents", "openai.yaml"),
+      "utf8",
+    );
+
+    expect(domainModeling).toMatch(/^name: domain-modeling$/m);
+    expect(domainModeling).toContain("references/CONTEXT-FORMAT.md");
+    expect(domainModeling).toContain("references/ADR-FORMAT.md");
+    expect(domainMetadata).toContain('display_name: "Domain modeling"');
+    expect(domainMetadata).toContain(
+      'default_prompt: "Use $bottega-dex:domain-modeling ',
+    );
+    expect(domainMetadata).toMatch(/policy:\s+allow_implicit_invocation: false/s);
+    expect(prototype).toMatch(/^name: prototype$/m);
+    expect(prototype).toContain("[LOGIC.md](LOGIC.md)");
+    expect(prototype).toContain("[UI.md](UI.md)");
+    expect(prototype).not.toMatch(/throwaway branch|implementation issue/i);
+    expect(prototypeMetadata).toContain('display_name: "Prototype"');
+    expect(prototypeMetadata).toContain(
+      'default_prompt: "Use $bottega-dex:prototype ',
+    );
+    expect(prototypeMetadata).toMatch(/policy:\s+allow_implicit_invocation: false/s);
+  });
+
+  it("keeps spec internal and repository-local", () => {
+    const spec = readFileSync(join(PLUGIN, "skills", "spec", "SKILL.md"), "utf8");
+
+    expect(spec).toMatch(/^name: spec$/m);
+    expect(spec).toMatch(/^user-invocable: false$/m);
+    expect(spec).toContain("docs/specs/<slug>.md");
+    expect(spec).toMatch(/Do not open, edit, or comment on an issue/i);
   });
 
   it("exposes improve as an opt-in architecture scan that hands one choice to Maestro", () => {
@@ -211,12 +269,20 @@ describe("Codex plugin package", () => {
     expect(start).toContain("## 5. Confirm GitHub publication");
     expect(start).toContain("gh auth status");
     expect(discover).toMatch(/^name: discover$/m);
-    expect(discover).not.toContain("user-invocable");
     expect(discover).toContain('`fork_turns: "none"`');
     expect(discover).toMatch(/low reasoning for a narrow read-only scout/i);
+    const discoverMetadata = readFileSync(
+      join(PLUGIN, "skills", "discover", "agents", "openai.yaml"),
+      "utf8",
+    );
+    expect(discoverMetadata).toContain('display_name: "Discover"');
+    expect(discoverMetadata).toContain(
+      'default_prompt: "Use $bottega-dex:discover ',
+    );
+    expect(discoverMetadata).toMatch(/policy:\s+allow_implicit_invocation: false/s);
     expect(architect).toMatch(/^name: architect$/m);
     expect(architect).not.toContain("user-invocable");
-    expect(architect).toContain("references/CONTEXT-FORMAT.md");
+    expect(architect).toContain("../domain-modeling/references/CONTEXT-FORMAT.md");
     expect(implement).toMatch(/^name: implement$/m);
     expect(implement).not.toContain("user-invocable");
     expect(panel).toMatch(/^name: panel$/m);
@@ -262,21 +328,21 @@ describe("Codex plugin package", () => {
     const packageLock = json(join(ROOT, "package-lock.json"));
     expect(manifest).toMatchObject({
       name: "bottega-dex",
-      version: "0.9.8",
+      version: "0.10.0",
       skills: "./skills/",
     });
-    expect(packageJson.version).toBe("0.9.8");
-    expect(packageLock.version).toBe("0.9.8");
-    expect(packageLock.packages[""].version).toBe("0.9.8");
+    expect(packageJson.version).toBe("0.10.0");
+    expect(packageLock.version).toBe("0.10.0");
+    expect(packageLock.packages[""].version).toBe("0.10.0");
     expect(manifest.interface.defaultPrompt).toEqual([
       "$bottega-dex:maestro Take this task through adaptive delivery, dual review, any required QA, and a pull request.",
     ]);
   });
 
   it("documents the adaptive ordered workflow and selected Bottega snapshot", () => {
-    expect(README).toContain("20caad4488d4bb29871a6549bc1c5d23cf73b8d7");
+    expect(README).toContain("a1b9385d533ccb37cc1fec6ce1361aeef7ed711a");
     expect(README).toContain(
-      "start → discover → architect when needed → panel when its three conditions hold → Claude cross-read when reversal is costly → orchestrate → code-review → QA when user-facing behavior changes → close",
+      "start → discover → spec when discovery adds decisions → architect when needed → panel when its three conditions hold → Claude cross-read when reversal is costly → orchestrate → code-review → spec read → architecture read when reversal is costly → QA when user-facing behavior changes → close",
     );
     expect(README).toMatch(/Architect runs only when.*acceptance criteria.*slices need settling/i);
     expect(README).toMatch(/Claude cross-read runs only when.*costly to reverse/i);

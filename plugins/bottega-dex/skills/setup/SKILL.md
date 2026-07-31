@@ -13,7 +13,7 @@ Do not install tools, edit files, change repository settings, or mutate GitHub b
 
 Check the Codex-native harness. Anything missing, report it rather than installing it silently.
 
-- **Requirements.** Verify `git`, Node.js 24 or later, and `gh`.
+- **Requirements.** Verify `git`, Node.js 24 or later, `gh`, and `trufflehog`. The review engine's secret preflight requires the TruffleHog binary and never installs it itself.
 - **Skill discovery.** Run `codex plugin list --json` and confirm `bottega-dex@bottega-dex` is installed and enabled. Report its installed version. When it is absent, walk me through these commands rather than symlinking anything:
 
   ```bash

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Prototype"
+  short_description: "Build a throwaway prototype to answer a design question"
+  default_prompt: "Use $bottega-dex:prototype to explore this design question before implementation."
+
+policy:
+  allow_implicit_invocation: false
