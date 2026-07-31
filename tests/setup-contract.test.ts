@@ -20,6 +20,8 @@ describe("setup v2 semantic reconciliation", () => {
     expect(setup).toContain("First reconcile an existing v1 block as setup-owned routes");
     expect(setup).toContain("Never leave both versions.");
     expect(setup).toContain("When no equivalent owner exists, use `docs/agents/issue-tracker.md` and `docs/agents/domain.md`");
+    expect(setup).toContain("trufflehog");
+    expect(setup).toMatch(/never installs it/i);
   });
 
   it("gives domain consumers one owner and migrates real material", () => {

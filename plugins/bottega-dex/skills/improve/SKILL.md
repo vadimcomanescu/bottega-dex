@@ -39,8 +39,8 @@ Check open issues and pull requests before proposing. An improvement already tra
 
 Present the strongest candidates in the conversation. Make each candidate one coherent unit under [architect](../architect/SKILL.md). Name the files, the evidence of friction, the change in product terms, the gain in leverage and locality, and a strength: strong, worth exploring, or speculative. Leave interface design to the run. Lead with the candidate you would take first and explain why. No HTML. No file report. The user picks one or rejects them.
 
-When the user rejects a candidate for a reason a future scan would need, offer to record the decision as an ADR so the candidate is not proposed again. Write that ADR directly because a rejected candidate never reaches a run. Skip temporary reasons.
+When the user rejects a candidate for a reason a future scan should remember, offer to record that boundary through [domain-modeling](../domain-modeling/SKILL.md) as an ADR. Write it directly only after the user accepts the record, and skip temporary reasons.
 
 ## 6. Run it
 
-After the user picks a candidate, sharpen it with them until its acceptance criteria are measurable. Then use [maestro](../maestro/SKILL.md), handing over the friction evidence, agreed change, and criteria. Maestro still performs release and ownership setup. The accepted scan stands as completed discovery, so Maestro confirms the handoff and continues at architecture without repeating the scan.
+After the user picks a candidate, sharpen it with them until its acceptance criteria are measurable. Then use [maestro](../maestro/SKILL.md), handing over the friction evidence, agreed change, and criteria. Maestro still performs release and ownership setup. The accepted scan stands as completed discovery, so Maestro confirms the handoff, synthesizes a spec only if the scan settled decisions beyond the candidate, and continues at architecture without repeating the scan.

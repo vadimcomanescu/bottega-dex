@@ -17,17 +17,21 @@ Native Codex subagent instructions in this plugin are intentional. The Claude co
 | `plugins/bottega-dex/skills/improve/SKILL.md` | User-facing codebase improvement scan and Maestro handoff |
 | `plugins/bottega-dex/skills/setup/SKILL.md` | User-facing one-time machine and repository reconciliation |
 | `plugins/bottega-dex/skills/start/SKILL.md` | Supporting ownership, isolation, and launch procedure |
-| `plugins/bottega-dex/skills/discover/SKILL.md` | Supporting discovery procedure |
-| `plugins/bottega-dex/skills/architect/SKILL.md` | Shared architecture doctrine |
+| `plugins/bottega-dex/skills/discover/SKILL.md` | User-invocable and Maestro discovery procedure: understand intent first, then adapt the unknowns work to the task |
+| `plugins/bottega-dex/skills/spec/SKILL.md` | Internal synthesis of discovery into the spec baseline used by builders, QA, and review |
+| `plugins/bottega-dex/skills/domain-modeling/SKILL.md` | User-invocable domain vocabulary and ADR maintenance |
+| `plugins/bottega-dex/skills/prototype/SKILL.md` | User-invocable throwaway logic or UI prototype method |
+| `plugins/bottega-dex/skills/architect/SKILL.md` | Shared architecture doctrine and interface/test-surface design |
 | `plugins/bottega-dex/skills/panel/SKILL.md` | Independent Codex and Claude decision panel |
 | `plugins/bottega-dex/skills/use-claude/SKILL.md` | Direct read-only Claude cross-read procedure |
 | `plugins/bottega-dex/skills/orchestrate/SKILL.md` | Exact upstream decomposition and implementation method |
 | `plugins/bottega-dex/skills/implement/SKILL.md` | Implementation doctrine for dispatched slices and repairs |
 | `plugins/bottega-dex/skills/close/SKILL.md` | Supporting publication, PR, and terminal-state procedure |
 | `plugins/bottega-dex/skills/close/references/qa-evidence.md` | QA evidence publication procedure |
-| `plugins/bottega-dex/skills/code-review/SKILL.md` | Vendored autoreview entrypoint for Sol and Claude Opus 5 |
+| `plugins/bottega-dex/skills/code-review/SKILL.md` | Vendored autoreview entrypoint for Sol and Claude Opus 5, with TruffleHog preflight |
 | `plugins/bottega-dex/skills/code-review/references` | Autoreview contract and review baseline |
 | `plugins/bottega-dex/skills/code-review/scripts` | Vendored autoreview engine and harness |
+| `THIRD_PARTY.md` | Vendored source pins and local adaptations |
 | `plugins/bottega-dex/skills/qa/SKILL.md` | Reviewed-head product QA procedure |
 | `plugins/bottega-dex/scripts/claude-exec` | Bounded `claude -p` adapter |
 | `plugins/bottega-dex/scripts/exec-common.js` | Shared adapter process and provenance helpers |
@@ -43,11 +47,13 @@ Native Codex subagent instructions in this plugin are intentional. The Claude co
 - Keep `maestro` as the user-facing end-to-end workflow and `orchestrate` as its complete build method.
 - Keep `improve` explicitly invoked. It scans and proposes before a run exists, waits for the user's candidate choice, then gives the accepted scan to `maestro` as completed discovery.
 - Keep `setup` explicitly invoked and separate from a run. It reads the repository's existing authorities, proposes exact machine, file, and GitHub changes, waits for approval, and is idempotent.
-- The fixed phase order is `start`, `discover`, `architect`, optional `panel`, `use-claude`, `orchestrate`, `code-review`, `qa`, `close`. Adaptive execution may omit an unnecessary nonmandatory later phase but never reorder phases, and it must re-enter a skipped phase if the work grows to need it.
-- Discovery findings feed architecture and the orchestration brief.
+- The fixed phase order is `start`, `discover`, conditional `spec`, conditional `architect`, optional `panel`, conditional `use-claude`, `orchestrate`, `code-review`, required spec read, conditional architecture read, conditional `qa`, `close`. Adaptive execution may omit a phase only under its local condition, never reorder phases, and must re-enter a skipped phase if the work grows to need it.
+- Discovery first explains the request in repository terms, then scales its unknowns work to the task. Its findings feed the spec, architecture, and orchestration brief.
+- The spec is synthesized only when discovery settled something beyond the request. Otherwise the request text is the spec verbatim. The whole diff is always read against that baseline after bug review.
 - `start` reads the host repository's documented merge procedure. `close` follows that procedure: opening the PR arms a queue where one owns landing, while opener-armed GitHub auto-merge and its red hold check remain a documented fallback only.
 - `use-claude` invokes Claude Fable 5 at high effort through direct `claude -p` for design cross-reads when reversal would be costly and for the Claude panel seat.
 - The complete integrated diff runs through the vendored autoreview helper with GPT-5.6 Sol at high reasoning and Claude Opus 5 at high effort.
+- The vendored review preflight requires `trufflehog` and uses its verified or unknown findings plus deletion-side redaction. Setup reports the missing binary rather than installing it.
 - A single builder skips its slice review only when the integrated structured review will run. Under the `SKILL.md` and prose exception, require one fresh high-reasoning review of the whole docs diff.
 - Native subagents perform orchestration work. The vendored autoreview helper is the review process boundary.
 - Keep `claude-exec` as the bounded direct Claude reviewer-role adapter requested by the user. It is separate from code review; autoreview invokes Claude itself for reviews.
@@ -55,7 +61,7 @@ Native Codex subagent instructions in this plugin are intentional. The Claude co
 - QA is required when a user-facing surface or product behavior changed. Otherwise `maestro` skips it. When run, QA drives the reviewed artifact and never fixes product code.
 - Never issue a direct merge command. A queue-owned PR is watched through its queue summary and updated-base checks; an `autoMergeRequest` of null is normal there.
 - Keep `plugins/bottega-dex/skills/orchestrate/SKILL.md` identical to the upstream source linked in `README.md`.
-- Keep imported `setup`, `start`, `discover`, `architect`, `improve`, `implement`, `panel`, `qa`, and `close` procedures aligned with the Bottega source linked in `README.md`, except for Codex-native adaptations.
+- Keep imported `setup`, `start`, `discover`, `architect`, `improve`, `implement`, `panel`, `qa`, and `close` procedures aligned with the Bottega source linked in `README.md`, except for Codex-native adaptations. Keep `domain-modeling`, `prototype`, and the internal `spec` seam aligned with their selected sources while retaining Dex's repository-local and Codex-native boundaries.
 - Preserve the upstream copyright notice in `LICENSE`.
 - Preserve unrelated changes. Use `apply_patch` for edits and stage explicit paths.
 

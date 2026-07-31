@@ -1,0 +1,7 @@
+interface:
+  display_name: "Discover"
+  short_description: "Understand and settle a request"
+  default_prompt: "Use $bottega-dex:discover to understand this request in its repository and settle its direction."
+
+policy:
+  allow_implicit_invocation: false

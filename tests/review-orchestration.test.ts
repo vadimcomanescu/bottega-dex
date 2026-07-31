@@ -9,6 +9,7 @@ const skill = (name: string) =>
 
 const MAESTRO = skill("maestro");
 const DISCOVER = skill("discover");
+const SPEC = skill("spec");
 const ORCHESTRATE = skill("orchestrate");
 const REVIEW = skill("code-review");
 const PANEL = skill("panel");
@@ -22,6 +23,7 @@ describe("Bottega Dex workflow", () => {
     const phases = [
       "[start](../start/SKILL.md)",
       "[discover](../discover/SKILL.md)",
+      "[spec](../spec/SKILL.md)",
       "[architect](../architect/SKILL.md)",
       "[panel](../panel/SKILL.md)",
       "[use-claude](../use-claude/SKILL.md)",
@@ -38,6 +40,9 @@ describe("Bottega Dex workflow", () => {
     expect(MAESTRO).not.toMatch(/(?:Fable|Opus) (?:worker|builder|fixer)/i);
     expect(MAESTRO).toContain("Claude Fable 5 at high effort");
     expect(DISCOVER).toContain('`fork_turns: "none"`');
+    expect(DISCOVER).toContain("Understand what I am asking for");
+    expect(DISCOVER).toContain("Match the method to the work");
+    expect(SPEC).toContain("implementation-facing specification artifact");
     expect(ORCHESTRATE).not.toMatch(/code-review|pull request|maestro/i);
   });
 
@@ -67,6 +72,10 @@ describe("Bottega Dex workflow", () => {
     expect(MAESTRO).toMatch(/more than one builder.*fresh.*review/is);
     expect(MAESTRO).toMatch(/user-facing surface or product behavior.*use \[qa\]/is);
     expect(MAESTRO).toMatch(/no user-facing surface or product behavior.*skip QA/is);
+    expect(MAESTRO).toMatch(/spec.*only when discovery settled something.*request/is);
+    expect(MAESTRO).toMatch(/whole diff.*read against the spec/is);
+    expect(MAESTRO).toMatch(/fresh native Codex subagent at high reasoning.*read the whole integrated diff against the spec/is);
+    expect(MAESTRO).toMatch(/independent architecture read.*costly to reverse/is);
   });
 
   it("governs validator threat models and review repair cycles", () => {

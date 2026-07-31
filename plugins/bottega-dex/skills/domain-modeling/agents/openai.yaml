@@ -1,0 +1,7 @@
+interface:
+  display_name: "Domain modeling"
+  short_description: "Define the language and decisions that shape a domain"
+  default_prompt: "Use $bottega-dex:domain-modeling to sharpen this project's domain model."
+
+policy:
+  allow_implicit_invocation: false

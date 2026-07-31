@@ -52,7 +52,8 @@ After creation, follow the documented mechanism:
 On an issue-born run, close the issue with the PR through a closing keyword. The body carries, written for that outside reader:
 
 - what changed and why;
-- the original request, discovery's settled scope, and the decisions that constrained orchestration;
+- the original request, discovery's settled scope, and the spec or verbatim request used as the build baseline;
+- the spec-conformance read and, when it ran, the independent architecture read, with their accepted findings and verdicts;
 - the evidence proving each requested outcome;
 - every decision made on the user's behalf, the one most likely to draw a different answer first;
 - who built and who reviewed: models, rounds, findings, verdicts, refutations;
