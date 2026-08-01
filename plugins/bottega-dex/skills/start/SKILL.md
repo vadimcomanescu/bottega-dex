@@ -1,11 +1,11 @@
 ---
 name: start
-description: Prepare a Bottega Dex run by settling ownership and release intent, isolating its branch and worktree, loading repository commands and merge procedure, and confirming GitHub publication.
+description: Prepare a Bottega Dex run by settling ownership and release intent, isolating its branch and worktree, loading repository commands and the complete landing and disarm procedure, and confirming GitHub publication.
 ---
 
 # Start
 
-Prepare the run before any dispatch: owned, isolated, commands and merge procedure in hand, GitHub publication checked. Discovery and every later phase work inside what you start here.
+Prepare the run before any dispatch: owned, isolated, commands and landing procedure in hand, GitHub publication checked. Discovery and every later phase work inside what you start here.
 
 ## 1. Settle release and ownership
 
@@ -27,11 +27,11 @@ The empty expected value means the remote ref must not exist, so exactly one cre
 
 Write the current Codex task id to `.bottega/run/<slug>/owner` before the run's first dispatch so another task can identify the owner. When the runtime does not expose an id, generate a unique ownership token and report it in the conversation. Write the release answer the start settled, `land` or `hold`, to `.bottega/run/<slug>/release`. Close reads that file before the PR opens. Resuming in a later task, rewrite the owner file before dispatching anything. Write the release file too when the run predates it, and ask me when no answer was ever settled. Both files are set once the owner file identifies this task and the release file carries the run's answer.
 
-## 4. Read the commands and merge procedure
+## 4. Read the commands and landing procedure
 
 Read the project's commands (format, lint, typecheck, test, build, run) from its agent map, `AGENTS.md` or `CLAUDE.md`. When both exist, follow the repository's precedence instead of assuming they are synchronized. When no map or command owner exists, discover the commands from the repository, verify them, and add the missing owner or route to the run's diff. The map is the commands' one home: a brief quotes them from it, and never defines them elsewhere. Discover a missing or broken command once, and write it back to the map as part of the run's diff. The same rule covers any operating fact a worker had to dig for: how the app boots from a worktree, seed data, migration steps. Read every command the run will brief from the map before you move on.
 
-Read the repository's documented pull-request and merge procedure from the same map and the authoritative file it routes to. Record whether opening an eligible non-draft PR enters a merge queue, the opener must arm GitHub auto-merge, or another repository-owned mechanism lands it; how `hold` blocks that mechanism; and what state proves the PR is queued, held, or waiting. Do not infer a procedure from available GitHub buttons or from another repository. If the map does not settle it, report the gap now because close cannot safely choose a merge action later.
+The landing procedure is one of those project-owned facts, so read it beside the commands from the same map and the authoritative file it routes to. Capture for Close: the brake that keeps a PR out of landing, whether the repository enforces that brake, what arms landing (the opener, a queue that takes eligible non-draft PRs, or a repository-owned mechanism requiring no opener action), and the deciding check or queue signal. For every mechanism that can land the PR, also capture the exact disarm or withdrawal action used when hold enforcement cannot be proved and the readback that proves the PR terminally ineligible for that mechanism. This includes disabling a GitHub auto-merge arm when present, withdrawing a queue or repository-owned enrollment, and making the PR draft only when the project names draft as its safe withdrawal state. Do not infer any action or proof from available GitHub buttons or another repository. If any applicable arm, disarm, withdrawal, or terminal-ineligibility proof is missing or ambiguous, report it now and mark Close blocked: Close must not guess how a PR lands or how to stop it from landing.
 
 ## 5. Confirm GitHub publication
 

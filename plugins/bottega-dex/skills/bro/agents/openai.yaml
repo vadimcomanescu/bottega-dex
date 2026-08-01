@@ -1,4 +1,4 @@
 interface:
   display_name: "Bro"
   short_description: "Restate the last reply plainly"
-  default_prompt: "Use $bottega-dex:bro to restate your last reply in plain human language."
+  default_prompt: "Use $bottega-dex:bro to restate the immediately preceding assistant reply plainly."

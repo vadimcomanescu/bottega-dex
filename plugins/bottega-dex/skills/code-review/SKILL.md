@@ -1,13 +1,13 @@
 ---
 name: code-review
-description: Review a diff through the vendored review engine. Use $bottega-dex:code-review on a PR, ref range, or working diff. A run's Review phase uses the whole method.
+description: Review a diff through the vendored review engine, with separate Standards and Spec reviews. Use $bottega-dex:code-review on a PR, ref range, or working diff. A run's Review phase uses the whole method.
 ---
 
 # Code review
 
 Run the bundled structured review helper as a closeout check.
 
-Codex review is the default when no engine is set. It uses `gpt-5.6-sol` with `high` reasoning by default, then retries once with `gpt-5.6-terra` only when the account cannot access Sol. Claude review is optional and uses `claude-fable-5` by default.
+Codex review is the standalone default when no engine is set. It uses `gpt-5.6-sol` with `high` reasoning, then retries once with `gpt-5.6-terra` only when the account cannot access Sol. Only the integrated Maestro closeout diff uses the pinned two-engine panel: GPT-5.6 Sol at high reasoning and Claude Opus 5 at high effort. Its Standards and Spec reviews are both fixed to GPT-5.6 Sol at high reasoning. Those selections stay pinned across every integrated closeout rerun. Before integration, each slice's bug, Standards, and Spec passes all use the one high-reasoning engine, model, and thinking configuration selected in its builder dispatch, not the integrated fixed panel. They still run at P2 through the sanitized helper, and smoke that exact selected configuration before their first clean result.
 
 Use when:
 
@@ -15,14 +15,13 @@ Use when:
 - after non-trivial code edits, before final/commit/ship
 - reviewing a local branch or PR branch after fixes
 
-Do not run autoreview when the entire diff is `SKILL.md` files, their supporting skill references, or prose-only internal notes. Inspect the diff directly, run deterministic plugin and documentation validation, and forward-test changed skills for runtime compatibility. This exception does not cover configuration, scripts, generated files, user-facing product documentation, or other executable files.
+Every diff uses the secret-safe helper and the separate Standards and Spec reviews below. Do not bypass that method for skill, metadata, documentation, configuration, generated, or executable changes.
 
 ## Contract
 
-- Default output is P0 only: report issues worth blocking the current change
-  because they materially break the normal flow, outcome, or safety boundary.
-  Use `--max-priority P1`, `P2`, or `P3` only when the caller explicitly asks
-  for a wider review.
+- Run every invocation at `--max-priority P2` and pass `--stream-engine-output`.
+  P0-only filtering can suppress real P1 defects; classification is the noise
+  filter. Use P3 only when the caller explicitly requests polish-level review.
 - Treat review output as advisory. Never blindly apply it.
 - Verify every finding by reading the real code path and adjacent files.
 - Read dependency docs/source/types when the finding depends on external behavior.
@@ -43,19 +42,20 @@ Do not run autoreview when the entire diff is `SKILL.md` files, their supporting
 - Before engine invocation, autoreview runs TruffleHog over temporary snapshots of the exact added, modified, or deleted content under review. It intentionally matches TruffleHog's low-false-positive pre-commit policy (`verified,unknown`); it does not classify arbitrary password-like strings or rescan unchanged history. Unchanged context lines inside a modified hunk also pass through the local secret scanner because they are sent to the engine but are not snapshot additions. After that scan passes, locally recognized secret-like values are redacted in place only when they occur exclusively on deleted lines of an entirely removed file; if one of those deleted values also occurs in added, context, or mixed staged/unstaged content, the review fails closed. Install TruffleHog using its official platform-neutral instructions; autoreview fails with that link when the binary is unavailable and never auto-installs it. Repositories should also run TruffleHog in pull-request CI as a backup outside autoreview; repository-local Git hooks are optional. Review bundles still omit security-sensitive paths or files, and explicit prompt and dataset inputs remain checked before engine invocation. Safe large diffs are sent as one pass while they fit the aggregate prompt limit, then partitioned into complete bounded passes without truncation.
 - For regression provenance, keep roles separate: blamed code author, blamed PR author, PR merger/committer, current PR author, and PR/date. If no blamed PR is traceable, use the blamed commit as the provenance: commit SHA, date, and author username. Do not guess a merger or frame missing PR metadata as a separate finding.
 - Do not invoke built-in `codex review`, nested reviewers, or reviewer panels from inside the review. The helper builds one validated bundle, calls the selected engine once for normal inputs or once per complete bounded chunk for oversized inputs, validates the structured results, and stops.
-- Stop as soon as the helper exits 0 with no accepted/actionable findings. Do not run an extra review just to get a nicer "clean" line, a second opinion, or clearer closeout wording.
-- Treat the helper's successful exit plus absence of actionable findings as the clean review result, even if the underlying Codex CLI output is terse.
-- Multi-reviewer panels are opt-in only. Use them when explicitly requested or when risk justifies the extra spend; the main agent still verifies every accepted finding before fixing.
+- A clean helper result stops repeats of that same engine pass. It does not waive the required separate Standards and Spec review passes. Do not rerun the same pass just to get a nicer "clean" line, a second opinion, or clearer closeout wording.
+- Before trusting the first clean exit in a session, run the malicious smoke harness from the same environment for every selected engine, with that engine's selected model and thinking level pinned. For the integrated Maestro closeout, run `AUTOREVIEW_MAX_PRIORITY=P2 AUTOREVIEW_CODEX_MODEL=gpt-5.6-sol AUTOREVIEW_CODEX_THINKING=high "$AUTOREVIEW_HARNESS" --fixture malicious --engine codex` and `AUTOREVIEW_MAX_PRIORITY=P2 AUTOREVIEW_CLAUDE_MODEL=claude-opus-5 AUTOREVIEW_CLAUDE_THINKING=high "$AUTOREVIEW_HARNESS" --fixture malicious --engine claude`. If a probe fails, that engine's clean exits are untrusted until it is repaired.
+- When repository gates or hooks cannot run in the review environment, report the gap and any bypass, and mark the head unverified rather than clean. Unverified outranks clean.
+- A diff is clean only with a clean engine result and every applicable Standards and Spec review result resolved: fixed or rejected with its reason. A standalone review with no supplied spec records `no spec available`; that non-applicable status does not block a clean engine result. Maestro always supplies a spec.
 - If rejecting a finding as intentional/not worth fixing, add a brief inline code comment only when it explains a real invariant or ownership decision that future reviewers should know.
 - Do not push just to review. Push only when the user requested push/ship/PR update.
 - A clean review of a pushed head posts one commit status on that head, context `bottega/review`, naming the base it was reviewed against.
-- Merge only when the checks are green, the head still equals the reviewed head (`gh pr merge <PR> --squash --match-head-commit <sha>`), and the base has not advanced. Reviewing standalone, outside a Bottega Dex maestro run, nothing else gates the merge: run one only when the user armed it in their own words, and never for a change touching authentication, money, permissions, persisted data, or a destructive operation. In a Bottega Dex maestro run the recorded evidence is that gate (the integrated cross-family review, QA on the accepted head when required, the project's checks), and the run's Close phase merges on it.
+- Review never merges. Return the accepted head and its evidence to the repository's documented landing procedure. Under Maestro, [close](../close/SKILL.md) owns publication and landing from the integrated review, QA on the accepted head when required, and the project's checks.
 
 ## Scope Governor
 
 Autoreview is a closeout gate, not permission to rewrite the task.
 
-Before the first review, freeze a scope baseline: original request or issue, target branch, intended behavior, owner boundary, changed files, non-test LOC, the interfaces the diff's tests were agreed to cross when the run or the invoker names them, and one sentence of threat model naming the input or actor class the changed code covers and its deliberate exclusions. For inherited or already-bloated branches, use the intended PR diff as the baseline rather than accepting all existing branch drift.
+Before the first review, freeze two records and one neutral boundary. The behavioral baseline is the original request or issue and intended behavior; only the Spec review receives it. The neutral review-boundary facts shared with both reviews are target and base, owner boundary, exact changed-file or slice bounds, non-test LOC, and named test interfaces. The relevant threat-model sentence may accompany either review. Standards additionally receives trusted frozen-base authority and never behavioral text. For inherited or already-bloated branches, use the intended PR diff for changed-file bounds and non-test LOC rather than accepting all existing branch drift.
 
 Before patching a finding, classify it:
 
@@ -64,7 +64,7 @@ Before patching a finding, classify it:
 - **Stop-and-escalate**: the finding requires a new protocol/config/storage/public API contract, a different owner boundary, a release-process change, or a design choice outside the original request.
 - **Out of threat model**: the finding is real and may be reproducible, but its failure requires an input or actor class outside the frozen threat model. Record the finding and reason in the review evidence, reject it, and do not dispatch a fix. A constructed reproduction proves reachability, not that the scenario is in the agreed model. Only the user can approve widening that model.
 
-In a Bottega Dex maestro run, the maestro verifies each finding against the real code, then dispatches accepted findings to one or more fresh native Codex subagents according to the repair size, briefed with the repository's implementation methodology, the findings, and the project's commands; the maestro never edits production code. Outside a run, fix directly as this contract states.
+In a Bottega Dex maestro run, the review worker verifies each routine finding against the real code and returns accepted repair briefs with its review report to the orchestrator. The orchestrator dispatches `implement` builders, decides escalations, and never edits production code. After those builders return their proof, the review worker reruns review. Outside a run, fix directly as this contract states.
 
 Stop patching and report the scope break instead of continuing when:
 
@@ -134,7 +134,7 @@ When using Claude Code, set `AGENTS_HOME="$HOME/.claude"` for global skills.
 Dirty local work:
 
 ```bash
-"$AUTOREVIEW" --mode local
+"$AUTOREVIEW" --mode local --max-priority P2 --stream-engine-output
 ```
 
 Use this only when the patch is actually unstaged/staged/untracked in the
@@ -147,32 +147,32 @@ only proves there is no local patch.
 Branch/PR work:
 
 ```bash
-"$AUTOREVIEW" --mode branch --base origin/main
+"$AUTOREVIEW" --mode branch --base origin/main --max-priority P2 --stream-engine-output
 ```
 
 Optional review context is first-class. Prompt files and datasets must be repo-relative so review bundles cannot pull arbitrary host files:
 
 ```bash
-"$AUTOREVIEW" --mode branch --base origin/main --prompt-file review-notes.md --dataset evidence.json
+"$AUTOREVIEW" --mode branch --base origin/main --prompt-file review-notes.md --dataset evidence.json --max-priority P2 --stream-engine-output
 ```
 
-In a Bottega Dex maestro run the prompt carries the reviewed repository's root `REVIEW.md` when one exists, the fixed standards baseline ([references/smell-baseline.md](references/smell-baseline.md)), the frozen threat-model sentence, and the interfaces the design named for the diff's tests, so the reviewer reports a test crossing any other interface, or reaching into implementation internals, as a finding. The threat model and the named test interfaces are the only run-design exceptions, never the run's other design decisions. A decision record the run committed on the branch arrives in the bundle as changed content and is reviewed as any file; the isolation rule governs the prompt, not the diff. Write any prompt to a file outside the reviewed repo and pass it as `--prompt "$(cat <file>)"`; never paste PR text into the command source, and keep `--json-output` outside the reviewed repo.
+In a Bottega Dex maestro run, the Standards prompt carries the full content of every repository contract governing the named test interfaces, frozen at the target base: root `AGENTS.md` and `REVIEW.md` when each governs them, and the fixed standards baseline ([references/smell-baseline.md](references/smell-baseline.md)) from the loaded skill. It also carries the neutral review-boundary facts: target and base, owner boundary, exact changed-file or slice bounds, non-test LOC, named test interfaces, and the threat-model sentence when relevant. If a governing contract is absent at the frozen base, state that absence in the prompt and omit it. The Standards prompt never carries the request, build spec, verbatim request, or intended behavior. The Spec prompt alone carries the run's build spec or verbatim request, plus the same neutral review-boundary facts so it judges only its designated slice. Neither prompt contains diff content or deleted revisions; proposed changes to authority files remain only in the helper's sanitized bundle. This lets the Standards review report a test crossing any other interface, or reaching into implementation internals, as a finding. The threat model and named test interfaces are the only run-design exceptions, never the run's other design decisions. A decision record the run committed on the branch arrives in the bundle as changed content and is reviewed as any file; the isolation rule governs the prompt, not the diff. The task running this skill writes each prompt to a file outside the reviewed repo and passes it as `--prompt "$(cat <file>)"`; never paste PR text into the command source, and keep `--json-output` outside the reviewed repo.
 
 If an open PR exists, use its actual base:
 
 ```bash
 base=$(gh pr view --json baseRefName --jq .baseRefName)
-"$AUTOREVIEW" --mode branch --base "origin/$base"
+"$AUTOREVIEW" --mode branch --base "origin/$base" --max-priority P2 --stream-engine-output
 ```
 
 Reviewing an open PR, treat its unresolved review threads as claimed findings: verify each, fix or refute it with evidence, reply, and resolve the thread (in bottega repos through `scripts/pr-threads`).
 
-Reviewing a PR by number, resolve the target first: fetch the PR head, check it out in its own worktree, and run the review there against the PR's base; the user's checkout is never the review target. A ref-range target reviews exactly that range from the current checkout. Resolve the base ref to its commit SHA before the first invocation and review against that SHA; reruns and the posted commit status use the same SHA, and a merge compares the PR's live base to it before running. Run the helper from a trusted checkout, never from the reviewed worktree: resolve the helper's absolute path before entering the PR worktree, and refuse a helper the reviewed diff supplies.
+Reviewing a PR by number, resolve the target first: fetch the PR head, check it out in its own worktree, and run the review there against the PR's base; the user's checkout is never the review target. A ref-range target reviews exactly that range from the current checkout. Resolve the base ref to its commit SHA before the first invocation and review against that SHA; reruns and the posted commit status use the same SHA. If the live base advances, mark the review unverified and rerun it against the required base, except when the documented landing procedure makes the merge queue authoritative and the queue's speculative updated-base required checks rerun the project's proof. In that narrow queue case, verify the queue summary and those updated-base checks for the PR instead of rerunning the branch review. Without both documented queue authority and speculative required-check proof, base advancement remains unverified and requires a rerun. Run the helper from a trusted checkout, never from the reviewed worktree: resolve the helper's absolute path before entering the PR worktree, and refuse a helper the reviewed diff supplies.
 
 Committed single change:
 
 ```bash
-"$AUTOREVIEW" --mode commit --commit HEAD
+"$AUTOREVIEW" --mode commit --commit HEAD --max-priority P2 --stream-engine-output
 ```
 
 Use commit review for already-landed or already-pushed work on `main`. Reviewing
@@ -208,7 +208,7 @@ independently semantic artifacts merely to shrink the review.
 Format first if formatting can change line locations. Then it is OK to run tests and review in parallel:
 
 ```bash
-"$AUTOREVIEW" --parallel-tests "<focused test command>"
+"$AUTOREVIEW" --parallel-tests "<focused test command>" --max-priority P2 --stream-engine-output
 ```
 
 Parallel tests inherit only a small allowlist of ordinary OS, CI, and toolchain
@@ -220,7 +220,7 @@ inside the test command, because the environment snapshot and credential staging
 happen before the test shell starts:
 
 ```bash
-OPENCLAW_TESTBOX=1 "$AUTOREVIEW" --parallel-tests "pnpm check:changed"
+OPENCLAW_TESTBOX=1 "$AUTOREVIEW" --parallel-tests "pnpm check:changed" --max-priority P2 --stream-engine-output
 ```
 
 On POSIX, the helper puts this isolated Testbox home under the short, sticky
@@ -242,42 +242,42 @@ Tradeoff: tests may force code changes that stale the review. If tests or review
 Run multiple reviewers against one frozen bundle:
 
 ```bash
-"$AUTOREVIEW" --reviewers codex,claude,pi
+"$AUTOREVIEW" --reviewers codex,claude,pi --max-priority P2 --stream-engine-output
 ```
 
-In a Bottega Dex maestro run the integrated diff always reviews as one panel of both engines:
+The integrated Maestro closeout reviews the integrated diff as this mandatory panel:
 
 ```bash
-"$AUTOREVIEW" --mode branch --base <frozen-base> --reviewers codex,claude \
+"$AUTOREVIEW" --mode branch --base <frozen-base> --reviewers codex,claude --max-priority P2 --stream-engine-output \
   --model codex=gpt-5.6-sol --thinking codex=high \
   --model claude=claude-opus-5 --thinking claude=high
 ```
 
-Reruns after fixes are single-engine with model and thinking pinned (`--engine codex --model gpt-5.6-sol --thinking high`; when the fix itself was built by a GPT model, rerun with `--engine claude --model claude-opus-5 --thinking high` instead, so the rerunning engine never comes from the company whose model wrote the fix), repeated until the helper exits clean at the accepted head; the review stands at that head.
+Every integrated Maestro closeout rerun repeats this exact two-engine panel with the models and thinking pinned, and repeats both Standards and Spec reviews with Sol at high reasoning, until all three review results are clean at the accepted head. A standalone invocation keeps the engine or panel its caller selected. Pre-integration slice reruns keep the one dispatch-selected high-reasoning engine, model, and thinking configuration for their bug, Standards, and Spec passes, and smoke that exact selected configuration before the first clean result. Do not replace either selection during reruns.
 
 `--panel` is shorthand for Codex plus Claude unless `--engine` changes the first reviewer:
 
 ```bash
-"$AUTOREVIEW" --panel
+"$AUTOREVIEW" --panel --max-priority P2 --stream-engine-output
 ```
 
 Set reviewer models and thinking/effort explicitly:
 
 ```bash
-"$AUTOREVIEW" --reviewers codex,claude --model codex=gpt-5.6-sol --thinking codex=xhigh --model claude=claude-fable-5 --thinking claude=xhigh
+"$AUTOREVIEW" --reviewers codex,claude --model codex=gpt-5.6-sol --thinking codex=xhigh --model claude=claude-fable-5 --thinking claude=xhigh --max-priority P2 --stream-engine-output
 ```
 
 Inline syntax is also supported for simple model IDs:
 
 ```bash
-"$AUTOREVIEW" --reviewers codex:gpt-5.6-sol:xhigh,claude:claude-fable-5:xhigh
+"$AUTOREVIEW" --reviewers codex:gpt-5.6-sol:xhigh,claude:claude-fable-5:xhigh --max-priority P2 --stream-engine-output
 ```
 
 For models with slashes or extra colons, prefer keyed form:
 
 ```bash
-"$AUTOREVIEW" --engine pi --model anthropic/claude-sonnet-4 --thinking high
-"$AUTOREVIEW" --reviewers codex,pi --model codex=gpt-5.6-sol --model pi=anthropic/claude-sonnet-4
+"$AUTOREVIEW" --engine pi --model anthropic/claude-sonnet-4 --thinking high --max-priority P2 --stream-engine-output
+"$AUTOREVIEW" --reviewers codex,pi --model codex=gpt-5.6-sol --model pi=anthropic/claude-sonnet-4 --max-priority P2 --stream-engine-output
 ```
 
 `--reviewers all` covers Codex, Claude, and Pi. Droid, Copilot, Cursor, and OpenCode selections fail closed because their current CLI contracts cannot confine project instructions, filesystem reads, or network fetches to the review boundary.
@@ -313,20 +313,20 @@ Examples matching current `main` behavior:
 
 ```bash
 # Codex with explicit model and reasoning
-"$AUTOREVIEW" --engine codex --model gpt-5.6-sol --thinking xhigh
+"$AUTOREVIEW" --engine codex --model gpt-5.6-sol --thinking xhigh --max-priority P2 --stream-engine-output
 
 # Codex fast mode (priority service tier); needs a model whose catalog lists the tier, silently standard otherwise
-"$AUTOREVIEW" --engine codex --codex-speed fast
+"$AUTOREVIEW" --engine codex --codex-speed fast --max-priority P2 --stream-engine-output
 
 # Safe Codex model/response tuning overrides (--codex-speed wins over a service_tier here)
-"$AUTOREVIEW" --engine codex --codex-config 'service_tier="fast"'
+"$AUTOREVIEW" --engine codex --codex-config 'service_tier="fast"' --max-priority P2 --stream-engine-output
 
 # Claude Code aliases or full model names, with optional availability fallback
-"$AUTOREVIEW" --engine claude --model claude-fable-5 --thinking xhigh
-"$AUTOREVIEW" --engine claude --model claude-fable-5 --fallback-model claude-opus-4-8,claude-sonnet-4-6
+"$AUTOREVIEW" --engine claude --model claude-fable-5 --thinking xhigh --max-priority P2 --stream-engine-output
+"$AUTOREVIEW" --engine claude --model claude-fable-5 --fallback-model claude-opus-4-8,claude-sonnet-4-6 --max-priority P2 --stream-engine-output
 
 # Pi with explicit model and thinking level
-"$AUTOREVIEW" --engine pi --model anthropic/claude-sonnet-4 --thinking high --pi-bin pi
+"$AUTOREVIEW" --engine pi --model anthropic/claude-sonnet-4 --thinking high --pi-bin pi --max-priority P2 --stream-engine-output
 
 ```
 
@@ -416,13 +416,36 @@ The helper:
 - prints `autoreview clean: no accepted/actionable findings reported` when the selected review command exits 0
 - exits nonzero when accepted/actionable findings are present
 
-## Final Report
+## Standards and Spec reviews
+
+Run the Standards and Spec reviews in parallel as two separate autoreview helper invocations against the same frozen target, per [references/reviews.md](references/reviews.md). The outer review worker retains read-only target-repository access to invoke the helper and verify findings. Each helper-created isolated model session receives only the helper's redacted review bundle plus its review prompt. The review worker never passes raw diffs, deleted revisions, or repository access into those isolated sessions.
+
+The task running this skill creates two review-specific prompt files outside the reviewed repository. Both prompts contain their review instructions and the neutral review-boundary facts. The Standards prompt additionally contains required trusted authority text frozen at the target base, and never contains the request, build spec, verbatim request, or intended behavior. The Spec prompt additionally contains the run's build spec or verbatim request and uses the neutral bounds to judge only its designated slice. Neither prompt contains diff content or deleted revisions. Pass each prompt with `--prompt`, because `--prompt-file` intentionally accepts only repository-relative files. Keep each JSON report outside the reviewed repository too.
+
+For an integrated Maestro closeout branch review, run these commands against the same frozen base used by the mandatory panel:
+
+```bash
+"$AUTOREVIEW" --mode branch --base "$FROZEN_BASE" --engine codex --max-priority P2 --stream-engine-output \
+  --model gpt-5.6-sol --thinking high \
+  --prompt "$(cat "$STANDARDS_REVIEW_PROMPT")" --json-output "$STANDARDS_REVIEW_REPORT"
+
+"$AUTOREVIEW" --mode branch --base "$FROZEN_BASE" --engine codex --max-priority P2 --stream-engine-output \
+  --model gpt-5.6-sol --thinking high \
+  --prompt "$(cat "$SPEC_REVIEW_PROMPT")" --json-output "$SPEC_REVIEW_REPORT"
+```
+
+For standalone local or commit review, replace only the target arguments with the exact frozen target arguments used by the structured review. The engine, model, thinking, P2 threshold, stream setting, prompt boundary, and separate external report stay fixed for the Standards and Spec reviews. Do not use `--dry-run`: it exits before TruffleHog and bundle construction. A review is clean only when its own helper invocation reports `trufflehog: clean`, completes structured review, and has every finding resolved. If its preflight or helper invocation fails, that review is unverified and cannot contribute to a clean result. A standalone Spec review with no supplied spec keeps the `no spec available` short circuit in the reference and does not launch or claim a clean Spec result. Maestro always supplies its spec.
+
+Standards and Spec findings use the same verification and scope classification as engine findings. Keep the Standards and Spec reports separate. A Maestro head is clean only when the mandatory panel and both review invocations produce clean results at the same frozen target.
+
+## Reporting
 
 Include:
 
 - review command used
 - tests/proof run
 - findings accepted/rejected, briefly why
-- the clean review result from the final helper/review run, or why a remaining finding was consciously rejected
+- the Standards and Spec review reports, kept separate, and how each finding was resolved
+- the clean result from the final helper/review run, or why a remaining finding was consciously rejected
 
 Do not run another review solely to improve the final report wording. If the final helper run exited 0 and produced no accepted/actionable findings, report that exact run as clean.
