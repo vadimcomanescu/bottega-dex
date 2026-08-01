@@ -1,8 +1,10 @@
 ---
 name: bro
-description: Restate the last message in plain human language, with no jargon.
+description: Restate the immediately preceding assistant reply in plain, jargon-free Simplified Technical English. Use when the user asks for a plain restatement.
 ---
 
 # Bro
 
-Restate your last message. Stop using jargon and speak coherently. State it more simply and concisely, like one human talking to another. Where the content is technical, write the restatement to ASD-STE100 Simplified Technical English.
+Restate the immediately preceding assistant reply once, simply and concisely, without jargon.
+
+Where the content is technical, write it to ASD-STE100 Simplified Technical English: use short sentences in simple tenses, with one idea each. Use active voice and name who does what. Use the same word for the same thing every time, choosing the plainest word that carries the meaning. When you keep a technical term, give its meaning once, at first use. Keep the subject and articles. A sentence without them can read two ways. Break a stack of nouns into a clause.

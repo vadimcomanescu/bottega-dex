@@ -5,6 +5,10 @@ import { describe, expect, it } from "vitest";
 
 const ROOT = join(import.meta.dirname, "..");
 const AGENTS = readFileSync(join(ROOT, "AGENTS.md"), "utf8");
+const START = readFileSync(
+  join(ROOT, "plugins", "bottega-dex", "skills", "start", "SKILL.md"),
+  "utf8",
+);
 const CLOSE = readFileSync(
   join(ROOT, "plugins", "bottega-dex", "skills", "close", "SKILL.md"),
   "utf8",
@@ -88,25 +92,58 @@ describe("repository landing setup", () => {
       /no enforcing required `hold` check appears.*`gh pr merge --disable-auto <PR-URL>`.*confirm.*`autoMergeRequest` is null.*leave.*labeled and unarmed.*stop.*report/is,
     );
     expect(AGENTS).toMatch(/removing the label reruns the check/i);
+    expect(AGENTS).toMatch(/no queue or separate repository-owned landing enrollment.*null `autoMergeRequest`.*terminal-ineligibility proof/is);
     expect(AGENTS).toMatch(/Never issue a direct merge command/i);
   });
 
-  it("arms a held fallback pull request before polling its hold check", () => {
+  it("requires the host landing procedure to define complete fail-closed withdrawal", () => {
+    expect(START).toMatch(
+      /For every mechanism that can land the PR.*exact disarm or withdrawal action.*readback that proves the PR terminally ineligible/is,
+    );
+    expect(START).toMatch(
+      /disabling a GitHub auto-merge arm.*withdrawing a queue or repository-owned enrollment.*making the PR draft only when the project names draft as its safe withdrawal state/is,
+    );
+    expect(START).toMatch(/any applicable arm, disarm, withdrawal, or terminal-ineligibility proof is missing or ambiguous.*Close blocked/is);
     expect(CLOSE).toMatch(
-      /Opener-armed auto-merge fallback:.*run `gh pr merge --auto --squash <PR-URL>`.*On a hold run, arm immediately after creation, before polling/is,
+      /fail closed across every mechanism that could still land the PR.*disable a GitHub auto-merge arm.*withdraw the PR from every queue or repository-owned landing mechanism.*make the PR draft when the procedure names draft as the safe withdrawal state/is,
     );
     expect(CLOSE).toMatch(
-      /After the arm is present, poll.*required checks.*confirm.*hold check.*red/is,
+      /autoMergeRequest.*null.*queue or repository-owned mechanism.*withdrawn or ineligible.*isDraft.*true.*every applicable readback agrees/is,
+    );
+    expect(CLOSE).toMatch(
+      /any disarm or withdrawal action is missing, fails, or cannot be proved.*fail-closed recovery failed.*never claim the PR is safely held/is,
+    );
+    expect(CLOSE).toMatch(
+      /enumerate every landing mechanism applicable to this PR.*verify the blocked or ineligible readback.*Every applicable proof is required.*One passing signal never substitutes/is,
+    );
+    expect(CLOSE).toMatch(
+      /If any applicable mechanism lacks its documented blocked or ineligible readback, fail closed across every mechanism/is,
+    );
+    expect(CLOSE).toMatch(
+      /single brake signal does not establish a safe hold.*complete fail-closed withdrawal.*any readback is missing or no longer blocked/is,
+    );
+  });
+
+  it("arms a held fallback before polling only when the landing procedure assigns the arm", () => {
+    expect(CLOSE).toMatch(
+      /Opener-armed auto-merge fallback:.*run `gh pr merge --auto --squash <PR-URL>`.*only when the landing procedure assigns that opener action for this release answer.*When it assigns an arm, create it immediately after the PR opens and before polling/is,
+    );
+    expect(CLOSE).toMatch(
+      /documented held fallback is an armed PR plus a required brake check.*poll its required checks.*confirm it is red because the documented brake is present/is,
     );
     expect(CLOSE).not.toMatch(
-      /On a hold run, first poll.*confirm.*red.*leave the PR labeled and unarmed/is,
+      /On a hold run, arm immediately after creation/is,
+    );
+    expect(CLOSE).toMatch(/Merge queue:.*Run no merge or auto-merge command/is);
+    expect(CLOSE).toMatch(
+      /procedure assigns no arm for the current release answer, such as a held draft, arm nothing/is,
     );
     expect(CLOSE).toMatch(
-      /no enforcing required check appears.*run `gh pr merge --disable-auto <PR-URL>`.*confirm.*`autoMergeRequest` is null.*leave the PR labeled and unarmed.*stop.*report/is,
+      /no enforcing required check appears.*complete fail-closed withdrawal.*`gh pr merge --disable-auto <PR-URL>`.*`autoMergeRequest` is null.*queue or repository-owned mechanism.*withdrawn.*proved ineligible/is,
     );
-    expect(CLOSE).not.toMatch(/no enforcing required check appears.*leave the PR labeled and armed/is);
+    expect(CLOSE).not.toMatch(/no enforcing required check appears.*leave the PR braked and armed/is);
     expect(CLOSE).toMatch(
-      /held fallback PR reaches the terminal held state only when the auto-merge arm created immediately after PR creation is present, its hold check alone is red/is,
+      /documented held fallback requires an arm plus a required brake check.*terminal held state only when that arm is present, the brake check alone is red/is,
     );
   });
 });

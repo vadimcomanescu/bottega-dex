@@ -6,6 +6,16 @@ const ROOT = join(import.meta.dirname, "..");
 const PLUGIN = join(ROOT, "plugins", "bottega-dex");
 const README = readFileSync(join(ROOT, "README.md"), "utf8");
 const AGENTS = readFileSync(join(ROOT, "AGENTS.md"), "utf8");
+const THIRD_PARTY = readFileSync(join(ROOT, "THIRD_PARTY.md"), "utf8");
+const CONTEXT = readFileSync(join(ROOT, "CONTEXT.md"), "utf8");
+const REVIEW_WORKER_ADR = readFileSync(
+  join(ROOT, "docs", "adr", "0001-one-review-worker-owns-convergence.md"),
+  "utf8",
+);
+const P2_LESSON = readFileSync(
+  join(ROOT, "docs", "lessons", "p0-threshold-suppressed-review-findings.md"),
+  "utf8",
+);
 
 const UPSTREAM_SKILL = `---
 name: orchestrate
@@ -46,6 +56,7 @@ describe("Codex plugin package", () => {
       "skills/close/references/qa-evidence.md",
       "skills/code-review/SKILL.md",
       "skills/code-review/LICENSE",
+      "skills/code-review/references/reviews.md",
       "skills/code-review/references/smell-baseline.md",
       "skills/code-review/scripts/autoreview",
       "skills/code-review/scripts/autoreview_test.py",
@@ -111,11 +122,15 @@ describe("Codex plugin package", () => {
 
     expect(bro).toMatch(/^name: bro$/m);
     expect(bro).not.toContain("disable-model-invocation");
-    expect(bro).toContain("Restate your last message");
+    expect(bro).toMatch(/Restate the immediately preceding assistant reply once/i);
+    expect(bro).not.toMatch(/from here on|persist(?:s|ent)? across turns/i);
     expect(bro).toContain("ASD-STE100 Simplified Technical English");
     expect(bro).not.toMatch(/certif(?:y|ied|ication)/i);
     expect(metadata).toContain('display_name: "Bro"');
+    expect(metadata).toContain('short_description: "Restate the last reply plainly"');
     expect(metadata).toContain('default_prompt: "Use $bottega-dex:bro ');
+    expect(metadata).toContain("immediately preceding assistant reply plainly");
+    expect(metadata).not.toMatch(/keep the task|persistent|from here on/i);
   });
 
   it("exposes domain modeling and prototype as opt-in Codex-native skills", () => {
@@ -264,8 +279,9 @@ describe("Codex plugin package", () => {
     expect(start).toMatch(/Follow its claim procedure without changing the user's checkout/i);
     expect(start).toMatch(/reserve that claim from the isolated worktree/i);
     expect(start).toMatch(/Preserve the tracker owner's force-push rule/i);
-    expect(start).toContain("## 4. Read the commands and merge procedure");
-    expect(start).toMatch(/opening an eligible non-draft PR enters a merge queue/i);
+    expect(start).toContain("## 4. Read the commands and landing procedure");
+    expect(start).toMatch(/queue that takes eligible non-draft PRs/i);
+    expect(start).toMatch(/every mechanism that can land the PR.*exact disarm or withdrawal action.*readback that proves the PR terminally ineligible/is);
     expect(start).toContain("## 5. Confirm GitHub publication");
     expect(start).toContain("gh auth status");
     expect(discover).toMatch(/^name: discover$/m);
@@ -296,17 +312,28 @@ describe("Codex plugin package", () => {
     expect(qa).toMatch(/product code.*stay as you found them/i);
     expect(close).toMatch(/^name: close$/m);
     expect(close).not.toContain("user-invocable");
+    expect(close).toMatch(/description:.*host project's complete landing procedure.*real terminal state/i);
     expect(close).toContain("references/qa-evidence.md");
     expect(close).toContain("../code-review/SKILL.md");
     expect(close).toMatch(/head accepted by autoreview/i);
-    expect(close).toMatch(/opening an eligible non-draft PR is the arm/i);
+    expect(close).toMatch(/complete documented landing procedure/i);
+    expect(close).toMatch(/label, required check, queue condition, or draft state/i);
+    expect(close).toMatch(/apply the brake the landing procedure names on the create call/i);
     expect(close).toMatch(/For Mergify this is the Mergify summary/i);
     expect(close).toMatch(/project checks remain ordinary checks and are not expected to turn red/i);
+    expect(close).toMatch(/Merge queue:.*eligible non-draft PR is the whole opener action.*no merge or auto-merge command/is);
     expect(close).toMatch(/Opener-armed auto-merge fallback/i);
+    expect(close).toMatch(/only when the landing procedure assigns that opener action for this release answer/i);
     expect(close).toMatch(/poll its required checks for up to five minutes/i);
-    expect(close).toMatch(/non-null on both land and hold runs/i);
-    expect(close).toMatch(/hold check and queue summary are merge-control signals/i);
-    expect(close).toMatch(/An `autoMergeRequest` of null is expected/i);
+    expect(close).toMatch(/disable-auto.*confirmation.*autoMergeRequest.*null/is);
+    expect(close).toMatch(/fail closed across every mechanism that could still land the PR.*withdraw the PR from every queue or repository-owned landing mechanism/is);
+    expect(close).toMatch(/every applicable readback agrees.*never claim the PR is safely held/is);
+    expect(close).toMatch(/enumerate every landing mechanism applicable to this PR.*Every applicable proof is required.*One passing signal never substitutes/is);
+    expect(close).toMatch(/single brake signal does not establish a safe hold.*any readback is missing or no longer blocked/is);
+    expect(close).toMatch(/report it held only when.*every other applicable mechanism also reports the PR blocked or ineligible/is);
+    expect(close).toMatch(/Another repository-owned mechanism:.*only the opener action its documented procedure assigns/is);
+    expect(close).toMatch(/Read every terminal outcome from the landing procedure/i);
+    expect(close).toMatch(/An `autoMergeRequest` of null is expected on a queue-owned non-draft PR/i);
     expect(close).not.toContain("gh pr merge --squash <PR-URL>");
     expect(qaEvidence).toMatch(/artifacts QA actually captured/i);
     expect(qaEvidence).toMatch(/recordings when the driving tool produced them/i);
@@ -328,21 +355,21 @@ describe("Codex plugin package", () => {
     const packageLock = json(join(ROOT, "package-lock.json"));
     expect(manifest).toMatchObject({
       name: "bottega-dex",
-      version: "0.10.0",
+      version: "0.11.0",
       skills: "./skills/",
     });
-    expect(packageJson.version).toBe("0.10.0");
-    expect(packageLock.version).toBe("0.10.0");
-    expect(packageLock.packages[""].version).toBe("0.10.0");
+    expect(packageJson.version).toBe("0.11.0");
+    expect(packageLock.version).toBe("0.11.0");
+    expect(packageLock.packages[""].version).toBe("0.11.0");
     expect(manifest.interface.defaultPrompt).toEqual([
       "$bottega-dex:maestro Take this task through adaptive delivery, dual review, any required QA, and a pull request.",
     ]);
   });
 
   it("documents the adaptive ordered workflow and selected Bottega snapshot", () => {
-    expect(README).toContain("a1b9385d533ccb37cc1fec6ce1361aeef7ed711a");
+    expect(README).toContain("7ee58ba7ca3c0677c2f1405bdb52b4ba3b7a09b7");
     expect(README).toContain(
-      "start → discover → spec when discovery adds decisions → architect when needed → panel when its three conditions hold → Claude cross-read when reversal is costly → orchestrate → code-review → spec read → architecture read when reversal is costly → QA when user-facing behavior changes → close",
+      "start → discover → spec when discovery adds decisions → architect when needed → panel when its three conditions hold → Claude cross-read when reversal is costly → orchestrate → closeout review with parallel Standards and Spec reviews → architecture read when reversal is costly → QA when user-facing behavior changes → close",
     );
     expect(README).toMatch(/Architect runs only when.*acceptance criteria.*slices need settling/i);
     expect(README).toMatch(/Claude cross-read runs only when.*costly to reverse/i);
@@ -351,17 +378,95 @@ describe("Codex plugin package", () => {
     expect(README).toMatch(/isolated branch and worktree.*project gates.*whole-diff review.*pull request/i);
     expect(README).toMatch(/QA is required when.*user-facing surface or product behavior/i);
     expect(README).toMatch(/no user-facing surface or product behavior.*skips QA/i);
+    expect(README).toMatch(/Maestro run.*glossary terms.*qualifying ADRs.*isolated worktree/i);
+    expect(README).toMatch(/Standalone discovery.*does not edit.*caller.*checkout.*exact proposed changes/is);
+    expect(README).toMatch(/post-review change.*every required review.*complete required QA scenario set.*final reviewed SHA.*never only an affected subset/is);
+    expect(README).toMatch(/neutral boundary facts: base, owner boundary, exact slice file bounds, non-test LOC, and named test interfaces/is);
+    expect(README).toMatch(/Standards receives.*neutral facts.*trusted frozen-base authority.*no behavior.*Spec receives.*same facts.*behavioral baseline/is);
+    expect(README).toMatch(/main run worktree.*integration worktree.*one slice branch and worktree per independent slice.*parallel builders never share Git state/is);
+    expect(README).toMatch(/helper reviews that slice branch against the frozen base.*P2.*selected high-reasoning engine.*exact-model smoke boundary.*Only the accepted slice commit.*main run worktree/is);
+    expect(README).toMatch(/review worker.*fixed GPT-5\.6 Sol and Claude Opus 5 panel.*every rerun/is);
+    expect(README).toMatch(/review worker.*leaf.*returns accepted repair briefs.*without spawning builders or editing production code/is);
+    expect(README).toMatch(/main task.*never edits production code.*dispatches `implement` builders.*repaired head.*same worker.*proof and reruns/is);
+    expect(README).toMatch(/P2.*malicious smoke harness.*clean review/i);
+    expect(README).toMatch(/Standards and Spec reviews run in parallel and stay separate.*Bottega `7ee58ba`/i);
+    expect(README).toMatch(/close.*project's documented brake.*queue-owned eligible non-draft PR receives no auto-merge arm.*only when the procedure assigns.*final report reads its outcome/is);
+    expect(README).toMatch(/hold enforcement cannot be proved.*every documented disarm or withdrawal action.*uses draft only when the procedure names it as safe.*every applicable readback proves the PR terminally ineligible/is);
     expect(README).toMatch(/single builder.*structured whole-diff review will run/is);
-    expect(README).toMatch(/SKILL.*prose exception.*fresh high-reasoning.*whole docs diff/is);
-    expect(AGENTS).toMatch(/fixed phase order.*start.*discover.*architect.*panel.*use-claude.*orchestrate.*code-review.*qa.*close/is);
+    expect(README).toMatch(/Every diff, including skill and workflow prose, goes through the sanitized review helper/i);
+    expect(AGENTS).toMatch(/fixed phase order.*start.*discover.*architect.*panel.*use-claude.*orchestrate.*closeout.*code-review.*qa.*close/is);
     expect(AGENTS).toMatch(/must re-enter a skipped phase/i);
     expect(AGENTS).toMatch(/QA is required when.*user-facing surface or product behavior/i);
-    expect(AGENTS).toMatch(/SKILL.*prose exception.*fresh high-reasoning.*whole docs diff/is);
+    expect(AGENTS).toMatch(/Every diff uses the sanitized helper/i);
     expect(README).toContain("$bottega-dex:improve [area or direction]");
     expect(README).toMatch(/scan.*strongest.*candidate.*maestro/is);
     expect(README).toContain("$bottega-dex:setup");
     expect(README).toMatch(/setup.*explicit-only.*exact file or GitHub change.*approval/is);
     expect(AGENTS).toContain("plugins/bottega-dex/skills/improve/SKILL.md");
     expect(AGENTS).toContain("plugins/bottega-dex/skills/setup/SKILL.md");
+    expect(AGENTS).toMatch(/close\/SKILL\.md.*documented brake when held.*only its assigned opener action.*outcome its procedure defines/i);
+    expect(AGENTS).toMatch(/hold enforcement cannot be proved.*disarms or withdraws every applicable GitHub, queue, and repository-owned mechanism.*never claims a safe hold.*every mechanism reports the PR ineligible/is);
+    expect(AGENTS).toMatch(/glossary terms.*qualifying ADRs inline/i);
+    expect(AGENTS).toMatch(/bro.*restates the immediately preceding assistant reply once.*does not persist across turns/is);
+    expect(AGENTS).toMatch(/main run worktree.*integration worktree.*one slice branch and worktree per independent slice.*parallel builders never share Git state/is);
+    expect(AGENTS).toMatch(/Review each slice branch against the frozen base.*integrate only its accepted commit.*main run worktree/is);
+    expect(AGENTS).toMatch(/neutral boundary facts: base, owner boundary, exact slice file bounds, non-test LOC, and named test interfaces/is);
+    expect(AGENTS).toMatch(/Standards receives.*neutral facts.*trusted frozen-base authority.*no behavior.*Spec receives.*same neutral facts.*behavioral baseline/is);
+    expect(AGENTS).toMatch(/fixed across reruns/i);
+    expect(AGENTS).toMatch(/review worker.*leaf.*returns accepted repair briefs.*without spawning builders or editing production code/is);
+    expect(AGENTS).toMatch(/root task.*never edits production code.*dispatches `implement` builders.*repaired head.*same review worker/is);
+    expect(AGENTS).toMatch(/Standards authority.*trusted frozen base.*not the reviewed checkout/is);
+    expect(AGENTS).toMatch(/review prompt.*frozen owner and scope baseline.*threat model.*named test interfaces/is);
+    expect(AGENTS).toMatch(/two review-triggered repair cycles.*pauses and reclassifies/is);
+    expect(AGENTS).toMatch(/architecture-driven repair.*re-enters panel.*dual-panel, Standards, and Spec reviews/is);
+    expect(AGENTS).toMatch(/post-review change.*complete required QA scenario set.*final reviewed SHA.*never only an affected subset/is);
+    expect(THIRD_PARTY).toContain("7ee58ba7ca3c0677c2f1405bdb52b4ba3b7a09b7");
+    expect(THIRD_PARTY).toContain("Bottega 0.177.0");
+    expect(THIRD_PARTY).toMatch(/P2 threshold, selected-model smoke checks, and separate Standards and Spec reviews.*not part of the unchanged OpenClaw/is);
+    expect(THIRD_PARTY).toMatch(/`bro` is a one-shot restatement and does not persist across turns.*Maestro owns its plain-language rule/is);
+    expect(THIRD_PARTY).toMatch(/multi-builder runs create one distinct slice branch and worktree per independent slice from the frozen integration base, each builder edits only its slice worktree, and only an accepted slice commit is integrated into the main run worktree/i);
+    expect(THIRD_PARTY).toMatch(/complete host-defined landing procedure.*project-defined brake.*procedure-assigned opener action.*procedure-read outcome.*fail-closed opener-armed fallback/i);
+    expect(THIRD_PARTY).toMatch(/queue-owned non-draft semantics.*fail-closed opener-armed fallback/i);
+  });
+
+  it("records the review vocabulary, decision, and P2 lesson", () => {
+    expect(CONTEXT).toMatch(/^## Language$/m);
+    expect(CONTEXT).toMatch(/^\*\*Run\*\*:$/m);
+    expect(CONTEXT).toMatch(/^\*\*Orchestrator\*\*:$/m);
+    expect(CONTEXT).toMatch(/^\*\*Worker\*\*:$/m);
+    expect(CONTEXT).toMatch(/^\*\*Review worker\*\*:$/m);
+    expect(CONTEXT).toMatch(/reviewing one frozen change until it is accepted or escalated/i);
+    expect(CONTEXT).toMatch(/^\*\*Independent review\*\*:$/m);
+    expect(CONTEXT).toMatch(/Standards review means checking repository conventions.*Spec review means checking delivered behavior/is);
+    expect(CONTEXT).not.toMatch(/high-reasoning|leaf worker|spawn builders|edit production code|dispatches repairs|run in parallel|reports remain separate/i);
+    expect(REVIEW_WORKER_ADR).toMatch(/fresh review worker.*returns accepted repair briefs.*orchestrator dispatches builders/is);
+    expect(REVIEW_WORKER_ADR).toMatch(/orchestrator-per-finding review and single-engine reruns/i);
+    expect(REVIEW_WORKER_ADR).toMatch(/extra model latency and cost.*orchestrator-builder handoff/is);
+    expect(P2_LESSON).toMatch(/What happened:.*P0-only default.*suppress/is);
+    expect(P2_LESSON).toMatch(/Every structured and independent review runs at P2/i);
+    expect(P2_LESSON).toMatch(/malicious smoke harness/i);
+    expect(P2_LESSON).toMatch(/^Enforced:/m);
+  });
+
+  it("pins complete frozen-base Standards authority and shared threat-model prompts", () => {
+    const reviews = readFileSync(
+      join(PLUGIN, "skills", "code-review", "references", "reviews.md"),
+      "utf8",
+    );
+    expect(reviews).toMatch(
+      /every applicable repository authority that governs the changed files, owner boundaries, or named test interfaces.*frozen target base/is,
+    );
+    expect(reviews).toMatch(
+      /Authority discovery is not limited to interface contracts.*root or nested agent map, review doctrine, ownership rule, test-interface contract/is,
+    );
+    expect(reviews).toMatch(
+      /relevant threat-model boundary.*exact same threat-model sentence is required in both the Standards and Spec prompt files.*neither helper invocation starts without it/is,
+    );
+    expect(reviews).toMatch(
+      /Spec prompt must include the same required threat-model sentence as the Standards prompt/i,
+    );
+    expect(reviews).toMatch(
+      /threat-model sentence.*neutral review-boundary fact.*does not add the request, specification, or intended behavior to the Standards prompt/is,
+    );
   });
 });
