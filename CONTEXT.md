@@ -19,6 +19,10 @@ A worker responsible for reviewing one frozen change until it is accepted or esc
 **Independent review**:
 One review of a frozen change against one authority. Standards review means checking repository conventions. Spec review means checking delivered behavior against the promised specification.
 
+**Plan**:
+The run's durable architecture handoff written before builders start: what builders must not decide, the named interfaces tests cross, any threat model, and the vertical slices. It is separate from the behavioral specification. The repository's documented planning authority owns it; without one, it stays in isolated run state or the conversation.
+_Avoid_: execution plan, design (design is the activity; Plan is the artifact)
+
 **Landing procedure**:
 The repository's documented rule for what lands a pull request, read from its agent map and its routed authority.
 

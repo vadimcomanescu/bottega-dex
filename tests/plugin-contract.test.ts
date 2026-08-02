@@ -65,6 +65,7 @@ describe("Codex plugin package", () => {
       "skills/code-review/scripts/test-review-harness.ps1",
       "skills/code-review/tests/test_autoreview_hardening.py",
       "skills/architect/SKILL.md",
+      "skills/codebase-design/SKILL.md",
       "skills/domain-modeling/SKILL.md",
       "skills/domain-modeling/agents/openai.yaml",
       "skills/domain-modeling/references/ADR-FORMAT.md",
@@ -170,6 +171,24 @@ describe("Codex plugin package", () => {
     expect(prototypeMetadata).toMatch(/policy:\s+allow_implicit_invocation: false/s);
   });
 
+  it("keeps deep-module vocabulary separate from consequential architecture methods", () => {
+    const codebaseDesign = readFileSync(
+      join(PLUGIN, "skills", "codebase-design", "SKILL.md"),
+      "utf8",
+    );
+    const architect = readFileSync(
+      join(PLUGIN, "skills", "architect", "SKILL.md"),
+      "utf8",
+    );
+
+    expect(codebaseDesign).toMatch(/^name: codebase-design$/m);
+    expect(codebaseDesign).toMatch(/Module.*Interface.*Depth.*Seam.*Adapter.*Leverage.*Locality/is);
+    expect(codebaseDesign).toMatch(/deletion test/i);
+    expect(architect).toContain("[codebase-design](../codebase-design/SKILL.md)");
+    expect(architect).toMatch(/dependency before deciding how its seam is tested/i);
+    expect(architect).toMatch(/Documentation and domain authority/i);
+  });
+
   it("keeps spec internal and repository-local", () => {
     const spec = readFileSync(join(PLUGIN, "skills", "spec", "SKILL.md"), "utf8");
 
@@ -177,6 +196,9 @@ describe("Codex plugin package", () => {
     expect(spec).toMatch(/^user-invocable: false$/m);
     expect(spec).toContain("docs/specs/<slug>.md");
     expect(spec).toMatch(/Do not open, edit, or comment on an issue/i);
+    expect(spec).toMatch(/How We Measure Success.*only when/is);
+    expect(spec).toMatch(/Further Notes.*Omit this section/is);
+    expect(spec).toMatch(/Plan.*separate/is);
   });
 
   it("exposes improve as an opt-in architecture scan that hands one choice to Maestro", () => {
@@ -201,12 +223,16 @@ describe("Codex plugin package", () => {
     expect(improve).toMatch(/Leave interface design to the run/i);
     expect(improve).toMatch(/No HTML.*No file report/i);
     expect(improve).toMatch(/The user picks one or rejects them/i);
+    expect(improve).toMatch(/deletion test.*test.*current interface.*ADRs/is);
     expect(improve).toMatch(/scan stands as.*discovery/i);
+    expect(improve).toMatch(/scan stands as completed discovery.*does not repeat/is);
+    expect(improve).toMatch(/settled additional behavioral decisions.*synthesizes the spec.*otherwise.*candidate and criteria verbatim.*continues to the Plan/is);
     expect(improve).toContain("[maestro](../maestro/SKILL.md)");
     expect(metadata).toContain('display_name: "Improve"');
     expect(metadata).toContain('default_prompt: "Use $bottega-dex:improve ');
     expect(metadata).toMatch(/policy:\s+allow_implicit_invocation: false/s);
-    expect(maestro).toMatch(/improve.*scan.*discovery.*without repeating/is);
+    expect(maestro).toMatch(/improve.*scan.*completed discovery.*do not repeat/is);
+    expect(maestro).toMatch(/scan settled behavioral decisions beyond the original candidate.*use \[spec\].*Otherwise.*candidate.*criteria verbatim.*continue to the Plan/is);
   });
 
   it("exposes setup as an explicit, idempotent Codex-native repository reconciliation", () => {
@@ -344,6 +370,7 @@ describe("Codex plugin package", () => {
     expect(marketplace.plugins).toEqual([
       expect.objectContaining({
         name: "bottega-dex",
+        version: "0.12.0",
         source: { source: "local", path: "./plugins/bottega-dex" },
         policy: { installation: "AVAILABLE", authentication: "ON_INSTALL" },
         category: "Coding",
@@ -355,19 +382,19 @@ describe("Codex plugin package", () => {
     const packageLock = json(join(ROOT, "package-lock.json"));
     expect(manifest).toMatchObject({
       name: "bottega-dex",
-      version: "0.11.0",
+      version: "0.12.0",
       skills: "./skills/",
     });
-    expect(packageJson.version).toBe("0.11.0");
-    expect(packageLock.version).toBe("0.11.0");
-    expect(packageLock.packages[""].version).toBe("0.11.0");
+    expect(packageJson.version).toBe("0.12.0");
+    expect(packageLock.version).toBe("0.12.0");
+    expect(packageLock.packages[""].version).toBe("0.12.0");
     expect(manifest.interface.defaultPrompt).toEqual([
       "$bottega-dex:maestro Take this task through adaptive delivery, dual review, any required QA, and a pull request.",
     ]);
   });
 
   it("documents the adaptive ordered workflow and selected Bottega snapshot", () => {
-    expect(README).toContain("7ee58ba7ca3c0677c2f1405bdb52b4ba3b7a09b7");
+    expect(README).toContain("e0926de03d955febee9646d9c19d6384ec92a345");
     expect(README).toContain(
       "start → discover → spec when discovery adds decisions → architect when needed → panel when its three conditions hold → Claude cross-read when reversal is costly → orchestrate → closeout review with parallel Standards and Spec reviews → architecture read when reversal is costly → QA when user-facing behavior changes → close",
     );
@@ -381,15 +408,21 @@ describe("Codex plugin package", () => {
     expect(README).toMatch(/Maestro run.*glossary terms.*qualifying ADRs.*isolated worktree/i);
     expect(README).toMatch(/Standalone discovery.*does not edit.*caller.*checkout.*exact proposed changes/is);
     expect(README).toMatch(/post-review change.*every required review.*complete required QA scenario set.*final reviewed SHA.*never only an affected subset/is);
-    expect(README).toMatch(/neutral boundary facts: base, owner boundary, exact slice file bounds, non-test LOC, and named test interfaces/is);
-    expect(README).toMatch(/Standards receives.*neutral facts.*trusted frozen-base authority.*no behavior.*Spec receives.*same facts.*behavioral baseline/is);
+    expect(README).toMatch(/neutral boundary facts: target and base, architectural owner boundary, relevant sibling surfaces, public, security, and product contracts, changed-file and exact slice file bounds, non-test LOC measurements, named test interfaces, and the exact threat-model sentence when relevant/is);
+    expect(README).toMatch(/Changed-file and slice bounds and LOC are review measurements and evidence, not hard scope caps.*Plan's exact slice ownership remains binding/is);
+    expect(README).toMatch(/durable Plan separate.*builder non-decisions.*named test interfaces.*threat model.*vertical slices/is);
+    expect(README).toMatch(/Maestro always writes.*Plan before builders.*architect.*contributes.*Settled or trivial work keeps Architect skipped/is);
+    expect(README).toMatch(/planning authority.*isolated run state or the conversation.*never mutates a tracker implicitly/is);
+    expect(README).toMatch(/Spec behavioral baseline stays separate: spec or verbatim request plus violated invariant and intended behavior.*Standards receives.*never behavioral content.*Spec receives.*behavioral baseline/is);
     expect(README).toMatch(/main run worktree.*integration worktree.*one slice branch and worktree per independent slice.*parallel builders never share Git state/is);
     expect(README).toMatch(/helper reviews that slice branch against the frozen base.*P2.*selected high-reasoning engine.*exact-model smoke boundary.*Only the accepted slice commit.*main run worktree/is);
     expect(README).toMatch(/review worker.*fixed GPT-5\.6 Sol and Claude Opus 5 panel.*every rerun/is);
     expect(README).toMatch(/review worker.*leaf.*returns accepted repair briefs.*without spawning builders or editing production code/is);
     expect(README).toMatch(/main task.*never edits production code.*dispatches `implement` builders.*repaired head.*same worker.*proof and reruns/is);
     expect(README).toMatch(/P2.*malicious smoke harness.*clean review/i);
-    expect(README).toMatch(/Standards and Spec reviews run in parallel and stay separate.*Bottega `7ee58ba`/i);
+    expect(README).toMatch(/Standards and Spec reviews run in parallel and stay separate.*Bottega `e0926de`/i);
+    expect(README).toContain("a504fd8ef2e704d95312d1c6c8afdf7e4466bcfc");
+    expect(README).toMatch(/Kimi remains available only for standalone helper invocations.*does not change Maestro's integrated panel/is);
     expect(README).toMatch(/close.*project's documented brake.*queue-owned eligible non-draft PR receives no auto-merge arm.*only when the procedure assigns.*final report reads its outcome/is);
     expect(README).toMatch(/hold enforcement cannot be proved.*every documented disarm or withdrawal action.*uses draft only when the procedure names it as safe.*every applicable readback proves the PR terminally ineligible/is);
     expect(README).toMatch(/single builder.*structured whole-diff review will run/is);
@@ -407,11 +440,15 @@ describe("Codex plugin package", () => {
     expect(AGENTS).toMatch(/close\/SKILL\.md.*documented brake when held.*only its assigned opener action.*outcome its procedure defines/i);
     expect(AGENTS).toMatch(/hold enforcement cannot be proved.*disarms or withdraws every applicable GitHub, queue, and repository-owned mechanism.*never claims a safe hold.*every mechanism reports the PR ineligible/is);
     expect(AGENTS).toMatch(/glossary terms.*qualifying ADRs inline/i);
+    expect(AGENTS).toMatch(/Maestro and the root task always write a durable Plan distinct.*builder non-decisions.*named test interfaces.*threat model.*vertical slices/is);
+    expect(AGENTS).toMatch(/architect.*contributes consequential design only when its condition holds.*without forcing that phase/is);
     expect(AGENTS).toMatch(/bro.*restates the immediately preceding assistant reply once.*does not persist across turns/is);
     expect(AGENTS).toMatch(/main run worktree.*integration worktree.*one slice branch and worktree per independent slice.*parallel builders never share Git state/is);
     expect(AGENTS).toMatch(/Review each slice branch against the frozen base.*integrate only its accepted commit.*main run worktree/is);
-    expect(AGENTS).toMatch(/neutral boundary facts: base, owner boundary, exact slice file bounds, non-test LOC, and named test interfaces/is);
-    expect(AGENTS).toMatch(/Standards receives.*neutral facts.*trusted frozen-base authority.*no behavior.*Spec receives.*same neutral facts.*behavioral baseline/is);
+    expect(AGENTS).toMatch(/neutral boundary facts: target and base, architectural owner boundary, relevant sibling surfaces, public, security, and product contracts, changed-file and exact slice file bounds, non-test LOC measurements, named test interfaces, and the exact threat-model sentence when relevant/is);
+    expect(AGENTS).toMatch(/Changed-file and slice bounds and LOC are review measurements and evidence, not hard scope caps.*Plan's exact slice ownership remains binding/is);
+    expect(AGENTS).toMatch(/Spec behavioral baseline separate: spec or verbatim request plus violated invariant and intended behavior.*Standards receives.*never behavioral content.*Spec receives.*behavioral baseline/is);
+    expect(AGENTS).toMatch(/Standards receives neutral facts plus trusted frozen-base authority and never behavioral content.*Spec receives the same neutral facts plus the behavioral baseline/is);
     expect(AGENTS).toMatch(/fixed across reruns/i);
     expect(AGENTS).toMatch(/review worker.*leaf.*returns accepted repair briefs.*without spawning builders or editing production code/is);
     expect(AGENTS).toMatch(/root task.*never edits production code.*dispatches `implement` builders.*repaired head.*same review worker/is);
@@ -420,9 +457,12 @@ describe("Codex plugin package", () => {
     expect(AGENTS).toMatch(/two review-triggered repair cycles.*pauses and reclassifies/is);
     expect(AGENTS).toMatch(/architecture-driven repair.*re-enters panel.*dual-panel, Standards, and Spec reviews/is);
     expect(AGENTS).toMatch(/post-review change.*complete required QA scenario set.*final reviewed SHA.*never only an affected subset/is);
-    expect(THIRD_PARTY).toContain("7ee58ba7ca3c0677c2f1405bdb52b4ba3b7a09b7");
-    expect(THIRD_PARTY).toContain("Bottega 0.177.0");
-    expect(THIRD_PARTY).toMatch(/P2 threshold, selected-model smoke checks, and separate Standards and Spec reviews.*not part of the unchanged OpenClaw/is);
+    expect(THIRD_PARTY).toContain("a504fd8ef2e704d95312d1c6c8afdf7e4466bcfc");
+    expect(THIRD_PARTY).toContain("e0926de03d955febee9646d9c19d6384ec92a345");
+    expect(THIRD_PARTY).toContain("Bottega 0.180.0");
+    expect(THIRD_PARTY).toMatch(/fixed integrated GPT\/Claude panel.*P2 threshold.*exact selected-model smoke checks.*separate Standards and Spec reviews/is);
+    expect(THIRD_PARTY).toMatch(/Kimi remains a standalone helper capability and does not change Maestro's integrated panel/is);
+    expect(THIRD_PARTY).toMatch(/fail-closed scan for unchanged unified-diff context lines/is);
     expect(THIRD_PARTY).toMatch(/`bro` is a one-shot restatement and does not persist across turns.*Maestro owns its plain-language rule/is);
     expect(THIRD_PARTY).toMatch(/multi-builder runs create one distinct slice branch and worktree per independent slice from the frozen integration base, each builder edits only its slice worktree, and only an accepted slice commit is integrated into the main run worktree/i);
     expect(THIRD_PARTY).toMatch(/complete host-defined landing procedure.*project-defined brake.*procedure-assigned opener action.*procedure-read outcome.*fail-closed opener-armed fallback/i);
@@ -454,7 +494,7 @@ describe("Codex plugin package", () => {
       "utf8",
     );
     expect(reviews).toMatch(
-      /every applicable repository authority that governs the changed files, owner boundaries, or named test interfaces.*frozen target base/is,
+      /every applicable repository authority that governs the changed files, owner boundaries, relevant sibling surfaces, public, security, or product contracts, or named test interfaces.*frozen target base/is,
     );
     expect(reviews).toMatch(
       /Authority discovery is not limited to interface contracts.*root or nested agent map, review doctrine, ownership rule, test-interface contract/is,

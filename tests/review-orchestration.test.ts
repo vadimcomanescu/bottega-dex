@@ -10,6 +10,7 @@ const skill = (name: string) =>
 const MAESTRO = skill("maestro");
 const DISCOVER = skill("discover");
 const SPEC = skill("spec");
+const ARCHITECT = skill("architect");
 const ORCHESTRATE = skill("orchestrate");
 const REVIEW = skill("code-review");
 const REVIEW_METHODS = readFileSync(
@@ -53,7 +54,18 @@ describe("Bottega Dex workflow", () => {
     expect(DISCOVER).toMatch(/During an active Maestro run.*isolated run worktree.*each decision settles/is);
     expect(DISCOVER).toMatch(/discovery runs on its own.*do not edit the caller's checkout/is);
     expect(DISCOVER).toMatch(/exact proposed glossary and ADR changes.*isolated delivery run/is);
+    expect(DISCOVER).toMatch(/Maestro and the root task own the Plan.*architect.*contributes only when consequential design remains unsettled/is);
     expect(SPEC).toContain("implementation-facing specification artifact");
+    expect(MAESTRO).toMatch(/Take the request all the way.*build it.*prove it.*pull request/is);
+    expect(MAESTRO).toMatch(/durable Plan.*separate from the spec or verbatim request/is);
+    expect(MAESTRO).toMatch(/root task writes a durable Plan before builders start/is);
+    expect(MAESTRO).toMatch(/Use \[architect\].*only when.*still need settling/is);
+    expect(MAESTRO).toMatch(/its decisions contribute to the Plan/is);
+    expect(MAESTRO).toMatch(/already settled or trivial.*skip Architect.*shortest sufficient Plan/is);
+    expect(MAESTRO).toMatch(/improve.*completed discovery.*do not repeat.*settled behavioral decisions beyond the original candidate.*use \[spec\].*Otherwise.*verbatim as the behavioral baseline/is);
+    expect(MAESTRO).toMatch(/builder.*must not decide.*named test interfaces.*vertical slices/is);
+    expect(MAESTRO).toMatch(/Never create or mutate a tracker item.*publish it/is);
+    expect(ARCHITECT).toMatch(/Plan.*repository's authorized planning location.*isolated run state or the conversation/is);
     expect(ORCHESTRATE).not.toMatch(/code-review|pull request|maestro/i);
   });
 
@@ -87,10 +99,11 @@ describe("Bottega Dex workflow", () => {
     expect(MAESTRO).not.toMatch(/Talk and write per \[bro\]/i);
     expect(MAESTRO).toMatch(/qualifying architecture decision.*ADR.*same diff.*verdict it reverses/is);
     const standardsFreeze = MAESTRO.match(/Before any builder starts,[^.]*\./)?.[0] ?? "";
-    expect(standardsFreeze).toMatch(/freeze the integration base and the neutral boundary facts: base, owner boundary, exact slice file bounds, non-test LOC baseline, and named test interfaces/is);
-    expect(standardsFreeze).not.toMatch(/request|spec|intended behavior|threat model/i);
-    expect(MAESTRO).toMatch(/Keep the spec or verbatim request separate as the behavioral baseline/is);
-    expect(MAESTRO).toMatch(/Standards review.*neutral facts.*trusted frozen-base authority.*no behavior.*Spec review.*same neutral facts.*behavioral baseline/is);
+    expect(standardsFreeze).toMatch(/freeze the neutral boundary facts: target and base, architectural owner boundary, relevant sibling surfaces, public, security, and product contracts, changed-file and exact slice file bounds, non-test LOC measurements, named test interfaces, and the exact threat-model sentence when relevant/is);
+    expect(standardsFreeze).not.toMatch(/request|specification|violated invariant|intended behavior/i);
+    expect(MAESTRO).toMatch(/changed-file and slice bounds and LOC are measurements and evidence, never hard scope caps.*Plan's exact slice file ownership remains binding/is);
+    expect(MAESTRO).toMatch(/Keep the Spec behavioral baseline separate: the spec or verbatim request plus the violated invariant and intended behavior when applicable/is);
+    expect(MAESTRO).toMatch(/Standards receives.*neutral facts.*trusted frozen-base authority.*never receives the request, specification, violated invariant, or intended behavior.*Spec receives.*same neutral facts.*behavioral baseline/is);
     expect(MAESTRO).toMatch(/main run worktree remains the integration worktree.*one distinct slice branch and worktree per independent slice.*frozen integration base/is);
     expect(MAESTRO).toMatch(/Each builder edits only its slice worktree.*parallel builders never share Git state/is);
     expect(MAESTRO).toMatch(/Before integration.*helper on that slice branch against the frozen integration base.*P2.*streamed output.*one high-reasoning engine selected in its builder dispatch.*never the integrated fixed panel/is);
@@ -98,12 +111,12 @@ describe("Bottega Dex workflow", () => {
     expect(MAESTRO).toMatch(/Standards and Spec reviews as applicable against that same slice before integration/is);
     expect(MAESTRO).toMatch(/Integrate only the accepted slice commit into the main run worktree/is);
     expect(MAESTRO).toMatch(/fresh high-reasoning native Codex review worker.*code-review.*whole/is);
-    expect(MAESTRO).toMatch(/Give it the frozen integration base, neutral boundary facts, separate spec or verbatim request, threat-model sentence, and project commands/is);
-    expect(MAESTRO).toMatch(/Standards review.*neutral facts.*trusted frozen-base authority.*no behavioral input.*Spec review.*same neutral facts.*spec or verbatim request/is);
+    expect(MAESTRO).toMatch(/Give it the frozen target and base, neutral boundary facts, separate Spec behavioral baseline, and project commands/is);
+    expect(MAESTRO).toMatch(/Standards review.*neutral facts.*trusted frozen-base authority.*no behavioral input.*Spec review.*same neutral facts.*spec or verbatim request, violated invariant, and intended behavior when applicable/is);
     expect(MAESTRO).toMatch(/review worker is a leaf.*verifies and classifies.*returns accepted repair briefs.*never spawns a builder or edits production code/is);
     expect(MAESTRO).toMatch(/root task.*dispatches accepted repairs.*\[implement\].*repaired head.*same review worker.*complete dual-panel, Standards, and Spec reviews/is);
     expect(MAESTRO).toMatch(/root task.*decides that record and escalations.*never edits production code/is);
-    expect(MAESTRO).toMatch(/Standards and Spec reviews run in parallel.*Bottega `7ee58ba`/is);
+    expect(MAESTRO).toMatch(/Standards and Spec reviews run in parallel.*Bottega `e0926de`/is);
     expect(MAESTRO).toMatch(/two review-triggered repair cycles without convergence.*pauses and reclassifies/is);
     expect(MAESTRO).toMatch(/continues only when.*in-scope blocker.*cycles are narrowing/is);
     expect(MAESTRO).toMatch(/independent architecture read.*costly to reverse/is);
@@ -121,10 +134,11 @@ describe("Bottega Dex workflow", () => {
     expect(REVIEW).toMatch(/review worker.*returns accepted repair briefs.*orchestrator.*dispatches `implement` builders.*review worker reruns review/is);
     expect(REVIEW).toMatch(/two review-triggered patch cycles.*have not converged.*pause and reclassify/is);
 
-    expect(REVIEW).toMatch(/freeze two records and one neutral boundary.*behavioral baseline.*only the Spec review receives it.*neutral review-boundary facts shared with both reviews.*target and base.*owner boundary.*exact changed-file or slice bounds.*non-test LOC.*named test interfaces/is);
+    expect(REVIEW).toMatch(/freeze two records and one neutral boundary.*behavioral baseline.*violated invariant.*only the Spec review receives it.*neutral review-boundary facts shared with both reviews.*target and base.*architectural owner boundary.*relevant sibling surfaces.*public, security, and product contracts.*changed-file and non-test LOC measurements.*named test interfaces/is);
     expect(REVIEW).toMatch(/Standards additionally receives trusted frozen-base authority and never behavioral text/is);
     expect(REVIEW).toContain("**Out of threat model**");
-    expect(REVIEW).toMatch(/compute both numbers.*before each.*dispatch/i);
+    expect(REVIEW).toMatch(/changed files and non-test LOC are measurements, not hard caps/is);
+    expect(REVIEW).toMatch(/arbitrary LOC multipliers are never automatic stop conditions/is);
     expect(REVIEW).toMatch(/two-cycle pause.*inside the threat model.*cycles are narrowing/is);
     expect(REVIEW).toMatch(/`REVIEW\.md`.*smell-baseline\.md.*threat-model sentence/is);
     expect(REVIEW).toMatch(/never the run's other design decisions/i);
@@ -181,6 +195,11 @@ describe("Bottega Dex workflow", () => {
     expect(REVIEW).toMatch(/repeats both Standards and Spec reviews with Sol at high reasoning.*all three review results are clean/is);
     expect(REVIEW).toMatch(/Pre-integration slice reruns keep the one dispatch-selected high-reasoning engine, model, and thinking configuration for their bug, Standards, and Spec passes.*smoke that exact selected configuration before the first clean result/is);
     expect(REVIEW).toMatch(/standalone invocation keeps the engine or panel its caller selected/i);
+    expect(REVIEW).toMatch(/Kimi remains a standalone helper capability and does not alter the integrated Maestro panel/i);
+    expect(REVIEW).toMatch(/runnable engines are `codex`, `claude`, `pi`, and `kimi`/i);
+    expect(REVIEW).toMatch(/Verify every finding.*running the check that settles it when one exists/is);
+    expect(REVIEW).toMatch(/Define scope by the authorized invariant and its architectural owner, not by the first patch/is);
+    expect(REVIEW).toMatch(/Prefer root-cause fixes at the right ownership boundary/is);
     expect(REVIEW).toMatch(/Standards and Spec reviews in parallel.*two separate autoreview helper invocations/is);
     expect((REVIEW.match(/^## Standards and Spec reviews$/gm) ?? [])).toHaveLength(1);
     expect(REVIEW.indexOf("## Standards and Spec reviews")).toBeGreaterThan(REVIEW.indexOf("## Helper"));
@@ -205,15 +224,15 @@ describe("Bottega Dex workflow", () => {
     expect(REVIEW_METHODS).toMatch(/separate vendored autoreview helper invocations.*same frozen target/is);
     expect(REVIEW_METHODS).toMatch(/TruffleHog preflight.*deletion-side redaction/is);
     expect(REVIEW_METHODS).toMatch(/review worker never passes a raw diff, deleted revision, or repository access.*isolated session/is);
-    expect(REVIEW).toMatch(/Standards prompt carries.*repository contract.*named test interfaces.*frozen at the target base.*neutral review-boundary facts: target and base, owner boundary, exact changed-file or slice bounds, non-test LOC, named test interfaces/is);
-    expect(REVIEW).toMatch(/Standards prompt never carries the request, build spec, verbatim request, or intended behavior.*Spec prompt alone carries.*build spec or verbatim request/is);
+    expect(REVIEW).toMatch(/Standards prompt carries.*repository contract.*named test interfaces.*frozen at the target base.*neutral review-boundary facts: target and base, architectural owner boundary, relevant sibling surfaces, public, security, and product contracts, changed-file and non-test LOC measurements/is);
+    expect(REVIEW).toMatch(/Standards prompt never carries the request, build spec, verbatim request, violated invariant, or intended behavior.*Spec prompt alone carries.*build spec or verbatim request and violated invariant/is);
     expect(REVIEW).toMatch(/task running this skill writes each prompt.*outside the reviewed repo/is);
     expect(REVIEW).toMatch(/task running this skill creates two review-specific prompt files.*authority text frozen at the target base/is);
     expect(REVIEW_METHODS).toMatch(/repository contract.*named test interfaces.*frozen target base.*never from the current checkout/is);
     expect(REVIEW_METHODS).toMatch(/Proposed contract changes remain only in the helper's sanitized bundle/is);
-    expect(REVIEW_METHODS).toMatch(/neutral review-boundary facts shared with the Spec review: target and base, owner boundary, exact changed-file or slice bounds, non-test LOC, named test interfaces/is);
-    expect(REVIEW_METHODS).toMatch(/Spec prompt.*shared neutral review-boundary facts.*exact changed-file or slice bounds/is);
-    expect(REVIEW_METHODS).toMatch(/Standards prompt never includes the request, build spec, verbatim request, (?:or )?intended behavior.*Spec prompt.*build spec or verbatim request/is);
+    expect(REVIEW_METHODS).toMatch(/neutral review-boundary facts shared with the Spec review: target and base, architectural owner boundary, relevant sibling surfaces, public, security, and product contracts, changed-file and non-test LOC measurements/is);
+    expect(REVIEW_METHODS).toMatch(/Spec prompt.*shared neutral review-boundary facts and changed-file and non-test LOC measurements.*first patch as a hard scope cap/is);
+    expect(REVIEW_METHODS).toMatch(/Standards prompt never includes the request, build spec, verbatim request, violated invariant, intended behavior.*Spec prompt.*build spec or verbatim request and the violated invariant/is);
     expect(REVIEW_METHODS).toMatch(/Spec review.*quotes the spec line/is);
     expect(REVIEW_METHODS).toMatch(/no spec available.*does not block.*clean engine result/is);
     expect(REVIEW_METHODS).toMatch(/Maestro run always supplies its spec/i);

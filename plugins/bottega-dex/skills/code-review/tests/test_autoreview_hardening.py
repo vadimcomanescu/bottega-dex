@@ -65,6 +65,22 @@ def realistic_secret_value() -> str:
     return "A7f9K2m4Q8v6" + "N3x5R1p0T9z8"
 
 
+def installed_java() -> str | None:
+    java = shutil.which("java")
+    if java is None:
+        return None
+    try:
+        probe = subprocess.run(
+            [java, "-version"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+    except OSError:
+        return None
+    return java if probe.returncode == 0 else None
+
+
 def add_fake_trufflehog(
     helper: dict[str, object],
     root: Path,
@@ -685,7 +701,7 @@ class AutoreviewHardeningTests(unittest.TestCase):
     def test_powershell_harness_exposes_runnable_engines_only(self) -> None:
         harness = SCRIPT.with_name("test-review-harness.ps1").read_text(encoding="utf-8")
 
-        self.assertIn("[ValidateSet('codex', 'claude', 'pi')]", harness)
+        self.assertIn("[ValidateSet('codex', 'claude', 'pi', 'kimi')]", harness)
         for disabled_engine in ("droid", "copilot", "opencode", "cursor"):
             self.assertNotIn(f"'{disabled_engine}'", harness)
 
@@ -1298,6 +1314,75 @@ class AutoreviewHardeningTests(unittest.TestCase):
             )
         )
         self.assertTrue(all("Oversized review bundle chunk:" in prompt for prompt in prompts))
+
+    def test_kimi_prompt_budget_partitions_before_argv_limits(self) -> None:
+        windows_prompt_budget = self.helper["KIMI_WINDOWS_MAX_PROMPT_BYTES"]
+        with tempfile.TemporaryDirectory() as tempdir:
+            repo = init_repo(Path(tempdir))
+            prompts = self.helper["build_review_prompts"](
+                repo,
+                "commit",
+                "HEAD",
+                "# Commit Diff\n" + "safe review content\n" * 1_500,
+                "",
+                "",
+                windows_prompt_budget,
+            )
+
+        self.assertGreater(len(prompts), 1)
+        self.assertTrue(
+            all(
+                len(prompt.encode("utf-8")) <= windows_prompt_budget
+                for prompt in prompts
+            )
+        )
+
+    def test_kimi_windows_argv_rejects_quote_expansion_past_process_limit(self) -> None:
+        prompt = '\\"' * 9_000
+        command = ["kimi", "--prompt", prompt, "--output-format", "stream-json"]
+
+        self.assertLess(len(prompt.encode("utf-8")), 30_000)
+        with self.assertRaisesRegex(
+            SystemExit,
+            "serialized Windows command line exceeds",
+        ):
+            self.helper["require_kimi_command_line_safe"](
+                command,
+                platform_name="nt",
+            )
+
+    def test_panel_builds_complete_prompt_partitions_per_reviewer(self) -> None:
+        reviewers = [
+            argparse.Namespace(engine="codex"),
+            argparse.Namespace(engine="kimi"),
+        ]
+        bundle = "# Commit Diff\n" + "safe review content\n" * 1_500
+        with tempfile.TemporaryDirectory() as tempdir:
+            repo = init_repo(Path(tempdir))
+            prompt_sets = self.helper["build_reviewer_prompt_sets"](
+                reviewers,
+                repo,
+                "commit",
+                "HEAD",
+                bundle,
+                "",
+                "",
+                platform_name="nt",
+            )
+
+        prompts_by_engine = {
+            reviewer.engine: prompts for reviewer, prompts in prompt_sets
+        }
+        self.assertEqual(len(prompts_by_engine["codex"]), 1)
+        self.assertGreater(len(prompts_by_engine["kimi"]), 1)
+        for prompts in prompts_by_engine.values():
+            self.assertEqual(
+                "".join(
+                    prompt.rsplit("# Change Bundle\n", 1)[1]
+                    for prompt in prompts
+                ),
+                bundle,
+            )
 
     def test_review_prompt_preserves_bundle_ending_whitespace(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -4601,6 +4686,192 @@ class AutoreviewHardeningTests(unittest.TestCase):
                 argparse.Namespace(engine="droid", tools=False),
                 True,
             )
+        with self.assertRaisesRegex(SystemExit, "kimi engine refused truncated review input"):
+            self.helper["ensure_reviewer_input_complete"](
+                argparse.Namespace(engine="kimi", tools=False),
+                True,
+            )
+
+    def test_kimi_config_is_sanitized_without_losing_model_auth(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            repo = init_repo(root)
+            share = root / "kimi-home"
+            share.mkdir()
+            (share / "config.toml").write_text(
+                "\n".join(
+                    [
+                        'default_model = "review-model"',
+                        'extra_skill_dirs = ["/tmp/unsafe-skills"]',
+                        "",
+                        "[models.review-model]",
+                        'provider = "review-provider"',
+                        'model = "kimi-k2"',
+                        "max_context_size = 100000",
+                        "",
+                        "[providers.review-provider]",
+                        'type = "kimi"',
+                        'base_url = "https://api.example.invalid"',
+                        'api_key = "test-token"',
+                        "",
+                        "[services.moonshot_search]",
+                        'base_url = "http://localhost"',
+                        "",
+                        "[thinking]",
+                        "enabled = false",
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            with mock.patch.dict(
+                os.environ,
+                {"KIMI_CODE_HOME": str(share)},
+                clear=False,
+            ):
+                config, source_share = self.helper["load_kimi_review_config"](repo)
+
+        self.assertEqual(source_share, share.resolve())
+        self.assertEqual(config["default_model"], "review-model")
+        self.assertEqual(
+            config["providers"]["review-provider"]["api_key"],
+            "test-token",
+        )
+        self.assertNotIn("services", config)
+        self.assertNotIn("extra_skill_dirs", config)
+        self.assertNotIn("thinking", config)
+        self.assertNotIn("hooks", config)
+
+    def test_kimi_oauth_credentials_are_linked_outside_runtime_state(self) -> None:
+        if os.name == "nt":
+            self.skipTest("directory symlink privileges vary on Windows")
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            repo = init_repo(root)
+            source_share = root / "source-kimi"
+            credentials = source_share / "credentials"
+            credentials.mkdir(parents=True)
+            device_id = "0123456789abcdef0123456789abcdef"
+            (source_share / "device_id").write_text(device_id, encoding="utf-8")
+            runtime_share = root / "runtime-kimi"
+            runtime_share.mkdir()
+
+            self.helper["prepare_kimi_runtime_auth"](
+                repo,
+                source_share,
+                runtime_share,
+            )
+
+            linked = runtime_share / "credentials"
+            self.assertTrue(linked.is_symlink())
+            self.assertEqual(linked.resolve(), credentials.resolve())
+            self.assertEqual(
+                (runtime_share / "device_id").read_text(encoding="utf-8"),
+                device_id,
+            )
+
+    def test_kimi_rejects_repo_controlled_config_symlink(self) -> None:
+        if os.name == "nt":
+            self.skipTest("directory symlink privileges vary on Windows")
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            repo = init_repo(root)
+            hostile_config = repo / "kimi-config.toml"
+            hostile_config.write_text("default_model = \"x\"\n", encoding="utf-8")
+            share = root / "kimi-home"
+            share.mkdir()
+            (share / "config.toml").symlink_to(hostile_config)
+
+            with mock.patch.dict(
+                os.environ,
+                {"KIMI_CODE_HOME": str(share)},
+                clear=False,
+            ), self.assertRaisesRegex(
+                SystemExit,
+                "must resolve outside",
+            ):
+                self.helper["load_kimi_review_config"](repo)
+
+    def test_kimi_engine_env_preserves_only_supported_runtime_overrides(self) -> None:
+        supported = {
+            "KIMI_CODE_BASE_URL": "https://managed.example.invalid",
+            "KIMI_CODE_OAUTH_HOST": "https://auth-managed.example.invalid",
+            "KIMI_OAUTH_HOST": "https://auth-fallback.example.invalid",
+            "KIMI_MODEL_NAME": "kimi-model",
+            "KIMI_MODEL_API_KEY": "model-token",
+            "KIMI_MODEL_PROVIDER_TYPE": "anthropic",
+            "KIMI_MODEL_BASE_URL": "https://model.example.invalid",
+            "KIMI_MODEL_MAX_CONTEXT_SIZE": "262144",
+            "KIMI_MODEL_CAPABILITIES": "image_in,thinking",
+            "KIMI_MODEL_DISPLAY_NAME": "Review Model",
+            "KIMI_MODEL_MAX_OUTPUT_SIZE": "8192",
+            "KIMI_MODEL_REASONING_KEY": "reasoning_content",
+            "KIMI_MODEL_THINKING_EFFORT": "high",
+            "KIMI_MODEL_ADAPTIVE_THINKING": "true",
+            "KIMI_MODEL_MAX_COMPLETION_TOKENS": "4096",
+            "KIMI_MODEL_TEMPERATURE": "0.3",
+            "KIMI_MODEL_TOP_P": "0.95",
+            "KIMI_MODEL_THINKING_KEEP": "all",
+        }
+        with tempfile.TemporaryDirectory() as tempdir:
+            repo = init_repo(Path(tempdir))
+            with mock.patch.dict(
+                os.environ,
+                {
+                    **supported,
+                    "KIMI_API_KEY": "ignored-direct-token",
+                    "KIMI_BASE_URL": "https://ignored-direct.example.invalid",
+                    "KIMI_CODE_HOME": str(repo / ".hostile-kimi"),
+                    "PYTHONPATH": "/tmp/hostile-python",
+                    "OPENAI_API_KEY": "unrelated-provider-token",
+                },
+                clear=False,
+            ):
+                env = self.helper["safe_engine_env"](repo, engine="kimi")
+
+        for key, value in supported.items():
+            self.assertEqual(env[key], value)
+        self.assertNotIn("KIMI_CODE_HOME", env)
+        self.assertNotIn("KIMI_API_KEY", env)
+        self.assertNotIn("KIMI_BASE_URL", env)
+        self.assertNotIn("PYTHONPATH", env)
+        self.assertNotIn("OPENAI_API_KEY", env)
+
+    def test_kimi_engine_env_rejects_incomplete_model_overlay(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            repo = init_repo(Path(tempdir))
+            for incomplete in (
+                {"KIMI_MODEL_NAME": "kimi-model", "KIMI_MODEL_API_KEY": ""},
+                {"KIMI_MODEL_NAME": "", "KIMI_MODEL_API_KEY": "model-token"},
+                {"KIMI_MODEL_BASE_URL": "https://model.example.invalid"},
+            ):
+                with self.subTest(incomplete=incomplete), mock.patch.dict(
+                    os.environ,
+                    incomplete,
+                    clear=True,
+                ), self.assertRaisesRegex(
+                    SystemExit,
+                    "KIMI_MODEL_NAME and KIMI_MODEL_API_KEY must both be set",
+                ):
+                    self.helper["safe_engine_env"](repo, engine="kimi")
+
+    def test_kimi_engine_env_rejects_unsafe_managed_endpoints(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            repo = init_repo(Path(tempdir))
+            for key, value in (
+                ("KIMI_CODE_OAUTH_HOST", "https://token@example.invalid"),
+                ("KIMI_OAUTH_HOST", "file:///tmp/auth"),
+                ("KIMI_CODE_BASE_URL", "https://api.example.invalid\nHost: attacker"),
+            ):
+                with self.subTest(key=key), mock.patch.dict(
+                    os.environ,
+                    {key: value},
+                    clear=True,
+                ), self.assertRaisesRegex(
+                    SystemExit,
+                    f"unsafe credentialed or malformed Kimi endpoint in {key}",
+                ):
+                    self.helper["safe_engine_env"](repo, engine="kimi")
 
     def test_safe_git_env_preserves_trusted_platform_and_helper_paths(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -4640,7 +4911,7 @@ class AutoreviewHardeningTests(unittest.TestCase):
 
             with self.assertRaisesRegex(
                 SystemExit,
-                r"droid engine is unavailable.*use codex, claude, or pi",
+                r"droid engine is unavailable.*use codex, claude, pi, or kimi",
             ) as error:
                 self.helper["run_droid"](argparse.Namespace(), repo, "prompt")
             self.assertNotIn("opencode", str(error.exception))
@@ -5164,6 +5435,69 @@ class AutoreviewHardeningTests(unittest.TestCase):
             self.assertIn("\\x1b]8;;", output)
             self.assertIn("\\x07", output)
 
+    def test_partitioned_panel_runs_each_reviewer_only_on_its_own_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            repo = init_repo(Path(tempdir))
+            reviewers = [
+                argparse.Namespace(
+                    engine="codex",
+                    model=None,
+                    fallback_model=None,
+                    thinking=None,
+                ),
+                argparse.Namespace(
+                    engine="kimi",
+                    model=None,
+                    fallback_model=None,
+                    thinking=None,
+                ),
+            ]
+            prompt_sets = [
+                (reviewers[0], ["codex-complete"]),
+                (reviewers[1], ["kimi-part-1", "kimi-part-2"]),
+            ]
+            args = argparse.Namespace(
+                allow_partial_panel=False,
+                require_finding=[],
+            )
+            clean_report = {
+                "findings": [],
+                "overall_correctness": "patch is correct",
+                "overall_explanation": "clean",
+                "overall_confidence": 0.9,
+            }
+            calls: list[tuple[str, str]] = []
+
+            def run_reviewer(
+                reviewer: argparse.Namespace,
+                _repo: Path,
+                prompt: str,
+                *_args: object,
+            ) -> dict[str, object]:
+                calls.append((reviewer.engine, prompt))
+                return clean_report.copy()
+
+            with mock.patch.dict(
+                self.helper["run_panel_prompt_sets"].__globals__,
+                {"run_reviewer": run_reviewer},
+            ):
+                self.helper["run_panel_prompt_sets"](
+                    args,
+                    prompt_sets,
+                    repo,
+                    set(),
+                    False,
+                )
+
+        self.assertCountEqual(
+            calls,
+            [
+                ("codex", "codex-complete"),
+                ("kimi", "kimi-part-1"),
+                ("kimi", "kimi-part-2"),
+            ],
+        )
+
     def test_fatal_panel_failure_output_is_terminal_escaped(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             repo = init_repo(Path(tempdir))
@@ -5533,10 +5867,19 @@ class AutoreviewHardeningTests(unittest.TestCase):
                 os.environ.clear()
                 os.environ.update(old)
 
+    def test_installed_java_rejects_launcher_without_runtime(self) -> None:
+        launcher = "/usr/bin/java"
+        unavailable = subprocess.CompletedProcess([launcher, "-version"], 1)
+        with (
+            mock.patch("shutil.which", return_value=launcher),
+            mock.patch("subprocess.run", return_value=unavailable),
+        ):
+            self.assertIsNone(installed_java())
+
     def test_parallel_test_environment_isolates_jvm_user_home(self) -> None:
-        java = shutil.which("java")
+        java = installed_java()
         if java is None:
-            self.skipTest("java is not installed")
+            self.skipTest("a usable Java runtime is not installed")
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
             repo = init_repo(root)
@@ -5586,9 +5929,9 @@ class AutoreviewHardeningTests(unittest.TestCase):
         )
 
     def test_java_tool_option_quote_round_trips_special_paths(self) -> None:
-        java = shutil.which("java")
+        java = installed_java()
         if java is None:
-            self.skipTest("java is not installed")
+            self.skipTest("a usable Java runtime is not installed")
         names = ["space home", "apostrophe's home"]
         if os.name != "nt":
             names.append('double"quote home')
@@ -6594,7 +6937,7 @@ class AutoreviewHardeningTests(unittest.TestCase):
             repo = init_repo(Path(tempdir))
             with self.assertRaisesRegex(
                 SystemExit,
-                r"ignored repository secrets; use codex, claude, or pi",
+                r"ignored repository secrets; use codex, claude, pi, or kimi",
             ) as error:
                 self.helper["run_copilot"](
                     args,

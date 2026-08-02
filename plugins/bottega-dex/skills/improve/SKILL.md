@@ -5,7 +5,7 @@ description: Scan a codebase for deepening opportunities, present the strongest 
 
 # Improve
 
-Find the refactors that turn shallow modules into deep ones, so the codebase gets easier to test and navigate. Agree on the strongest candidate with the user, then hand it to a run.
+Find the refactors that turn shallow modules into deep ones, so the codebase gets easier to test and navigate. Present the strongest candidates, let the user choose one, verify that choice against the code, then hand it to a run.
 
 ## 1. Read
 
@@ -17,7 +17,7 @@ Follow the direction the user named. It takes priority over anything you would c
 
 ## 3. Scan
 
-Read the scoped code and note where you hit friction, using the vocabulary from [architect](../architect/SKILL.md):
+Read the scoped code and note where you hit friction, using the vocabulary from [codebase-design](../codebase-design/SKILL.md):
 
 - understanding one concept requires moving between many small modules
 - a module's interface is nearly as complex as its implementation; apply the deletion test and ask whether deleting it would concentrate the complexity or only move it
@@ -37,10 +37,20 @@ Check open issues and pull requests before proposing. An improvement already tra
 
 ## 5. Propose
 
-Present the strongest candidates in the conversation. Make each candidate one coherent unit under [architect](../architect/SKILL.md). Name the files, the evidence of friction, the change in product terms, the gain in leverage and locality, and a strength: strong, worth exploring, or speculative. Leave interface design to the run. Lead with the candidate you would take first and explain why. No HTML. No file report. The user picks one or rejects them.
+Present the strongest candidates in the conversation. Make each candidate one coherent unit under [architect](../architect/SKILL.md). Name the files, the evidence of friction, the change in product terms, the gain in leverage and locality, and a strength: strong, worth exploring, or speculative. Leave interface design to the run. Lead with the candidate you would take first and explain why. No HTML. No file report. The user picks one or rejects them; never start a run from the agent's ranking alone.
 
 When the user rejects a candidate for a reason a future scan should remember, offer to record that boundary through [domain-modeling](../domain-modeling/SKILL.md) as an ADR. Write it directly only after the user accepts the record, and skip temporary reasons.
 
-## 6. Run it
+## 6. Verify the choice
 
-After the user picks a candidate, sharpen it with them until its acceptance criteria are measurable. Then use [maestro](../maestro/SKILL.md), handing over the friction evidence, agreed change, and criteria. Maestro still performs release and ownership setup. The accepted scan stands as completed discovery, so Maestro confirms the handoff, synthesizes a spec only if the scan settled decisions beyond the candidate, and continues at architecture without repeating the scan.
+After the user chooses a candidate, verify it on the real code before spending a run on it:
+
+- apply the deletion test and name where the complexity would concentrate if the module disappeared;
+- name a behavior test that the current interface makes difficult to write and the caller-facing interface that should make it possible; and
+- check the candidate against every ADR covering the area, surfacing any collision that would require reopening a decision.
+
+If the candidate fails verification, return the evidence to the user and let them choose another candidate or stop. Record a rejected direction as an ADR only when [domain-modeling](../domain-modeling/SKILL.md) says it qualifies and the user accepts that record.
+
+## 7. Run it
+
+After the chosen candidate passes verification, sharpen it with the user until its acceptance criteria are measurable. Then use [maestro](../maestro/SKILL.md), handing over the original candidate, friction evidence, deletion-test result, testability evidence, ADR check, agreed change, criteria, and which behavioral decisions the scan settled beyond that candidate. Maestro still performs release and ownership setup. The scan stands as completed discovery, so Maestro does not repeat it. When the scan settled additional behavioral decisions, Maestro synthesizes the spec; otherwise it carries the agreed candidate and criteria verbatim as the behavioral baseline. It then continues to the Plan.
