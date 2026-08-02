@@ -5,13 +5,17 @@ description: Build and sharpen a project's domain model. Use when the user wants
 
 # Domain modeling
 
-Actively build and sharpen the project's domain model as we design: challenge terms, invent edge-case scenarios, and write the glossary and decisions down the moment they settle. Reading `CONTEXT.md` for vocabulary is a habit any skill has. This skill is for changing the model.
+Actively build and sharpen the project's domain model while designing. Challenge terms, test them with edge cases, and record glossary entries and decisions when they settle. Reading `CONTEXT.md` for vocabulary is a habit any skill has. This skill is for changing the model.
 
 ## File structure
 
 Most repos have a single context: `CONTEXT.md` at the root and `docs/adr/` for decisions. When a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts, and the map points to where each one lives, each with its own `CONTEXT.md` and `docs/adr/`.
 
-Create files lazily, when you have something to write: `CONTEXT.md` when the first term resolves, `docs/adr/` when the first record is needed.
+Create files lazily, when there is something to write: `CONTEXT.md` when the first term resolves and `docs/adr/` when the first record qualifies. Follow the repository's existing format first. For a new entry use [CONTEXT-FORMAT.md](references/CONTEXT-FORMAT.md) or [ADR-FORMAT.md](references/ADR-FORMAT.md).
+
+## Write boundary
+
+During an active Maestro run, write resolved terms and qualifying ADRs immediately in the isolated run worktree. When domain modeling is invoked on its own, it is read-only until the user explicitly authorizes an isolated delivery change: return the exact proposed glossary and ADR text rather than editing the caller's checkout.
 
 ## During the session
 
@@ -23,6 +27,6 @@ Create files lazily, when you have something to write: `CONTEXT.md` when the fir
 
 **Cross-reference with code.** When I state how something works, check whether the code agrees, and surface any contradiction. "Your code cancels entire Orders, but you just said partial cancellation is possible. Which is right?"
 
-**Update `CONTEXT.md` inline.** When a term resolves, update `CONTEXT.md` right there, as it happens. `CONTEXT.md` is a glossary and nothing else, free of implementation detail. Use [CONTEXT-FORMAT.md](references/CONTEXT-FORMAT.md).
+**Update `CONTEXT.md` inline.** During an active run, update a term as it resolves instead of batching terms at the end. `CONTEXT.md` is a glossary and nothing else, free of implementation detail. Outside a run, propose the same exact entry without writing it.
 
-**Offer ADRs sparingly.** Offer a record only when all three hold: the decision is hard to reverse, a future reader would wonder why, and it came from a real trade-off between genuine alternatives. When one is missing, skip the record. Use [ADR-FORMAT.md](references/ADR-FORMAT.md).
+**Offer ADRs sparingly.** A record qualifies only when all three hold: the decision is hard to reverse, a future reader would wonder why, and it came from a real trade-off between genuine alternatives. When one is missing, skip the record. During an active run write it when it qualifies; outside a run present the proposed record for explicit authorization.

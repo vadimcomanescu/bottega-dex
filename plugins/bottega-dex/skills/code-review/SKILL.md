@@ -7,11 +7,11 @@ description: Review a diff through the vendored review engine, with separate Sta
 
 Run the bundled structured review helper as a closeout check.
 
-Codex review is the standalone default when no engine is set. It uses `gpt-5.6-sol` with `high` reasoning, then retries once with `gpt-5.6-terra` only when the account cannot access Sol. Only the integrated Maestro closeout diff uses the pinned two-engine panel: GPT-5.6 Sol at high reasoning and Claude Opus 5 at high effort. Its Standards and Spec reviews are both fixed to GPT-5.6 Sol at high reasoning. Those selections stay pinned across every integrated closeout rerun. Before integration, each slice's bug, Standards, and Spec passes all use the one high-reasoning engine, model, and thinking configuration selected in its builder dispatch, not the integrated fixed panel. They still run at P2 through the sanitized helper, and smoke that exact selected configuration before their first clean result.
+Codex review is the standalone default when no engine is set. It uses `gpt-5.6-sol` with `high` reasoning, then retries once with `gpt-5.6-terra` only when the account cannot access Sol. Claude review is optional and uses `claude-fable-5` by default. Pi and Kimi use the model configured by their respective CLIs unless `--model` overrides it. Only the integrated Maestro closeout diff uses the pinned two-engine panel: GPT-5.6 Sol at high reasoning and Claude Opus 5 at high effort. Its Standards and Spec reviews are both fixed to GPT-5.6 Sol at high reasoning. Those selections stay pinned across every integrated closeout rerun. Before integration, each slice's bug, Standards, and Spec passes all use the one high-reasoning engine, model, and thinking configuration selected in its builder dispatch, not the integrated fixed panel. They still run at P2 through the sanitized helper, and smoke that exact selected configuration before their first clean result.
 
 Use when:
 
-- user asks for Codex review / Claude review / Pi review / autoreview / second-model review
+- user asks for Codex review / Claude review / Pi review / Kimi review / autoreview / second-model review
 - after non-trivial code edits, before final/commit/ship
 - reviewing a local branch or PR branch after fixes
 
@@ -23,13 +23,13 @@ Every diff uses the secret-safe helper and the separate Standards and Spec revie
   P0-only filtering can suppress real P1 defects; classification is the noise
   filter. Use P3 only when the caller explicitly requests polish-level review.
 - Treat review output as advisory. Never blindly apply it.
-- Verify every finding by reading the real code path and adjacent files.
+- Verify every finding by reading the real code path and adjacent files, and by running the check that settles it when one exists.
 - Read dependency docs/source/types when the finding depends on external behavior.
-- Reject unrealistic edge cases, speculative risks, broad rewrites, and fixes that over-complicate the codebase.
-- Prefer small fixes at the right ownership boundary; no refactor unless it clearly improves the bug class.
-- When an accepted finding shows a bug class or repeated pattern, inspect the current PR scope for sibling instances before fixing.
-- Fix the scoped bug class at once when practical; stop at touched surfaces, owner boundaries, and clear follow-up territory.
-- Keep going until structured review returns no accepted/actionable findings only while the work remains inside the original task scope.
+- Reject unrealistic edge cases, speculative risks, unrelated rewrites, and fixes that over-complicate the codebase.
+- Prefer root-cause fixes at the right ownership boundary. A coherent refactor is appropriate when it removes the bug class, duplicate policy, stale paths, or ownership confusion; do not default to a symptom patch.
+- When an accepted finding exposes a bug class or repeated pattern, inspect its owner and relevant sibling implementations before fixing.
+- Fix the same bug class across its owner-boundary neighborhood when practical; stop at unrelated invariants, different owners, and unapproved contract changes.
+- Keep going until structured review returns no accepted/actionable findings only while the work remains inside the authorized architectural and task scope.
 - If a review-triggered fix changes code, rerun focused tests and rerun the structured review helper.
 - For security-audit suppression changes, verify accepted findings remain auditable: suppressed findings stay in structured output, active output keeps an unsuppressible suppression notice, and aggregate findings cannot hide unrelated active risk.
 - Never switch or override the requested review engine/model except for the documented Codex Sol-to-Terra account-access fallback. Capacity, rate-limit, and unrelated failures keep the same engine/model.
@@ -53,28 +53,28 @@ Every diff uses the secret-safe helper and the separate Standards and Spec revie
 
 ## Scope Governor
 
-Autoreview is a closeout gate, not permission to rewrite the task.
+Autoreview is a closeout gate, not permission to change the task's product contract. Define scope by the authorized invariant and its architectural owner, not by the first patch.
 
-Before the first review, freeze two records and one neutral boundary. The behavioral baseline is the original request or issue and intended behavior; only the Spec review receives it. The neutral review-boundary facts shared with both reviews are target and base, owner boundary, exact changed-file or slice bounds, non-test LOC, and named test interfaces. The relevant threat-model sentence may accompany either review. Standards additionally receives trusted frozen-base authority and never behavioral text. For inherited or already-bloated branches, use the intended PR diff for changed-file bounds and non-test LOC rather than accepting all existing branch drift.
+Before the first review, freeze two records and one neutral boundary. The behavioral baseline is the original request or issue, violated invariant, and intended behavior; only the Spec review receives it. The neutral review-boundary facts shared with both reviews are target and base, architectural owner boundary, relevant sibling surfaces, public, security, and product contracts, changed-file and non-test LOC measurements, and the interfaces the diff's tests were agreed to cross when the invoker names them. The relevant threat-model sentence identifies the class of input the changed code answers for: accidental states, adversarial input, or untrusted data. When relevant, the exact same sentence accompanies both reviews. Standards additionally receives trusted frozen-base authority and never behavioral text. Changed files and non-test LOC are measurements, not hard caps, and test-support helpers count as test. For inherited or already-bloated branches, distinguish the intended architectural fix from unrelated branch drift.
 
 Before patching a finding, classify it:
 
-- **In-scope blocker**: the finding is introduced by the current diff, affects the same owner boundary, and can be fixed without changing the task's contract.
-- **Follow-up**: the finding is real but belongs to an adjacent bug class, sibling surface, cleanup, or broader hardening track.
+- **In-scope blocker**: the finding affects the same violated invariant or owner-boundary neighborhood, including relevant sibling implementations and connected obsolete paths, and can be fixed without changing the task's contract.
+- **Follow-up**: the finding is real but belongs to an unrelated bug class, different owner, independent cleanup, or broader hardening track.
 - **Stop-and-escalate**: the finding requires a new protocol/config/storage/public API contract, a different owner boundary, a release-process change, or a design choice outside the original request.
-- **Out of threat model**: the finding is real and may be reproducible, but its failure requires an input or actor class outside the frozen threat model. Record the finding and reason in the review evidence, reject it, and do not dispatch a fix. A constructed reproduction proves reachability, not that the scenario is in the agreed model. Only the user can approve widening that model.
+- **Out of threat model**: the finding is real and even reproducible, but its failure scenario requires an actor or input class outside the baseline's threat model. Reject it by rule, record it with its reason in the review evidence, and do not dispatch a fix. A constructed reproduction proves reachability by an attacker, not by an accident; it does not move a finding into the model, and widening the model is a scope expansion only the owner grants.
 
 In a Bottega Dex maestro run, the review worker verifies each routine finding against the real code and returns accepted repair briefs with its review report to the orchestrator. The orchestrator dispatches `implement` builders, decides escalations, and never edits production code. After those builders return their proof, the review worker reruns review. Outside a run, fix directly as this contract states.
 
 Stop patching and report the scope break instead of continuing when:
 
-- a narrow PR turns into an architecture change, protocol change, migration, or release-process change;
-- the diff grows past 2x the original files or non-test LOC without explicit approval to expand scope; compute both numbers against the frozen baseline before each repair dispatch;
+- a task turns into an unauthorized product, protocol, migration, storage, security, or release-process change;
+- added files or production LOC no longer serve the authorized invariant, owner boundary, or meaningful simplification; file counts, initial diff size, and arbitrary LOC multipliers are never automatic stop conditions;
 - two review-triggered patch cycles have not converged; pause and reclassify every remaining finding before another edit;
 - the best fix is "define the canonical contract first" rather than another local inference layer;
 - fixing the accepted finding would make the PR no longer describe the same behavior, issue, or owner boundary.
 
-After the two-cycle pause, continue only when every remaining accepted finding is an in-scope blocker inside the threat model and the cycles are narrowing: each cycle has fewer accepted findings than the previous cycle and does not reopen a fixed finding. Otherwise preserve the useful analysis, identify the smallest safe landed subset if one exists, and open or request a follow-up for the larger fix. Do not keep committing speculative fixes just to satisfy the reviewer.
+After the two-cycle pause, continue only when every remaining accepted finding is still an in-scope blocker inside the threat model and the cycles are narrowing: each cycle has fewer accepted findings than the previous cycle and does not reopen a fixed finding. Otherwise preserve the useful analysis, identify a coherent root-cause-safe landed subset if one exists, and open or request a follow-up for unrelated work. Do not land a symptom patch or keep committing speculative fixes just to satisfy the reviewer.
 
 Do not stack or push review-triggered fix commits while scope classification or focused proof is unresolved. Keep exploratory edits local until the cycle is proven in scope; if scope breaks, remove them from the landing lane instead of preserving them as branch history.
 
@@ -156,7 +156,7 @@ Optional review context is first-class. Prompt files and datasets must be repo-r
 "$AUTOREVIEW" --mode branch --base origin/main --prompt-file review-notes.md --dataset evidence.json --max-priority P2 --stream-engine-output
 ```
 
-In a Bottega Dex maestro run, the Standards prompt carries the full content of every repository contract governing the named test interfaces, frozen at the target base: root `AGENTS.md` and `REVIEW.md` when each governs them, and the fixed standards baseline ([references/smell-baseline.md](references/smell-baseline.md)) from the loaded skill. It also carries the neutral review-boundary facts: target and base, owner boundary, exact changed-file or slice bounds, non-test LOC, named test interfaces, and the threat-model sentence when relevant. If a governing contract is absent at the frozen base, state that absence in the prompt and omit it. The Standards prompt never carries the request, build spec, verbatim request, or intended behavior. The Spec prompt alone carries the run's build spec or verbatim request, plus the same neutral review-boundary facts so it judges only its designated slice. Neither prompt contains diff content or deleted revisions; proposed changes to authority files remain only in the helper's sanitized bundle. This lets the Standards review report a test crossing any other interface, or reaching into implementation internals, as a finding. The threat model and named test interfaces are the only run-design exceptions, never the run's other design decisions. A decision record the run committed on the branch arrives in the bundle as changed content and is reviewed as any file; the isolation rule governs the prompt, not the diff. The task running this skill writes each prompt to a file outside the reviewed repo and passes it as `--prompt "$(cat <file>)"`; never paste PR text into the command source, and keep `--json-output` outside the reviewed repo.
+In a Bottega Dex maestro run, the Standards prompt carries the full content of every repository contract governing the named test interfaces, owner boundary, relevant sibling surfaces, and public, security, or product contracts, frozen at the target base: root `AGENTS.md` and `REVIEW.md` when each governs them, and the fixed standards baseline ([references/smell-baseline.md](references/smell-baseline.md)) from the loaded skill. It also carries the neutral review-boundary facts: target and base, architectural owner boundary, relevant sibling surfaces, public, security, and product contracts, changed-file and non-test LOC measurements, named test interfaces, and the threat-model sentence when relevant. These measurements are not hard scope caps. If a governing contract is absent at the frozen base, state that absence in the prompt and omit it. The Standards prompt never carries the request, build spec, verbatim request, violated invariant, or intended behavior. The Spec prompt alone carries the run's build spec or verbatim request and violated invariant, plus the same neutral review-boundary facts, so it judges the authorized owner-boundary neighborhood rather than only the first patch. Neither prompt contains diff content or deleted revisions; proposed changes to authority files remain only in the helper's sanitized bundle. This lets the Standards review report a test crossing any other interface, or reaching into implementation internals, as a finding. The threat model and named test interfaces are the only run-design exceptions, never the run's other design decisions. A decision record the run committed on the branch arrives in the bundle as changed content and is reviewed as any file; the isolation rule governs the prompt, not the diff. The task running this skill writes each prompt to a file outside the reviewed repo and passes it as `--prompt "$(cat <file>)"`; never paste PR text into the command source, and keep `--json-output` outside the reviewed repo.
 
 If an open PR exists, use its actual base:
 
@@ -192,6 +192,9 @@ locations. A single physical diff line split across passes also retains its
 original addition, deletion, or context marker.
 Every original bundle byte appears exactly once across the pass sequence, and
 all validated reports are merged before required-finding and exit-status checks.
+In a panel, each reviewer receives its own complete sequence under that
+reviewer's input limit. A Kimi reviewer can therefore use several passes while
+Codex, Claude, or Pi reviews the same bundle in one pass.
 The helper caps one run at eight bounded passes so an unexpectedly huge branch
 cannot create unbounded model calls; split still-larger work into coherent review
 targets.
@@ -242,7 +245,7 @@ Tradeoff: tests may force code changes that stale the review. If tests or review
 Run multiple reviewers against one frozen bundle:
 
 ```bash
-"$AUTOREVIEW" --reviewers codex,claude,pi --max-priority P2 --stream-engine-output
+"$AUTOREVIEW" --reviewers codex,claude,pi,kimi --max-priority P2 --stream-engine-output
 ```
 
 The integrated Maestro closeout reviews the integrated diff as this mandatory panel:
@@ -280,7 +283,7 @@ For models with slashes or extra colons, prefer keyed form:
 "$AUTOREVIEW" --reviewers codex,pi --model codex=gpt-5.6-sol --model pi=anthropic/claude-sonnet-4 --max-priority P2 --stream-engine-output
 ```
 
-`--reviewers all` covers Codex, Claude, and Pi. Droid, Copilot, Cursor, and OpenCode selections fail closed because their current CLI contracts cannot confine project instructions, filesystem reads, or network fetches to the review boundary.
+`--reviewers all` covers Codex, Claude, Pi, and Kimi. Kimi remains a standalone helper capability and does not alter the integrated Maestro panel. Droid, Copilot, Cursor, and OpenCode selections fail closed because their current CLI contracts cannot confine project instructions, filesystem reads, or network fetches to the review boundary.
 
 ## Models and thinking
 
@@ -293,7 +296,7 @@ Recommended model defaults:
 | **codex** (default) | `gpt-5.6-sol` -> `gpt-5.6-terra` on access failure | Helper default                           |
 | **claude**          | `claude-fable-5`                                   | Anthropic's most capable widely released Claude model |
 
-CLI flags and environment variables override these defaults. Pi does not get a built-in model default because its provider catalog may vary by installation. Droid, Copilot, Cursor, and OpenCode are currently refused.
+CLI flags and environment variables override these defaults. Pi and Kimi do not get built-in model defaults because their configured model catalogs may vary by installation. Droid, Copilot, Cursor, and OpenCode are currently refused.
 
 | Engine              | Model flag                 | Example model IDs                                                            | Thinking flag                 | Accepted levels                                            |
 | ------------------- | -------------------------- | ---------------------------------------------------------------------------- | ----------------------------- | ---------------------------------------------------------- |
@@ -302,6 +305,7 @@ CLI flags and environment variables override these defaults. Pi does not get a b
 | **droid**           | currently refused          | Factory model IDs                                                            | `-r, --reasoning-effort Y`    | `off`, `none`, `low`, `medium`, `high`, `xhigh`, `max`     |
 | **copilot**         | currently refused          | Copilot model aliases                                                        | not supported                 | n/a                                                        |
 | **pi**              | `pi --model X`             | `anthropic/claude-sonnet-4`, `openai/gpt-4o`                                 | `--thinking Y`                | `off`, `minimal`, `low`, `medium`, `high`, `xhigh`         |
+| **kimi**            | `kimi --model X`           | A model alias from the user's Kimi config                                    | `[thinking] enabled` in the staged config | `on`, `off`                                |
 | **cursor**          | currently refused          | Cursor model aliases                                                         | not supported                 | n/a                                                        |
 | **opencode**        | currently refused          | OpenCode provider/model IDs                                                  | not supported                 | n/a                                                        |
 
@@ -328,6 +332,10 @@ Examples matching current `main` behavior:
 # Pi with explicit model and thinking level
 "$AUTOREVIEW" --engine pi --model anthropic/claude-sonnet-4 --thinking high --pi-bin pi --max-priority P2 --stream-engine-output
 
+# Kimi with its configured default model, or a configured model alias
+"$AUTOREVIEW" --engine kimi --thinking on --kimi-bin kimi --max-priority P2 --stream-engine-output
+"$AUTOREVIEW" --engine kimi --model kimi-model-alias --max-priority P2 --stream-engine-output
+
 ```
 
 `--cursor-agent-bin` and `CURSOR_AGENT_BIN` remain compatibility aliases for
@@ -353,7 +361,7 @@ loader such as an untracked `.envrc`; the helper does not write a config file.
 | `AUTOREVIEW_CLAUDE_FALLBACK_MODEL` | Claude-only fallback chain                                                                                                       |
 | `AUTOREVIEW_PROVIDER_ENV_ALLOW`    | Comma-separated custom Pi/OpenCode credential variable names; names must end in a recognized credential suffix                   |
 
-Codex maps thinking to `model_reasoning_effort`. Claude maps thinking to `--effort`. Pi maps thinking to `--thinking`. Only Claude accepts `--fallback-model`; global CLI/env fallback requires at least one Claude reviewer, and engine-specific fallback overrides require that reviewer to be selected. Non-Claude fallback overrides, including `AUTOREVIEW_<NONCLAUDE>_FALLBACK_MODEL`, fail closed instead of being silently ignored.
+Codex maps thinking to `model_reasoning_effort`. Claude maps thinking to `--effort`. Pi maps thinking to `--thinking`. Kimi maps `on` and `off` to `[thinking] enabled` in the staged review config. Only Claude accepts `--fallback-model`; global CLI/env fallback requires at least one Claude reviewer, and engine-specific fallback overrides require that reviewer to be selected. Non-Claude fallback overrides, including `AUTOREVIEW_<NONCLAUDE>_FALLBACK_MODEL`, fail closed instead of being silently ignored.
 
 ## Review engine isolation
 
@@ -366,10 +374,13 @@ When autoreview runs inside the repository under review, external reviewer CLIs 
 | **droid**    | Fails closed: current CLI cannot disable both project instructions and all tools                                                                                                                 | Droid CLI `exec --help` and `--list-tools`                                  |
 | **copilot**  | Fails closed: repository read tools also expose ignored files outside the reviewed bundle                                                                                                        | GitHub Copilot CLI command reference                                        |
 | **pi**       | `--no-approve --no-session --no-context-files --no-extensions --no-skills --no-prompt-templates --no-themes --no-tools`                                                                          | Pi CLI `--help`; requires Pi `v0.79.0+`                                     |
+| **kimi**     | Empty external workspace; staged `KIMI_CODE_HOME` with sanitized config; Markdown custom agent with no tools or subagents; explicit empty `--skills-dir`; isolated runtime state                  | Official Kimi Code CLI `v0.30.0+` within the 0.x line                       |
 | **opencode** | Fails closed: project/global config isolation and private-network fetch denial are not both proven                                                                                               | OpenCode CLI contract                                                       |
 | **cursor**   | Fails closed: documented read permissions can target absolute host paths and no proven repository-only filesystem sandbox is exposed                                                             | Cursor CLI [permissions](https://cursor.com/docs/cli/reference/permissions) |
 
-Codex `--ignore-user-config` skips config loading for the exec run. Autoreview reconstructs only the documented `cli_auth_credentials_store`, `forced_login_method`, and `forced_chatgpt_workspace_id` settings from `CODEX_HOME/config.toml`, keeping authentication usable without forwarding unrelated user configuration. Codex runs in an empty temporary workspace: the validated bundle is its sole repository input, ignored files and linked-worktree metadata remain unreadable, and the zero project-doc budget keeps workspace instructions out of the prompt. `--ignore-rules` skips user/project execpolicy rules. Claude `--safe-mode` disables project hooks, skills, plugins, MCP servers, and CLAUDE.md; autoreview supplies WebSearch by default, permits only explicitly domain-constrained WebFetch rules, and exposes no filesystem or shell tools. Pi runs from a neutral temporary directory with project resources disabled and `--no-tools`. Droid, Copilot, Cursor, and OpenCode fail closed because their current CLI contracts cannot isolate untrusted review input from host, project, or private-network trust surfaces.
+Codex `--ignore-user-config` skips config loading for the exec run. Autoreview reconstructs only the documented `cli_auth_credentials_store`, `forced_login_method`, and `forced_chatgpt_workspace_id` settings from `CODEX_HOME/config.toml`, keeping authentication usable without forwarding unrelated user configuration. Codex runs in an empty temporary workspace: the validated bundle is its sole repository input, ignored files and linked-worktree metadata remain unreadable, and the zero project-doc budget keeps workspace instructions out of the prompt. `--ignore-rules` skips user/project execpolicy rules. Claude `--safe-mode` disables project hooks, skills, plugins, MCP servers, and CLAUDE.md; autoreview supplies WebSearch by default, permits only explicitly domain-constrained WebFetch rules, and exposes no filesystem or shell tools. Pi runs from a neutral temporary directory with project resources disabled and `--no-tools`.
+
+Kimi (`-p`, `stream-json`) runs from an empty external workspace with a staged `KIMI_CODE_HOME`: sanitized model and provider config only, its OAuth credential directory linked in, and device identity copied so native token refreshes remain durable without exposing the rest of the user's Kimi state. The adapter accepts the official Kimi Code 0.x dialect from `v0.30.0`, rejects the legacy Python `kimi-cli` 1.x dialect, and sets `KIMI_CODE_EXPERIMENTAL_FLAG=1` because `--agent-file` uses the v2 print-mode engine in that release line. It preserves validated HTTP(S) `KIMI_CODE_OAUTH_HOST`, `KIMI_OAUTH_HOST`, and `KIMI_CODE_BASE_URL` overrides so staged OAuth credentials resolve to the same environment. Direct-provider setup uses a complete `KIMI_MODEL_NAME` and `KIMI_MODEL_API_KEY` environment overlay; ambient `KIMI_API_KEY` and `KIMI_BASE_URL` are not forwarded because official Kimi Code requires those names inside provider config instead of reading them as the model overlay. A Markdown `--agent-file` with `tools: []` and `subagents: []` plus an empty `--skills-dir` keep project instructions, tools, and MCP servers out of the review. The prompt travels as the `--prompt` argument, so each pass is capped at 120,000 bytes on POSIX and 26,000 bytes on Windows. The Windows invocation is also checked after command-line serialization, including quote and backslash expansion, against the 32,767-character process limit. Droid, Copilot, Cursor, and OpenCode fail closed because their current CLI contracts cannot isolate untrusted review input from host, project, or private-network trust surfaces.
 
 Codex uses a named permission profile that grants read access only to an empty temporary workspace. This is narrower than repository-root access, which would expose ignored credentials, and narrower than the legacy `read-only` sandbox, which permits reads across the host filesystem.
 
@@ -398,7 +409,7 @@ The helper:
 - otherwise uses current PR base if `gh pr view` works
 - otherwise uses `origin/main` for non-main branches
 - does not fetch automatically during branch review; the selected base ref must already resolve locally
-- recognizes `--engine droid`, `copilot`, `cursor`, and `opencode` only to fail closed with isolation errors; runnable engines are `codex`, `claude`, and `pi`; default is `AUTOREVIEW_ENGINE` or `codex`
+- recognizes `--engine droid`, `copilot`, `cursor`, and `opencode` only to fail closed with isolation errors; runnable engines are `codex`, `claude`, `pi`, and `kimi`; default is `AUTOREVIEW_ENGINE` or `codex`
 - resolves bare `git`, `gh`, reviewer, and PowerShell shell commands from absolute `PATH` entries only, never from the reviewed checkout; explicit `--*-bin` paths are interpreted from the reviewed repository root when relative and accepted only when both the supplied path and resolved target stay outside the reviewed repository
 - use `--mode commit --commit <ref>` for already-committed work, especially clean `main` after landing
 - scans safe Git patches in full, recognizes synthetic fixture values tied to their credential field, reviews them in one pass up to the aggregate prompt limit, and automatically uses complete bounded passes above it
@@ -406,12 +417,13 @@ The helper:
 - writes only to stdout unless `--output`, `--json-output`, or live streamed engine stderr is set
 - supports `--dry-run`, `--parallel-tests`, `--parallel-tests-shell`, `--prompt`, repo-relative `--prompt-file`, repo-relative `--dataset`, `--no-tools`, `--no-web-search`, repeatable Codex-only safe model/response tuning with `--codex-config key=value`, Codex-only `--codex-speed fast|flex|default`, and commit refs
 - supports `--stream-engine-output` or `AUTOREVIEW_STREAM_ENGINE_OUTPUT=1` for live engine text while preserving structured validation; Codex and Claude hide tool/file event details, emit compact activity summaries, and report usage at turn completion
-- supports opt-in review panels with `--panel` / `--reviewers`, plus per-engine `--model`, `--thinking`, and Claude `--fallback-model`
+- supports opt-in review panels with `--panel` / `--reviewers`, plus per-engine `--model`, `--thinking`, and Claude `--fallback-model`; each reviewer gets a complete partition sized to its own input limit
 - uses built-in defaults `codex=gpt-5.6-sol` with `high` reasoning and an access-only `gpt-5.6-terra` retry, plus `claude=claude-fable-5`; honors `AUTOREVIEW_MODEL`, `AUTOREVIEW_THINKING`, `AUTOREVIEW_FALLBACK_MODEL`, and per-engine `AUTOREVIEW_<ENGINE>_MODEL` / `AUTOREVIEW_<ENGINE>_THINKING` environment overrides when CLI flags are omitted
-- gives Codex the bundle in an empty workspace with web search available; Claude receives the bundle plus WebSearch by default and optional domain-constrained WebFetch, and Pi receives the bundle with no tools
+- gives Codex the bundle in an empty workspace with web search available; Claude receives the bundle plus WebSearch by default and optional domain-constrained WebFetch; Pi and Kimi receive the bundle with no tools
 - runs Claude with `--safe-mode` (`v2.1.169+`), `--setting-sources user`, MCP and auto-memory disabled, no filesystem/shell tools, an empty external workspace, and `--fallback-model` when set
 - refuses Droid, Copilot, Cursor, and OpenCode reviews until their CLIs expose the required project, filesystem, and network isolation
 - runs Pi `v0.79.0+` from neutral temporary directories with `--no-approve`, `--no-session`, disabled Pi context/resource loading, and `--no-tools` because its built-in read tools are not repository-confined
+- runs the official Kimi Code CLI `v0.30.0+` within the 0.x line from an empty temporary workspace with a staged `KIMI_CODE_HOME`, the v2 print-mode flag enabled, sanitized config and model environment, an empty `--skills-dir`, and a no-tools, no-subagents Markdown `--agent-file`; the legacy Python `kimi-cli` 1.x dialect fails closed
 - prints `review still running: <engine> elapsed=<seconds>s pid=<pid>` to stderr at long-running intervals while waiting for the selected review engine, unless streamed output or compact Codex activity has been visible recently
 - prints `autoreview clean: no accepted/actionable findings reported` when the selected review command exits 0
 - exits nonzero when accepted/actionable findings are present
@@ -420,7 +432,7 @@ The helper:
 
 Run the Standards and Spec reviews in parallel as two separate autoreview helper invocations against the same frozen target, per [references/reviews.md](references/reviews.md). The outer review worker retains read-only target-repository access to invoke the helper and verify findings. Each helper-created isolated model session receives only the helper's redacted review bundle plus its review prompt. The review worker never passes raw diffs, deleted revisions, or repository access into those isolated sessions.
 
-The task running this skill creates two review-specific prompt files outside the reviewed repository. Both prompts contain their review instructions and the neutral review-boundary facts. The Standards prompt additionally contains required trusted authority text frozen at the target base, and never contains the request, build spec, verbatim request, or intended behavior. The Spec prompt additionally contains the run's build spec or verbatim request and uses the neutral bounds to judge only its designated slice. Neither prompt contains diff content or deleted revisions. Pass each prompt with `--prompt`, because `--prompt-file` intentionally accepts only repository-relative files. Keep each JSON report outside the reviewed repository too.
+The task running this skill creates two review-specific prompt files outside the reviewed repository. Both prompts contain their review instructions and the neutral review-boundary facts. The Standards prompt additionally contains required trusted authority text frozen at the target base, and never contains the request, build spec, verbatim request, violated invariant, or intended behavior. The Spec prompt additionally contains the run's build spec or verbatim request and violated invariant and uses the neutral facts to judge the authorized owner-boundary neighborhood. Neither prompt contains diff content or deleted revisions. Pass each prompt with `--prompt`, because `--prompt-file` intentionally accepts only repository-relative files. Keep each JSON report outside the reviewed repository too.
 
 For an integrated Maestro closeout branch review, run these commands against the same frozen base used by the mandatory panel:
 
